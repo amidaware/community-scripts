@@ -969,5 +969,20 @@
     "shell": "powershell",
     "category": "TRMM (Win):Other",
     "default_timeout": "300"
+  },
+  {
+    "guid": "f0487715-8295-42d9-83e3-9977b7fd16f4",
+    "filename": "Tactical_Hudu_Sync.ps1",
+    "submittedBy": "https://github.com/bc24fl/tacticalrmm-scripts/",
+    "name": "Tactical Hudu Sync",
+    "description": "Syncs assets from Tactical to Hudu",
+    "args": [
+      "-ApiKeyTactical {{global.ApiKeyTactical}}",
+      "-ApiUrlTactical {{global.ApiUrlTactical}}",
+      "-ApiKeyHudu {{global.ApiKeyHudu}}",
+      "-ApiUrlHudu{{global.ApiUrlHudu}}"
+    ],
+    "shell": "powershell",
+    "category": "TRMM (Win):3rd Party Software"
   }
 ]
