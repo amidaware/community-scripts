@@ -29,6 +29,7 @@
 		
 .VERSION
     - v1.0 Initial Release by https://github.com/bc24fl/tacticalrmm-scripts/
+     
 #>
 
 param(
