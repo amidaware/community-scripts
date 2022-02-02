@@ -3,10 +3,11 @@
     Installs Sophos Endpoint via the Sophos API https://developer.sophos.com/apis
 
 .REQUIREMENTS
-    You will need API credentials to use this script.  The instructions are slightly different depending who you are.
-    For Partners : https://developer.sophos.com/getting-started (Only Step 1 Required For API Credentials)
-    For Organizations: https://developer.sophos.com/getting-started-organization (Only Step 1 Required For API Credentials)
-    For Tenants	: https://developer.sophos.com/getting-started-tenant (Only Step 1 Required For API Credentials)
+    You will need API credentials to use this script.  The instructions are slightly different depending who you are. 
+    (Only Step 1 Required For API Credentials)
+    For Partners : https://developer.sophos.com/getting-started 
+    For Organizations: https://developer.sophos.com/getting-started-organization 
+    For Tenants	: https://developer.sophos.com/getting-started-tenant 
 
 .INSTRUCTIONS
     1. Get your API Credentials (Client Id, Client Secret) using the steps in the Requirements section
@@ -26,6 +27,7 @@
 	V1.0 Initial Release by https://github.com/bc24fl/tacticalrmm-scripts/
 	V1.1 Added error handling for each Invoke-Rest Call for easier troubleshooting and graceful exit.
 	V1.2 Added support for more than 100 tenants.
+    V1.3 Removed Chocolately dependency
 	
 #>
 
@@ -37,18 +39,15 @@ param(
 )
 
 if ([string]::IsNullOrEmpty($ClientId)) {
-    Write-Output "ClientId must be defined. Use -ClientId <value> to pass it."
-    Exit 1
+    throw "ClientId must be defined. Use -ClientId <value> to pass it."
 }
 
 if ([string]::IsNullOrEmpty($ClientSecret)) {
-    Write-Output "ClientSecret must be defined. Use -ClientSecret <value> to pass it."
-    Exit 1
+    throw "ClientSecret must be defined. Use -ClientSecret <value> to pass it."
 }
 
 if ([string]::IsNullOrEmpty($TenantName)) {
-    Write-Output "TenantName must be defined. Use -TenantName <value> to pass it."
-    Exit 1
+    throw "TenantName must be defined. Use -TenantName <value> to pass it."
 }
 
 if ([string]::IsNullOrEmpty($Products)) {
@@ -77,8 +76,7 @@ $authToken = $authResponse.access_token
 $authHeaders = @{Authorization = "Bearer $authToken"}
 
 if ($authToken.length -eq 0){
-	Write-Host "Error, no authentication token received.  Please check your api credentials.  Exiting script."
-	Exit 1
+	throw "Error, no authentication token received.  Please check your api credentials.  Exiting script."
 }
 
 $whoAmIResponse = (Invoke-RestMethod -Method 'Get' -headers $authHeaders -Uri $urlWhoami)
@@ -86,8 +84,7 @@ $myId = $whoAmIResponse.Id
 $myIdType = $whoAmIResponse.idType
 
 if ($myIdType.length -eq 0){
-	Write-Host "Error, no Whoami Id Type received.  Please check your api credentials or network connections.  Exiting script."
-	Exit 1
+	throw "Error, no Whoami Id Type received.  Please check your api credentials or network connections.  Exiting script."
 }
 
 if($myIdType -eq 'partner'){
@@ -109,8 +106,7 @@ elseif($myIdType -eq 'tenant'){
     }
 }
 else {
-    Write-Host "Error finding id type.  This script only supports Partner, Organization, and Tenant API's."
-    Exit 1
+    throw "Error finding id type.  This script only supports Partner, Organization, and Tenant API's."
 }
 
 # Cycle through all tenants until a tenant match, or all pages have exhausted.  
@@ -137,8 +133,7 @@ do {
 } until( $currentPage -gt $totalPages -Or ($tenantId.length -gt 1 ) )
 
 if ($tenantId.length -eq 0){
-	Write-Host "Error, no tenant found with the provided name.  Please check the name and try again.  Exiting script."
-	Exit 1
+	throw "Error, no tenant found with the provided name.  Please check the name and try again.  Exiting script."
 }
 
 $requestHeaders =@{
@@ -151,8 +146,7 @@ $endpointDownloadResponse = (Invoke-RestMethod -Method 'Get' -headers $requestHe
 $endpointInstallers = $endpointDownloadResponse.installers
 
 if ($endpointInstallers.length -eq 0){
-	Write-Host "Error, no installers received.  Please check your api credentials or network connections.  Exiting script."
-	Exit 1
+	throw "Error, no installers received.  Please check your api credentials or network connections.  Exiting script."
 }
 
 foreach ($installer in $endpointInstallers){
@@ -168,19 +162,18 @@ foreach ($installer in $endpointInstallers){
             $installUrl = $installer.downloadUrl
         }
         else{
-            Write-Host "Error, this script only supports producttype of 1) Work Station, 2) Domain Controller, or 3) Server."
-            Exit 1
+            throw "Error, this script only supports producttype of 1) Work Station, 2) Domain Controller, or 3) Server."
         }
     }
 }
 
 try{
     Write-Host "Checking if Sophos Endpoint installed.  Please wait..."
-    $AppInstalled = & "choco" "list" "-li"
 
-    if ($AppInstalled -like '*Sophos Endpoint Agent*'){
-        Write-Host "Sophos Endpoint is installed.  Skipping installation."
-    } else {
+    $software = "Sophos Endpoint Agent";
+    $installed = ((Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*).DisplayName -Match $software).Length -gt 0
+
+    if(-Not $installed) {
         Write-Host "Sophos Endpoint is NOT installed.  Installing now..."
 
         Write-Host "Downloading Sophos from " + $installUrl + " Please wait..." 
@@ -195,8 +188,11 @@ try{
         Write-Host "Running Sophos Setup... Please wait up to 20 minutes for install to complete." 
         $appArgs = @("--products=" + $Products + " --quiet ")
         Start-Process -Filepath $outpath -ArgumentList $appArgs
+
+    } else {
+        Write-Host "Sophos Endpoint is installed.  Skipping installation."
     }
 }
 catch{
-    Write-Host "Installation failed with error message: $($PSItem.ToString())"
+    throw "Installation failed with error message: $($PSItem.ToString())"
 }
