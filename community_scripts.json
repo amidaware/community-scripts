@@ -327,6 +327,16 @@
     "default_timeout": "3600"
   },
   {
+    "guid": "24a6fdbc-0909-46fe-813c-7f26933fe5fe",
+    "filename": "Win_Windows_Update_Block_Win11.ps1",
+    "submittedBy": "https://github.com/dinger1986/",
+    "name": "Windows 11 Upgrade Block",
+    "description": "Blocks Windows 11 Upgrade if machine is Win11 capable",
+    "shell": "powershell",
+    "category": "TRMM (Win):Updates",
+    "default_timeout": "3600"
+  },
+  {
     "guid": "375323e5-cac6-4f35-a304-bb7cef35902d",
     "filename": "Win_Disk_Volume_Status.ps1",
     "submittedBy": "https://github.com/dinger1986",
