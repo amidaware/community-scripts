@@ -20,6 +20,16 @@
     "default_timeout": "300"
   },
   {
+    "guid": "eb15bb8b-a2c5-4452-b16a-8a758fbb6722",
+    "filename": "Win_Printers_List_Installed.ps1",
+    "submittedBy": "https://github.com/dinger1986",
+    "name": "Printers - Gets a list of all installed printers",
+    "description": "This script will get a list of all installed printers, their ports and if shared or not",
+    "shell": "powershell",
+    "category": "TRMM (Win):Printing",
+    "default_timeout": "300"
+  },
+  {
     "guid": "3ff6a386-11d1-4f9d-8cca-1b0563bb6443",
     "filename": "Win_Google_Chrome_Clear_Cache.ps1",
     "submittedBy": "https://github.com/Omnicef",
