@@ -9,7 +9,7 @@ The [`/scripts_wip/`](https://github.com/amidaware/community-scripts/tree/main/s
 
 ## `scripts` folder
 
-The [`/scripts/`](https://github.com/amidaware/community-scripts/tree/main/scripts_wip) folder is the Official Community Script folder. Everything in here will be distributed with Tactical RMM during the install process. 
+The [`/scripts/`](https://github.com/amidaware/community-scripts/tree/main/scripts) folder is the Official Community Script folder. Everything in here will be distributed with Tactical RMM during the install process. 
 
 Everything in this folder **_MUST_** have a corresponding and valid entry in the [community_scripts.json](https://github.com/amidaware/community-scripts/blob/main/community_scripts.json) which is used in the TRMMs install and upgrade process to integrate these scripts into the Tactical RMM Community Scripts Library. 
 
