@@ -1004,5 +1004,19 @@
     ],
     "shell": "powershell",
     "category": "TRMM (Win):3rd Party Software"
+  },
+  {
+    "guid": "9eda0e93-b4f8-4fb3-8a5d-2636f67b7663",
+    "filename": "Kb_Approve_Install.ps1",
+    "submittedBy": "https://github.com/bc24fl/tacticalrmm-scripts/",
+    "name": "KB Approve Install",
+    "description": "Toggle approval and installation of a specific Kb across all agents",
+    "args": [
+      "-ApiKeyTactical {{global.ApiKeyTactical}}",
+      "-ApiUrlTactical {{global.ApiUrlTactical}}",
+      "-Kb [Microsoft Kb #]"
+    ],
+    "shell": "powershell",
+    "category": "TRMM (Win):Updates"
   }
 ]
