@@ -5,7 +5,7 @@ See <https://docs.tacticalrmm.com/contributing_community_scripts/> for best prac
 
 ## `scripts_wip` folder
 
-The [`/scripts_wip/`](https://github.com/amidaware/community-scripts/tree/main/scripts_wip) is a collection box for anything you want WIP=(Work In Progress). Jot ideas, not completed scripts, all commits welcome. Have some time and want to help with Tactical RMM? Discuss in the #script Discord channel and toss around ideas with other scripters and improve scripts from wip to official script quality.
+The [`/scripts_wip/`](https://github.com/amidaware/community-scripts/tree/main/scripts_wip) is a collection box for anything you want WIP=(Work In Progress). Jot ideas, not completed scripts, all commits welcome. Have some time and want to help with Tactical RMM? Discuss in the #script Discord channel and toss around ideas with other people and improve scripts from wip to official script quality.
 
 ## `scripts` folder
 
