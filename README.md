@@ -14,3 +14,18 @@ The [`/scripts/`](https://github.com/amidaware/community-scripts/tree/main/scrip
 Everything in this folder **_MUST_** have a corresponding and valid entry in the [community_scripts.json](https://github.com/amidaware/community-scripts/blob/main/community_scripts.json) which is used in the TRMMs install and upgrade process to integrate these scripts into the Tactical RMM Community Scripts Library. 
 
 Until v1 of Tactical RMM is released function changes on existing scripts is allowed, but not encouraged. Be aware there may be Tactical RMM installs in the field where you might be breaking someones scripts/tasks applied to their workstations. Work hard and try to add additional functionality/consolidate multiple scripts while preserving backwards functionality (or make a new version of the script).
+
+## Running tests locally
+
+### Setup the env and install pytest
+```
+python3 -m venv env
+source env/bin/activate
+pip install --upgrade pip
+pip install pytest
+```
+
+### Run tests
+```
+pytest
+```
