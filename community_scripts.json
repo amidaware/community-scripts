@@ -992,9 +992,9 @@
   },
   {
     "guid": "f0487715-8295-42d9-83e3-9977b7fd16f4",
-    "filename": "Tactical_Hudu_Sync.ps1",
+    "filename": "Win_HuduToTactical_Sync.ps1",
     "submittedBy": "https://github.com/bc24fl/tacticalrmm-scripts/",
-    "name": "Tactical Hudu Sync",
+    "name": "Hudu - Sync between Hudu and TRMM",
     "description": "Syncs assets from Tactical to Hudu",
     "args": [
       "-ApiKeyTactical {{global.ApiKeyTactical}}",
@@ -1007,9 +1007,9 @@
   },
   {
     "guid": "9eda0e93-b4f8-4fb3-8a5d-2636f67b7663",
-    "filename": "Kb_Approve_Install.ps1",
+    "filename": "Win_Kb_Approve_Install.ps1",
     "submittedBy": "https://github.com/bc24fl/tacticalrmm-scripts/",
-    "name": "KB Approve Install",
+    "name": "Windows Updates - Individual KB Approve and Install",
     "description": "Toggle approval and installation of a specific Kb across all agents",
     "args": [
       "-ApiKeyTactical {{global.ApiKeyTactical}}",
