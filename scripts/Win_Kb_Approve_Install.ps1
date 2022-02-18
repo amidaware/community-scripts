@@ -1,30 +1,31 @@
 <#
 .SYNOPSIS
-    Toggle the approval and installation of a specific KB across all agents using the API and no 3rd party libraries.
+    Toggle the approval and installation of a specific KB accross all agents using the API and without installing any 3rd party libraries.
 
 .REQUIREMENTS
     - You will need an API key from Tactical RMM which should be passed as parameters (DO NOT hard code in script).  Do not run this on each agent (see notes).  
 
 .NOTES
     - This script is designed to run on a single computer.  Ideally, it should be run on the Tactical RMM server or other trusted device.
-    - This script cycles through each agent toggling the approval and installation of a specific kb.  Tactical will do the installation when it's ready.
+    - This script cycles through each agent toggling the approval and installation of a specific kb.  Tactical RMM will do the installation when it's ready.
 
 .PARAMETERS
     - $ApiKeyTactical   - Tactical API Key
     - $ApiUrlTactical   - Tactical API Url
-    - $Kb               - Microsoft Kb number to install
+    - $Kbs              - Microsoft Kb numbers to install (ie: -Kbs "KB12345", "KB12346")
    
 .EXAMPLE
-    - KB_Approve_Install.ps1 -ApiKeyTactical 1234567 -ApiUrlTactical api.yourdomain.com  -Kb "KB123456789"
+    - Win_KB_Approve_Install.ps1 -ApiKeyTactical 1234567 -ApiUrlTactical api.yourdomain.com  -Kbs "KB123456789"
 		
 .VERSION
-	- v1.0 Initial Release by https://github.com/bc24fl/tacticalrmm-scripts/
+    - v1.0 Initial Release by https://github.com/bc24fl/tacticalrmm-scripts/
+    - v1.1 Added multiple Kb option (ie: -Kbs "KB12345", "KB12346")
 #>
 
 param(
     [string] $ApiKeyTactical,
     [string] $ApiUrlTactical,
-    [string] $Kb
+    [string[]] $Kbs
 )
 
 if ([string]::IsNullOrEmpty($ApiKeyTactical)) {
@@ -35,8 +36,8 @@ if ([string]::IsNullOrEmpty($ApiUrlTactical)) {
     throw "ApiUrlTactical must be defined. Use -ApiUrlTactical <value> to pass it."
 }
 
-if ([string]::IsNullOrEmpty($Kb)) {
-    throw "Kb must be defined. Use -Kb <value> to pass it."
+if ([string]::IsNullOrEmpty($Kbs)) {
+    throw "Kbs must be defined. Use -Kbs <value> to pass it."
 }
 
 $headers= @{
@@ -55,7 +56,6 @@ foreach ($agents in $agentsResult) {
 
     $agentId        = $agents.agent_id
     $agentHostname  = $agents.hostname
-    $agentStatus    = $agents.status
 
     # Get agent updates
     try {
@@ -70,29 +70,32 @@ foreach ($agents in $agentsResult) {
         $updateKb       = $update.kb 
         $updateAction   = $update.action
 
-        if ($Kb -eq $updateKb -And $updateAction -eq "nothing"){
-            Write-Host "KB $updateKB is available for installation on agent $agentHostname"
+        foreach ($kb in $Kbs) {
 
-            # Set Approve KB
-            $body = @{
-                "action"   = "approve"
-            }
-            try {
-                $updateApproveKb = Invoke-RestMethod -Method 'Put' -Uri "https://$ApiUrlTactical/winupdate/$updateId/" -Body ($body|ConvertTo-Json) -Headers $headers -ContentType "application/json"
-                Write-Host "Agent $agentHostname toggling approval of $updateKB"
-            }
-            catch {
-                Write-Error "Error invoking Approve KB on agent $agentHostname - $agentId with error: $($PSItem.ToString())"
-            }
+            if ($kb -eq $updateKb -And $updateAction -eq "nothing"){
+                Write-Host "KB $updateKB is available for installation on agent $agentHostname"
 
-            # Set Install KB
-            $body = @{}
-            try {
-                $updateInstallKb = Invoke-RestMethod -Method 'Post' -Uri "https://$ApiUrlTactical/winupdate/$agentId/install/" -Body ($body|ConvertTo-Json) -Headers $headers -ContentType "application/json"
-                Write-Host "Agent $agentHostname toggling installation of $updateKB"  
-            }
-            catch {
-                Write-Error "Error invoking Install KB on agent $agentHostname - $agentId with error: $($PSItem.ToString())"
+                # Set Approve KB
+                $body = @{
+                    "action"   = "approve"
+                }
+                try {
+                    $updateApproveKb = Invoke-RestMethod -Method 'Put' -Uri "https://$ApiUrlTactical/winupdate/$updateId/" -Body ($body|ConvertTo-Json) -Headers $headers -ContentType "application/json"
+                    Write-Host "Agent $agentHostname toggling approval of $updateKB"
+                }
+                catch {
+                    Write-Error "Error invoking Approve KB on agent $agentHostname - $agentId with error: $($PSItem.ToString())"
+                }
+
+                # Set Install KB
+                $body = @{}
+                try {
+                    $updateInstallKb = Invoke-RestMethod -Method 'Post' -Uri "https://$ApiUrlTactical/winupdate/$agentId/install/" -Body ($body|ConvertTo-Json) -Headers $headers -ContentType "application/json"
+                    Write-Host "Agent $agentHostname toggling installation of $updateKB"  
+                }
+                catch {
+                    Write-Error "Error invoking Install KB on agent $agentHostname - $agentId with error: $($PSItem.ToString())"
+                }
             }
         }
     } 
