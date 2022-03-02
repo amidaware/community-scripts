@@ -980,6 +980,16 @@
     "default_timeout": "300"
   },
   {
+    "guid": "73ab2fba-c01b-4ebc-9e00-311b7ced4a51",
+    "filename": "Win_Powershell_TestPATH.bat",
+    "submittedBy": "https://github.com/NiceGuyIT",
+    "name": "Windows PATH Testing",
+    "description": "Testing Windows PATH environment variables for troubleshooting",
+    "shell": "cmd",
+    "category": "TRMM (Win):Testing",
+    "default_timeout": "300"
+  },
+  {
     "guid": "962d3cce-49a2-4f3e-a790-36f62a6799a0",
     "filename": "Win_Collect_System_Report_And_Email.ps1",
     "submittedBy": "https://github.com/rfost52",
