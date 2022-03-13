@@ -147,6 +147,16 @@
     "category": "TRMM (Win):TacticalRMM Related"
   },
   {
+    "guid": "01845406-d83d-4ba5-960e-06bafe67a235",
+    "filename": "Win_TRMM_GetLogs.ps1",
+    "submittedBy": "https://github.com/RemiOS0456",
+    "name": "TacticalRMM - Agent Rename",
+    "description": "Pulls last 50 lines, unless more are requested from TRMM agent and Mesh Agent",
+    "syntax": "[-Lines <Int>]",
+    "shell": "powershell",
+    "category": "TRMM (Win):TacticalRMM Related"
+  },
+  {
     "guid": "525ae965-1dcf-4c17-92b3-5da3cf6819f5",
     "filename": "Win_Bitlocker_Drive_Check_Status.ps1",
     "submittedBy": "https://github.com/silversword411",
