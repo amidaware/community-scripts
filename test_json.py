@@ -1,6 +1,7 @@
 import json
 import os
 
+
 def test_community_script_json_file():
     valid_shells = ["powershell", "python", "cmd"]
 
@@ -37,6 +38,7 @@ def test_community_script_json_file():
     # check guids are unique
     assert len(guids) == len(set(guids))
 
+
 def test_community_script_has_jsonfile_entry():
     with open(os.path.join("community_scripts.json")) as f:
         info = json.load(f)
@@ -50,9 +52,7 @@ def test_community_script_has_jsonfile_entry():
 
 
 def test_script_filenames_do_not_contain_spaces():
-    with open(
-        os.path.join("community_scripts.json")
-    ) as f:
+    with open(os.path.join("community_scripts.json")) as f:
         info = json.load(f)
         for script in info:
             assert " " not in script["filename"]
