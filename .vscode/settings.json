@@ -1,7 +1,10 @@
 {
     "python.defaultInterpreterPath": "env/bin/python",
     "python.languageServer": "Pylance",
-    "python.analysis.extraPaths": ["env"],
+    "python.analysis.extraPaths": [
+        "env"
+    ],
+    "python.testing.pytestEnabled": true,
     "python.analysis.diagnosticSeverityOverrides": {
         "reportUnusedImport": "error",
         "reportDuplicateImport": "error",

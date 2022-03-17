@@ -4,6 +4,7 @@ import os
 
 def test_community_script_json_file():
     valid_shells = ["powershell", "python", "cmd"]
+    valid_os = ["windows", "linux", "darwin"]
 
     with open("community_scripts.json") as f:
         info = json.load(f)
@@ -31,6 +32,12 @@ def test_community_script_json_file():
         # allows strings as long as they can be type casted to int
         if "default_timeout" in script.keys():
             assert isinstance(int(script["default_timeout"]), int)
+
+        # check supported platforms
+        if "supported_platforms" in script.keys():
+            assert isinstance(script["supported_platforms"], list)
+            for i in script["supported_platforms"]:
+                assert i in valid_os
 
         assert "guid" in script.keys()
         guids.append(script["guid"])
