@@ -1,8 +1,10 @@
 import json
 import os
 
+
 def test_community_script_json_file():
     valid_shells = ["powershell", "python", "cmd"]
+    valid_os = ["windows", "linux", "darwin"]
 
     with open("community_scripts.json") as f:
         info = json.load(f)
@@ -31,11 +33,18 @@ def test_community_script_json_file():
         if "default_timeout" in script.keys():
             assert isinstance(int(script["default_timeout"]), int)
 
+        # check supported platforms
+        if "supported_platforms" in script.keys():
+            assert isinstance(script["supported_platforms"], list)
+            for i in script["supported_platforms"]:
+                assert i in valid_os
+
         assert "guid" in script.keys()
         guids.append(script["guid"])
 
     # check guids are unique
     assert len(guids) == len(set(guids))
+
 
 def test_community_script_has_jsonfile_entry():
     with open(os.path.join("community_scripts.json")) as f:
@@ -50,9 +59,7 @@ def test_community_script_has_jsonfile_entry():
 
 
 def test_script_filenames_do_not_contain_spaces():
-    with open(
-        os.path.join("community_scripts.json")
-    ) as f:
+    with open(os.path.join("community_scripts.json")) as f:
         info = json.load(f)
         for script in info:
             assert " " not in script["filename"]

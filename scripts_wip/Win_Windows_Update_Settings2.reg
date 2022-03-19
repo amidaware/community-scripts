@@ -1,0 +1,25 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate]
+"SetComplianceDeadline"=dword:00000001
+"ConfigureDeadlineForQualityUpdates"=dword:00000007
+"ConfigureDeadlineGracePeriod"=dword:00000002
+"ConfigureDeadlineForFeatureUpdates"=dword:0000001e
+"ConfigureDeadlineGracePeriodForFeatureUpdates"=dword:00000002
+"DeferFeatureUpdates"=dword:00000001
+"BranchReadinessLevel"=dword:00000010
+"DeferFeatureUpdatesPeriodInDays"=dword:000000b4
+"PauseFeatureUpdatesStartTime"=""
+"ManagePreviewBuilds"=dword:00000001
+"ManagePreviewBuildsPolicyValue"=dword:00000000
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU]
+"AUOptions"=dword:00000004
+"NoAutoUpdate"=dword:00000000
+"AlwaysAutoRebootAtScheduledTime"=dword:00000001
+"NoAutoRebootWithLoggedOnUsers"=dword:00000001
+"ScheduledInstallDay"=dword:00000000
+"ScheduledInstallTime"=dword:00000003
+"AutomaticMaintenanceEnabled"=dword:00000001
+"ScheduledInstallEveryWeek"=dword:00000001
+"AllowMUUpdateService"=dword:00000001

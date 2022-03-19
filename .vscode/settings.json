@@ -1,0 +1,37 @@
+{
+    "python.defaultInterpreterPath": "env/bin/python",
+    "python.languageServer": "Pylance",
+    "python.analysis.extraPaths": [
+        "env"
+    ],
+    "python.testing.pytestEnabled": true,
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportUnusedImport": "error",
+        "reportDuplicateImport": "error",
+    },
+    "python.analysis.typeCheckingMode": "basic",
+    "python.formatting.provider": "black",
+    "editor.formatOnSave": true,
+    "files.watcherExclude": {
+        "files.watcherExclude": {
+            "**/.git/objects/**": true,
+            "**/.git/subtree-cache/**": true,
+            "**/node_modules/": true,
+            "/node_modules/**": true,
+            "**/env/": true,
+            "/env/**": true,
+            "**/__pycache__": true,
+            "/__pycache__/**": true,
+            "**/.cache": true,
+            "**/.eggs": true,
+            "**/.ipynb_checkpoints": true,
+            "**/.mypy_cache": true,
+            "**/.pytest_cache": true,
+            "**/*.egg-info": true,
+            "**/*.feather": true,
+            "**/*.parquet*": true,
+            "**/*.pyc": true,
+            "**/*.zip": true
+        },
+    }
+}
