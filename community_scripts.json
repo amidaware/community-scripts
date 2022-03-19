@@ -337,6 +337,17 @@
     "default_timeout": "3600"
   },
   {
+    "guid": "67bee6b8-7bbb-40d9-8b3f-8b144d9710e8",
+    "filename": "Win_Win11_Remove_Chat.bat",
+    "submittedBy": "https://github.com/silversword411",
+    "name": "Windows 11 - Remove Chat Icon from taskbar",
+    "description": "Checks to see if machine is Win11 capable",
+    "shell": "cmd",
+    "category": "TRMM (Win):Win11 Tweaks",
+    "supported_platforms": ["windows"],
+    "default_timeout": "30"
+  },
+  {
     "guid": "24a6fdbc-0909-46fe-813c-7f26933fe5fe",
     "filename": "Win_Windows_Update_Block_Win11.ps1",
     "submittedBy": "https://github.com/dinger1986/",
