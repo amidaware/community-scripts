@@ -7,6 +7,9 @@
     "description": "This script will clean up Mozilla Firefox for all users.",
     "shell": "powershell",
     "category": "TRMM (Win):Browsers",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "300"
   },
   {
@@ -17,6 +20,9 @@
     "description": "This script will stop the spooler, delete all pending print jobs and restart the spooler",
     "shell": "cmd",
     "category": "TRMM (Win):Printing",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "300"
   },
   {
@@ -27,6 +33,9 @@
     "description": "This script will get a list of all installed printers, their ports and if shared or not",
     "shell": "powershell",
     "category": "TRMM (Win):Printing",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "300"
   },
   {
@@ -37,6 +46,9 @@
     "description": "This script will clean up Google Chrome for all users.",
     "shell": "powershell",
     "category": "TRMM (Win):Browsers",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "300"
   },
   {
@@ -47,6 +59,9 @@
     "description": "Lists apps locally installed by chocolatey",
     "shell": "cmd",
     "category": "TRMM (Win):3rd Party Software>Chocolatey",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "90"
   },
   {
@@ -57,6 +72,9 @@
     "description": "Installs Adobe Reader DC.",
     "shell": "powershell",
     "category": "TRMM (Win):3rd Party Software>Chocolatey",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "300"
   },
   {
@@ -67,6 +85,9 @@
     "description": "This script installs Duplicati 2.0.6.100 as a service and creates status files to be used with commuity check",
     "shell": "cmd",
     "category": "TRMM (Win):3rd Party Software",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "300"
   },
   {
@@ -76,6 +97,9 @@
     "name": "Duplicati - Check Status",
     "description": "Checks Duplicati Backup is running properly over the last 24 hours",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):3rd Party Software>Monitoring"
   },
   {
@@ -86,6 +110,9 @@
     "description": "TRMM agent will set registry key to disable Windows Auto Updates. This will re-enable Windows standard update settings",
     "shell": "powershell",
     "category": "TRMM (Win):Updates",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "90"
   },
   {
@@ -96,6 +123,9 @@
     "description": "This script will reset all of the Windows Updates components to DEFAULT SETTINGS.",
     "shell": "powershell",
     "category": "TRMM (Win):Updates",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "300"
   },
   {
@@ -106,6 +136,9 @@
     "description": "Cleans the C: drive's Window Temporary files, Windows SoftwareDistribution folder, the local users Temperary folder, IIS logs (if applicable) and empties the recycling bin. All deleted files will go into a log transcript in $env:TEMP. By default this script leaves files that are newer than 7 days old however this variable can be edited.",
     "shell": "powershell",
     "category": "TRMM (Win):Maintenance",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "25000"
   },
   {
@@ -115,6 +148,9 @@
     "name": "Defender - Full Scan",
     "description": "Runs a Windows Defender Full background scan.",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Security>Antivirus"
   },
   {
@@ -124,6 +160,9 @@
     "name": "Defender - Quick Scan",
     "description": "Runs a Quick Scan using Windows Defender in the Background.",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Security>Antivirus"
   },
   {
@@ -134,6 +173,11 @@
     "description": "Runs a Speed Test using Python",
     "shell": "python",
     "category": "TRMM (Win):Network",
+    "supported_platforms": [
+      "windows",
+      "linux",
+      "darwin"
+    ],
     "default_timeout": "120"
   },
   {
@@ -144,6 +188,9 @@
     "description": "Updates the DisplayName registry entry for the Tactical RMM windows agent to your desired name. This script takes 1 required argument: the name you wish to set.",
     "syntax": "<string>",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):TacticalRMM Related"
   },
   {
@@ -154,6 +201,9 @@
     "description": "Pulls last 50 lines, unless more are requested from TRMM agent and Mesh Agent",
     "syntax": "[-Lines <Int>]",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):TacticalRMM Related"
   },
   {
@@ -164,6 +214,9 @@
     "description": "Runs a check on drive for Bitlocker status. Returns 0 if Bitlocker is not enabled, 1 if Bitlocker is enabled",
     "syntax": "[Drive <string>]",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Storage"
   },
   {
@@ -173,6 +226,9 @@
     "name": "Bitlocker - Create Status Report",
     "description": "Creates a Bitlocker status report.",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Storage"
   },
   {
@@ -182,6 +238,9 @@
     "name": "Bitlocker - Retrieve Status Report",
     "description": "Retreives a Bitlocker status report.",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Storage"
   },
   {
@@ -191,6 +250,9 @@
     "name": "Bitlocker - Get Recovery Keys",
     "description": "Retreives a Bitlocker Recovery Keys",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Storage"
   },
   {
@@ -200,6 +262,9 @@
     "name": "Storage Pools - Check Health",
     "description": "Checks all storage pools for health, returns error 1 if unhealthy",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Monitoring"
   },
   {
@@ -209,6 +274,9 @@
     "name": "BIOS - Check Information",
     "description": "Retreives and reports on BIOS make, version, and date.",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Hardware"
   },
   {
@@ -218,6 +286,9 @@
     "name": "Monitor - Get Info",
     "description": "Retreives and reports on Monitor info: Manufacturer, Model, Serial",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Hardware"
   },
   {
@@ -227,6 +298,9 @@
     "name": "RAM - Check Information",
     "description": "Retreives and reports on RAM info: DIMM's, total memory, slots total and used",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Hardware"
   },
   {
@@ -236,6 +310,9 @@
     "name": "Lenovo - Driver Updates",
     "description": "Searches the Lenovo support system for new drivers and installs them",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Hardware"
   },
   {
@@ -245,6 +322,9 @@
     "name": "Hardware - Get Serial Number",
     "description": "Returns BIOS Serial Number - Use with Custom Fields for later use",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Collectors"
   },
   {
@@ -257,6 +337,9 @@
       "{{client.ScreenConnectService}}"
     ],
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Collectors"
   },
   {
@@ -269,6 +352,9 @@
       "{{agent.SplashtopSUUID}}"
     ],
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Collectors"
   },
   {
@@ -278,6 +364,9 @@
     "name": "TeamViewer - Get ClientID for client",
     "description": "Returns Teamviewer ClientID for client - Use with Custom Fields for later use.",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Collectors"
   },
   {
@@ -287,6 +376,9 @@
     "name": "AnyDesk - Get AnyNetID for client",
     "description": "Returns AnyNetID for client - Use with Custom Fields for later use.",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Collectors"
   },
   {
@@ -296,6 +388,9 @@
     "name": "Securepoint - Get DeviceId for client",
     "description": "Returns Securepoint DeviceId for client - Use with Custom Fields for later use.",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Collectors"
   },
   {
@@ -305,6 +400,9 @@
     "name": "Power Profile - Reset High Perf Power Profile to defaults",
     "description": "Resets monitor, disk, standby, and hibernate timers in the default High Performance power profile to their default values. It also re-indexes the AC and DC power profiles into their default order.",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Power"
   },
   {
@@ -314,6 +412,9 @@
     "name": "Power Profile - Set High Performance",
     "description": "Sets the High Performance Power profile to the active power profile. Use this to keep machines from falling asleep.",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Power"
   },
   {
@@ -324,6 +425,9 @@
     "description": "Forces an upgrade to the latest release of Windows 10.",
     "shell": "powershell",
     "category": "TRMM (Win):Updates",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "25000"
   },
   {
@@ -334,6 +438,9 @@
     "description": "Checks to see if machine is Win11 capable",
     "shell": "powershell",
     "category": "TRMM (Win):Updates",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "3600"
   },
   {
@@ -344,7 +451,9 @@
     "description": "Checks to see if machine is Win11 capable",
     "shell": "cmd",
     "category": "TRMM (Win):Win11 Tweaks",
-    "supported_platforms": ["windows"],
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "30"
   },
   {
@@ -355,6 +464,9 @@
     "description": "Blocks Windows 11 Upgrade if machine is Win11 capable",
     "shell": "powershell",
     "category": "TRMM (Win):Updates",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "3600"
   },
   {
@@ -364,6 +476,9 @@
     "name": "Disk Drive Volume Health Check (using Event Viewer errors)",
     "description": "Checks Drive Volumes for errors reported in event viewer within the last 24 hours",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Hardware"
   },
   {
@@ -375,6 +490,9 @@
     "syntax": "[<int>]",
     "shell": "powershell",
     "category": "TRMM (Win):Monitoring",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "90"
   },
   {
@@ -386,6 +504,9 @@
     "syntax": "-list <string>\n[-u <uninstall string>]\n[-u quiet <uninstall string>]",
     "shell": "powershell",
     "category": "TRMM (Win):3rd Party Software",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "600"
   },
   {
@@ -401,6 +522,9 @@
     ],
     "default_timeout": "2500",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):3rd Party Software"
   },
   {
@@ -417,6 +541,9 @@
     ],
     "default_timeout": "3600",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):3rd Party Software"
   },
   {
@@ -427,6 +554,9 @@
     "description": "Cycles through each printer and restarts any jobs that are stuck with error status.",
     "shell": "powershell",
     "category": "TRMM (Win):Printing",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "90"
   },
   {
@@ -437,6 +567,9 @@
     "name": "Defender - Enable",
     "description": "Enables Windows Defender and sets preferences",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Security>Antivirus"
   },
   {
@@ -447,6 +580,9 @@
     "description": "Installs and enabled OpenSSH Server Feature in Win10",
     "shell": "powershell",
     "category": "TRMM (Win):Windows Features",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "300"
   },
   {
@@ -456,6 +592,9 @@
     "name": "RDP - Enable",
     "description": "Enables RDP",
     "shell": "cmd",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Windows Features"
   },
   {
@@ -466,6 +605,9 @@
     "description": "Enables the Windows .NET 3.5 Framework in Turn Features on and off",
     "shell": "powershell",
     "default_timeout": "300",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Windows Features"
   },
   {
@@ -475,6 +617,9 @@
     "name": "Speed Test - Powershell",
     "description": "Speed Test with Powershell(win 10 or server2016+)",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Network"
   },
   {
@@ -484,6 +629,9 @@
     "name": "ADDC - Sync DC Time",
     "description": "Syncs time with domain controller",
     "shell": "cmd",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Active Directory"
   },
   {
@@ -498,6 +646,9 @@
       "-HuduApiKey {{global.HuduApiKey}}"
     ],
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Active Directory"
   },
   {
@@ -507,6 +658,9 @@
     "name": "ADDC - Sync AD",
     "description": "Trigger AD Sync on domain controller",
     "shell": "cmd",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Active Directory"
   },
   {
@@ -516,6 +670,9 @@
     "name": "Defender - Clear Logs",
     "description": "Clears Windows Defender Logs",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Security>Antivirus"
   },
   {
@@ -526,6 +683,9 @@
     "description": "This will check for Malware and Antispyware within the last 24 hours and display, otherwise will report as Healthy. Command Parameter: (number) if provided will check that number of days back in the log.",
     "syntax": "[<int>]",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Security>Antivirus"
   },
   {
@@ -535,6 +695,9 @@
     "name": "Power - Fast Startup Disable",
     "description": "Disables Faststartup on Windows 10",
     "shell": "cmd",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Power"
   },
   {
@@ -544,6 +707,9 @@
     "name": "Power - Hibernate Disable",
     "description": "Disables Hibernation",
     "shell": "cmd",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Power"
   },
   {
@@ -553,6 +719,9 @@
     "name": "TRMM Defender Exclusions",
     "description": "Windows Defender Exclusions for Tactical RMM",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Security>Antivirus"
   },
   {
@@ -563,6 +732,9 @@
     "syntax": "<string>",
     "description": "Displays a popup message to the currently logged on user",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Other"
   },
   {
@@ -573,6 +745,9 @@
     "syntax": "[-antivirusName <string>]",
     "description": "Verify and display status for all installed Antiviruses",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Security>Antivirus"
   },
   {
@@ -582,6 +757,9 @@
     "name": "Template Example - Create User Logon Script",
     "description": "Creates a powershell script that runs at logon of any user on the machine in the security context of the user.",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Other"
   },
   {
@@ -593,6 +771,9 @@
     "syntax": "-$PackageName <string>\n[-Hosts <string>]\n[-mode {(install) | update | uninstall}]",
     "shell": "powershell",
     "category": "TRMM (Win):3rd Party Software>Chocolatey",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "600"
   },
   {
@@ -602,6 +783,9 @@
     "name": "ADDC - Check and Enable AD Recycle Bin",
     "description": "Only run on Domain Controllers, checks for Active Directory Recycle Bin and enables if not already enabled",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Active Directory"
   },
   {
@@ -611,6 +795,9 @@
     "name": "Local Administrators - Disables all local admins if joined to domain or AzureAD",
     "description": "Checks to see if computer is either joined to a AD domain or Azure AD. If it is, it disables all local admin accounts. If not joined to domain/AzureAD, leaves admin accounts in place",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):User Management"
   },
   {
@@ -621,6 +808,9 @@
     "description": "Event Viewer Monitor - Notify Bluescreen events on your system",
     "syntax": "[<int>]",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Monitoring"
   },
   {
@@ -631,6 +821,9 @@
     "description": "Event Viewer Monitor - Notify when new Local user is created. If parameter provided will search back that number of days",
     "syntax": "[<int>]",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Monitoring"
   },
   {
@@ -641,6 +834,9 @@
     "description": "Event Viewer Monitor - Notify when new Task Scheduler item is created",
     "syntax": "[<int>]",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Monitoring"
   },
   {
@@ -650,6 +846,9 @@
     "name": "User Check - See if user logged in with temp profile",
     "description": "Check if users are logged in with a temp profile",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Other"
   },
   {
@@ -661,6 +860,9 @@
     "syntax": "-NewName <string>\n[-Username <string>]\n[-Password <string>]\n[-Restart]",
     "shell": "powershell",
     "category": "TRMM (Win):Other",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": 30
   },
   {
@@ -671,6 +873,9 @@
     "description": "Restart PC. Add parameter: shutdown if you want to shutdown computer",
     "syntax": "[shutdown]",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Updates"
   },
   {
@@ -681,6 +886,9 @@
     "description": "Gets a list of all service with startup type of Automatic but aren't running and tries to start them",
     "shell": "powershell",
     "default_timeout": "300",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Updates"
   },
   {
@@ -698,6 +906,9 @@
     ],
     "default_timeout": "90",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):3rd Party Software"
   },
   {
@@ -708,6 +919,9 @@
     "description": "Disable Autorun System Wide",
     "shell": "cmd",
     "category": "TRMM (Win):Other",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "30"
   },
   {
@@ -718,6 +932,9 @@
     "description": "Disable Cortana System Wide",
     "shell": "cmd",
     "category": "TRMM (Win):Other",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "30"
   },
   {
@@ -728,6 +945,9 @@
     "description": "Wake on Lan enable on Dell, HP, Lenovo",
     "shell": "powershell",
     "category": "TRMM (Win):Network",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "90"
   },
   {
@@ -738,6 +958,9 @@
     "description": "Wake on Lan test status",
     "shell": "powershell",
     "category": "TRMM (Win):Network",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "90"
   },
   {
@@ -748,6 +971,9 @@
     "description": "Returns all saved wifi passwords stored on the computer",
     "shell": "powershell",
     "category": "TRMM (Win):Network",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "90"
   },
   {
@@ -758,6 +984,9 @@
     "description": "Disable IPv6 on all adapters",
     "shell": "powershell",
     "category": "TRMM (Win):Network",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "90"
   },
   {
@@ -767,6 +996,9 @@
     "name": "Network - Set Primary NIC to DHCP",
     "description": "Enable DHCP on primary adapter",
     "shell": "cmd",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Network",
     "default_timeout": "90"
   },
@@ -778,6 +1010,9 @@
     "description": "Trigger and release and renew of IP address on all network adapters",
     "shell": "cmd",
     "category": "TRMM (Win):Network",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "90"
   },
   {
@@ -788,6 +1023,9 @@
     "description": "Domain computers skipped. Sets all NICs to have primary DNS server of 1.1.1.2, backup of 1.0.0.2 (Cloudflare malware blocking)",
     "shell": "powershell",
     "category": "TRMM (Win):Network",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "90"
   },
   {
@@ -798,6 +1036,9 @@
     "description": "Resets TCP stack using netsh",
     "shell": "cmd",
     "category": "TRMM (Win):Network",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "120"
   },
   {
@@ -808,6 +1049,9 @@
     "description": "Insert new product key and Activate. Requires 1 parameter the product key you want to use",
     "shell": "powershell",
     "category": "TRMM (Win):Other",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "90"
   },
   {
@@ -818,6 +1062,9 @@
     "description": "Checks to see if windows is activated and returns status",
     "shell": "powershell",
     "category": "TRMM (Win):Other",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "120"
   },
   {
@@ -828,6 +1075,9 @@
     "description": "Delete its application shortcut that's installed in the start menu by default",
     "shell": "powershell",
     "category": "TRMM (Win):TacticalRMM Related",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "10"
   },
   {
@@ -837,6 +1087,9 @@
     "name": "Windows Firewall - Check Status",
     "description": "Windows Firewall - Check state, report status",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Network"
   },
   {
@@ -846,6 +1099,9 @@
     "name": "Windows UAC - Check Status",
     "description": "Windows UAC - Report status",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Security"
   },
   {
@@ -855,6 +1111,9 @@
     "name": "Windows Security - Security Audit",
     "description": "Runs an Audit on many components of windows to check for security issues",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Security"
   },
   {
@@ -864,6 +1123,9 @@
     "name": "Azure AD - Check Status",
     "description": "Azure AD - Check if joined or not",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Azure>AD"
   },
   {
@@ -873,6 +1135,9 @@
     "name": "Azure - Mars Cloud backup Status",
     "description": "Azure - Mars Cloud backup Check Status",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Azure>Backup"
   },
   {
@@ -882,6 +1147,9 @@
     "name": "File System - Enable Long Paths",
     "description": "Enables NTFS Long paths greater than 260 characters",
     "shell": "cmd",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Storage"
   },
   {
@@ -891,6 +1159,9 @@
     "name": "USB - Disable Access",
     "description": "USB - Disable Plugged in USB devices",
     "shell": "cmd",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Storage"
   },
   {
@@ -900,6 +1171,9 @@
     "name": "USB - Enable Access",
     "description": "USB - Enable Plugged in USB devices",
     "shell": "cmd",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Storage"
   },
   {
@@ -909,6 +1183,9 @@
     "name": "File System - Empty Recycle Bin",
     "description": "Empty the recycle bin",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Storage"
   },
   {
@@ -919,6 +1196,9 @@
     "description": "Create a local user. Parameters are: username, password and optional: description, fullname, group (adds to Users if not specified)",
     "syntax": "-username <string>\n-password <string>\n[-description <string>]\n[-fullname <string>]\n[-group <string>]",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):User Management"
   },
   {
@@ -929,6 +1209,9 @@
     "description": "Used to enable or disable local user",
     "syntax": "-Name <string>\n-Enabled { yes | no }",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):User Management"
   },
   {
@@ -938,6 +1221,9 @@
     "name": "Users - List Local Users and Enabled/Disabled Status",
     "description": "Get list of computer users and show which one is enabled",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):User Management"
   },
   {
@@ -947,6 +1233,9 @@
     "name": "Network Category - Set Network To Private",
     "description": "Sets current network type to Private",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Network"
   },
   {
@@ -956,6 +1245,9 @@
     "name": "Task Scheduler - Add a task",
     "description": "Add a task to Task Scheduler, needs editing",
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Other"
   },
   {
@@ -966,6 +1258,9 @@
     "description": "Uses RunAsUser to setup sent items for the currently logged on user on delegated folders to go into the delegated folders sent for all.",
     "shell": "powershell",
     "category": "TRMM (Win):Office",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "90"
   },
   {
@@ -977,6 +1272,9 @@
     "syntax": "-source <string>\n-destination <string>\n[-recursive {True | False}]",
     "shell": "powershell",
     "category": "TRMM (Win):Misc>Reference",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "1"
   },
   {
@@ -987,6 +1285,9 @@
     "description": "Reference Script: Will need manual tweaking, for running MSI from powershell",
     "shell": "powershell",
     "category": "TRMM (Win):Misc>Reference",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "1"
   },
   {
@@ -998,6 +1299,9 @@
     "description": "Join computer to a domain in Active Directory",
     "shell": "powershell",
     "category": "TRMM (Win):Active Directory",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "300"
   },
   {
@@ -1008,6 +1312,9 @@
     "description": "Testing Windows PATH environment variables for troubleshooting",
     "shell": "cmd",
     "category": "TRMM (Win):Testing",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "300"
   },
   {
@@ -1019,6 +1326,9 @@
     "description": "Generates a system report in HTML format, then emails it",
     "shell": "powershell",
     "category": "TRMM (Win):Other",
+    "supported_platforms": [
+      "windows"
+    ],
     "default_timeout": "300"
   },
   {
@@ -1034,6 +1344,9 @@
       "-ApiUrlHudu{{global.ApiUrlHudu}}"
     ],
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):3rd Party Software"
   },
   {
@@ -1048,6 +1361,9 @@
       "-Kb [Microsoft Kb #]"
     ],
     "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
     "category": "TRMM (Win):Updates"
   }
 ]
