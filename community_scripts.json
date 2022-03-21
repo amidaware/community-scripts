@@ -197,7 +197,7 @@
     "guid": "01845406-d83d-4ba5-960e-06bafe67a235",
     "filename": "Win_TRMM_GetLogs.ps1",
     "submittedBy": "https://github.com/RemiOS0456",
-    "name": "TacticalRMM - Agent Rename",
+    "name": "TacticalRMM - Get Agent Logs",
     "description": "Pulls last 50 lines, unless more are requested from TRMM agent and Mesh Agent",
     "syntax": "[-Lines <Int>]",
     "shell": "powershell",
