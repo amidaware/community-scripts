@@ -448,7 +448,7 @@
     "filename": "Win_Win11_Remove_Chat.bat",
     "submittedBy": "https://github.com/silversword411",
     "name": "Windows 11 - Remove Chat Icon from taskbar",
-    "description": "Checks to see if machine is Win11 capable",
+    "description": "Removes the chat taskbar icon in Win11",
     "shell": "cmd",
     "category": "TRMM (Win):Win11 Tweaks",
     "supported_platforms": [
