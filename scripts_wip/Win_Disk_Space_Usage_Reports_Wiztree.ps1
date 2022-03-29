@@ -77,30 +77,30 @@ th {
 "@
 
 # Set the filenames of WizTree csv's
-$FilesCSV = "Files_$(Get-Date –Format 'yyyyMMdd_hhmmss').csv"
-$FoldersCSV = "Folders_$(Get-Date –Format 'yyyyMMdd_hhmmss').csv"
+$FilesCSV = "Files_$(Get-Date -Format 'yyyyMMdd_hhmmss').csv"
+$FoldersCSV = "Folders_$(Get-Date -Format 'yyyyMMdd_hhmmss').csv"
 
 # Set the filenames of customised csv's
-$ExportedFilesCSV = "Exported_Files_$(Get-Date –Format 'yyyyMMdd_hhmmss').csv"
-$ExportedFoldersCSV = "Exported_Folders_$(Get-Date –Format 'yyyyMMdd_hhmmss').csv"
+$ExportedFilesCSV = "Exported_Files_$(Get-Date -Format 'yyyyMMdd_hhmmss').csv"
+$ExportedFoldersCSV = "Exported_Folders_$(Get-Date -Format 'yyyyMMdd_hhmmss').csv"
 
 # Set the filenames of html reports
-$ExportedFilesHTML = "Largest_Files_$(Get-Date –Format 'yyyyMMdd_hhmmss').html"
-$ExportedFoldersHTML = "Largest_Folders_$(Get-Date –Format 'yyyyMMdd_hhmmss').html"
-$SummaryHTMLReport = "Disk_Usage_Summary_$(Get-Date –Format 'yyyyMMdd_hhmmss').html"
+$ExportedFilesHTML = "Largest_Files_$(Get-Date -Format 'yyyyMMdd_hhmmss').html"
+$ExportedFoldersHTML = "Largest_Folders_$(Get-Date -Format 'yyyyMMdd_hhmmss').html"
+$SummaryHTMLReport = "Disk_Usage_Summary_$(Get-Date -Format 'yyyyMMdd_hhmmss').html"
 
 # Run the WizTree portable app
-Start-Process –FilePath "$RunLocation\WizTree64.exe" –ArgumentList """$Env:SystemDrive"" /export=""$TempLocation\$FilesCSV"" /admin 1 /sortby=2 /exportfolders=0" –Verb runas –Wait
-Start-Process –FilePath "$RunLocation\WizTree64.exe" –ArgumentList """$Env:SystemDrive"" /export=""$TempLocation\$FoldersCSV"" /admin 1 /sortby=2 /exportfiles=0" –Verb runas –Wait
+Start-Process -FilePath "$RunLocation\WizTree64.exe" -ArgumentList """$Env:SystemDrive"" /export=""$TempLocation\$FilesCSV"" /admin 1 /sortby=2 /exportfolders=0" -Verb runas -Wait
+Start-Process -FilePath "$RunLocation\WizTree64.exe" -ArgumentList """$Env:SystemDrive"" /export=""$TempLocation\$FoldersCSV"" /admin 1 /sortby=2 /exportfiles=0" -Verb runas -Wait
 
 
 
 #region Files
 
 # Remove the first 2 rows from the CSVs to leave just the relevant data
-$CSVContent = Get-Content –Path $TempLocation\$FilesCSV –ReadCount 0 
-$CSVContent = $CSVContent | Select –Skip 1
-$CSVContent = $CSVContent | Select –Skip 1
+$CSVContent = Get-Content -Path $TempLocation\$FilesCSV -ReadCount 0 
+$CSVContent = $CSVContent | Select -Skip 1
+$CSVContent = $CSVContent | Select -Skip 1
 
 # Create a table to store the results
 $Table = [System.Data.DataTable]::new("Directory Structure")
@@ -117,13 +117,13 @@ Foreach ($csvrow in $CSVContent) {
 }
 
 # Export the table to a new CSV
-$Table | Sort 'Size (Bytes)' –Descending | Export-CSV –Path $TempLocation\$ExportedFilesCSV –NoTypeInformation –UseCulture
+$Table | Sort 'Size (Bytes)' -Descending | Export-CSV -Path $TempLocation\$ExportedFilesCSV -NoTypeInformation -UseCulture
 
 # Export the largest 100 results into html format
 $Table |
-Sort 'Size (Bytes)' –Descending |
-Select –First 100 |
-ConvertTo-Html –Property 'Name', 'Size (Bytes)', 'Size (KB)', 'Size (MB)', 'Size (GB)' –Head $style –Body "<h2>100 largest files on $env:COMPUTERNAME</h2>" –CssUri "http://www.w3schools.com/lib/w3.css"  | 
+Sort 'Size (Bytes)' -Descending |
+Select -First 100 |
+ConvertTo-Html -Property 'Name', 'Size (Bytes)', 'Size (KB)', 'Size (MB)', 'Size (GB)' -Head $style -Body "<h2>100 largest files on $env:COMPUTERNAME</h2>" -CssUri "http://www.w3schools.com/lib/w3.css"  | 
 Out-String | Out-File $TempLocation\$ExportedFilesHTML
 
 #endregion
@@ -133,9 +133,9 @@ Out-String | Out-File $TempLocation\$ExportedFilesHTML
 #region Folders
 
 # Remove the first 2 rows from the CSVs to leave just the relevant data
-$CSVContent = Get-Content –Path $TempLocation\$FoldersCSV –ReadCount 0 
-$CSVContent = $CSVContent | Select –Skip 1
-$CSVContent = $CSVContent | Select –Skip 1
+$CSVContent = Get-Content -Path $TempLocation\$FoldersCSV -ReadCount 0 
+$CSVContent = $CSVContent | Select -Skip 1
+$CSVContent = $CSVContent | Select -Skip 1
 
 # Create a table to store the results
 $Table = [System.Data.DataTable]::new("Directory Structure")
@@ -154,13 +154,13 @@ Foreach ($csvrow in $CSVContent) {
 }
 
 # Export the table to a new CSV
-$Table | Sort 'Size (Bytes)' –Descending | Export-CSV –Path $TempLocation\$ExportedFoldersCSV –NoTypeInformation –UseCulture
+$Table | Sort 'Size (Bytes)' -Descending | Export-CSV -Path $TempLocation\$ExportedFoldersCSV -NoTypeInformation -UseCulture
 
 # Export the largest 100 results into html format
 $Table |
-Sort 'Size (Bytes)' –Descending |
-Select –First 100 |
-ConvertTo-Html –Property 'Name', 'Size (Bytes)', 'Size (KB)', 'Size (MB)', 'Size (GB)', 'Files', 'Folders' –Head $style –Body "<h2>100 largest directories on $env:COMPUTERNAME</h2>" –CssUri "http://www.w3schools.com/lib/w3.css"  | 
+Sort 'Size (Bytes)' -Descending |
+Select -First 100 |
+ConvertTo-Html -Property 'Name', 'Size (Bytes)', 'Size (KB)', 'Size (MB)', 'Size (GB)', 'Files', 'Folders' -Head $style -Body "<h2>100 largest directories on $env:COMPUTERNAME</h2>" -CssUri "http://www.w3schools.com/lib/w3.css"  | 
 Out-String | Out-File $TempLocation\$ExportedFoldersHTML
 
 #endregion
@@ -170,14 +170,14 @@ Out-String | Out-File $TempLocation\$ExportedFoldersHTML
 #region Create HTML disk usage summary report
 
 # Get system drive data
-$WMIDiskInfo = Get-CimInstance –ClassName Win32_Volume –Property Capacity, FreeSpace, DriveLetter | Where { $_.DriveLetter -eq $env:SystemDrive } | Select Capacity, FreeSpace, DriveLetter
+$WMIDiskInfo = Get-CimInstance -ClassName Win32_Volume -Property Capacity, FreeSpace, DriveLetter | Where { $_.DriveLetter -eq $env:SystemDrive } | Select Capacity, FreeSpace, DriveLetter
 $DiskInfo = [pscustomobject]@{
     DriveLetter      = $WMIDiskInfo.DriveLetter
     'Capacity (GB)'  = [math]::Round(($WMIDiskInfo.Capacity / 1GB), 2)
     'FreeSpace (GB)' = [math]::Round(($WMIDiskInfo.FreeSpace / 1GB), 2)
-    'UsedSpace (GB)' = [math]::Round((($WMIDiskInfo.Capacity / 1GB) – ($WMIDiskInfo.FreeSpace / 1GB)), 2)
+    'UsedSpace (GB)' = [math]::Round((($WMIDiskInfo.Capacity / 1GB) - ($WMIDiskInfo.FreeSpace / 1GB)), 2)
     'Percent Free'   = [math]::Round(($WMIDiskInfo.FreeSpace * 100 / $WMIDiskInfo.Capacity), 2)
-    'Percent Used'   = [math]::Round((($WMIDiskInfo.Capacity – $WMIDiskInfo.FreeSpace) * 100 / $WMIDiskInfo.Capacity), 2)
+    'Percent Used'   = [math]::Round((($WMIDiskInfo.Capacity - $WMIDiskInfo.FreeSpace) * 100 / $WMIDiskInfo.Capacity), 2)
 }
 
 # Create html header
@@ -194,7 +194,7 @@ $html = $html + @"
 <h2>Disk Space Usage for Drive $($DiskInfo.DriveLetter) on $env:COMPUTERNAME</h2>
 <table cellpadding="0" cellspacing="0" width="700">
 <tr>
-  <td style="background-color:$(Set-PercentageColour –Value $($DiskInfo.'Percent Used'));padding:10px;color:#ffffff;" width="$($DiskInfo.'Percent Used')%">
+  <td style="background-color:$(Set-PercentageColour -Value $($DiskInfo.'Percent Used'));padding:10px;color:#ffffff;" width="$($DiskInfo.'Percent Used')%">
     $($DiskInfo.'UsedSpace (GB)') GB ($($DiskInfo.'Percent Used') %)
   </td>
   <td style="background-color:#eeeeee;padding-top:10px;padding-bottom:10px;color:#333333;" width="$($DiskInfo.'Percent Used')%">
@@ -226,7 +226,7 @@ If ($DiskInfo.'FreeSpace (GB)' -lt 20) {
     <table cellpadding="0" cellspacing="0" width="700">  
     <tr>
         <td style="padding:5px;color:red;font-weight:bold" width="80%">
-        You need to free $(20 – $DiskInfo.'FreeSpace (GB)') GB on this disk to pass the W10 readiness check!
+        You need to free $(20 - $DiskInfo.'FreeSpace (GB)') GB on this disk to pass the W10 readiness check!
         </td>
     </tr>
     </table>
@@ -254,13 +254,13 @@ Out-File $TempLocation\$SummaryHTMLReport
 
 # Create a subfolder with computername if doesn't exist
 If (!(Test-Path $TargetRoot\$env:COMPUTERNAME)) {
-    $null = New-Item –Path $TargetRoot –Name $env:COMPUTERNAME –ItemType Directory
+    $null = New-Item -Path $TargetRoot -Name $env:COMPUTERNAME -ItemType Directory
 }
 
 # Create a subdirectory with current date-time
-$DateString = ((Get-Date).ToUniversalTime() | get-date –Format "yyyy-MM-dd_HH-mm-ss").ToString()
+$DateString = ((Get-Date).ToUniversalTime() | get-date -Format "yyyy-MM-dd_HH-mm-ss").ToString()
 If (!(Test-Path $TargetRoot\$env:COMPUTERNAME\$DateString)) {
-    $null = New-Item –Path $TargetRoot\$env:COMPUTERNAME –Name $DateString –ItemType Directory
+    $null = New-Item -Path $TargetRoot\$env:COMPUTERNAME -Name $DateString -ItemType Directory
 }
 
 # Set final target location
@@ -294,7 +294,7 @@ $Files = @(
 )
 
 Foreach ($file in $files) {
-    Remove-Item –Path $TempLocation\$file –Force
+    Remove-Item -Path $TempLocation\$file -Force
 }
 
 

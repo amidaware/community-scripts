@@ -6,4 +6,4 @@ Get-SmbSession | Select-Object -Property ClientComputerName,ClientUserName,Diale
 
 
 #Install SMB1
-Get-WindowsOptionalFeature –Online –FeatureName SMB1Protocol
+Get-WindowsOptionalFeature -Online -FeatureName SMB1Protocol
