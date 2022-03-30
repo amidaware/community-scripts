@@ -622,6 +622,30 @@
     ],
     "category": "TRMM (Win):Network"
   },
+    {
+    "guid": "5aabbecd-4f3b-47a4-9810-95d9992d2e3f",
+    "filename": "Win_Get_Devices_On_Network.ps1",
+    "submittedBy": "https://github.com/dinger1986",
+    "name": "Network IP Scan - Powershell",
+    "description": "Checks for all devices on a network using ping and arp",
+    "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
+    "category": "TRMM (Win):Network"
+  },
+      {
+    "guid": "caeeab69-71a4-4ef4-bf69-0641b6ff01df",
+    "filename": "Win_Test_Network_Speed.ps1",
+    "submittedBy": "https://github.com/dinger1986",
+    "name": "Test Network Speeds - Powershell",
+    "description": "This will download and run iperf to check network speeds, you need one machine on the network as a server and another as a client",
+    "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
+    "category": "TRMM (Win):Network"
+  },
   {
     "guid": "a821975c-60df-4d58-8990-6cf8a55b4ee0",
     "filename": "Win_Time_Sync.bat",
