@@ -1,7 +1,16 @@
 #!/bin/bash
-mv current_status_new current_status_old
-cat /var/spool/cron/crontabs/* > current_status_new
-diff <(cat current_status_old) <(cat current_status_new)
+
+new="/opt/cronmonitor/current_status_new"
+old="/opt/cronmonitor/current_status_old"
+
+if [[ ! -e $old ]]; then
+mkdir /opt/cronmonitor/
+cat /var/spool/cron/crontabs/* > $new
+fi
+
+mv $new $old
+cat /var/spool/cron/crontabs/* > $new
+diff <(cat $old) <(cat $new)
 if [[ $? == 0 ]] ; then 
     echo "no change in cron"
 else
