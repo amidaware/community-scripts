@@ -636,9 +636,9 @@
   },
       {
     "guid": "caeeab69-71a4-4ef4-bf69-0641b6ff01df",
-    "filename": "Win_Test_Network_Speed.ps1",
+    "filename": "Win_Network_Speed_Test.ps1",
     "submittedBy": "https://github.com/dinger1986",
-    "name": "Test Network Speeds - Powershell",
+    "name": "Test Network Speed",
     "description": "This will download and run iperf to check network speeds, you need one machine on the network as a server and another as a client",
     "syntax": "[-mode <string>]\n[-IP <string>]",
     "shell": "powershell",
