@@ -1,6 +1,6 @@
-Here's monitor for users on Linux:
-
 #!/bin/bash
+
+# Monitor for users on Linux:
 
 new="/opt/rmmscripts/users_new"
 old="/opt/rmmscripts/users_old"
