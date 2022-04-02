@@ -624,9 +624,9 @@
   },
     {
     "guid": "5aabbecd-4f3b-47a4-9810-95d9992d2e3f",
-    "filename": "Win_Get_Devices_On_Network.ps1",
+    "filename": "Win_Network_Scan.ps1",
     "submittedBy": "https://github.com/dinger1986",
-    "name": "Network IP Scan - Powershell",
+    "name": "Network IP Scan",
     "description": "Checks for all devices on a network using ping and arp",
     "shell": "powershell",
     "supported_platforms": [
