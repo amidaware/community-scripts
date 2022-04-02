@@ -567,6 +567,7 @@
     "name": "Defender - Enable",
     "description": "Enables Windows Defender and sets preferences",
     "shell": "powershell",
+    "syntax": "[-NoControlledFolders][-AuditOnly]",
     "supported_platforms": [
       "windows"
     ],
@@ -616,6 +617,31 @@
     "submittedBy": "https://github.com/dinger1986",
     "name": "Speed Test - Powershell",
     "description": "Speed Test with Powershell(win 10 or server2016+)",
+    "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
+    "category": "TRMM (Win):Network"
+  },
+    {
+    "guid": "5aabbecd-4f3b-47a4-9810-95d9992d2e3f",
+    "filename": "Win_Network_Scan.ps1",
+    "submittedBy": "https://github.com/dinger1986",
+    "name": "Network IP Scan",
+    "description": "Checks for all devices on a network using ping and arp",
+    "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
+    "category": "TRMM (Win):Network"
+  },
+      {
+    "guid": "caeeab69-71a4-4ef4-bf69-0641b6ff01df",
+    "filename": "Win_Network_Speed_Test.ps1",
+    "submittedBy": "https://github.com/dinger1986",
+    "name": "Test Network Speed",
+    "description": "This will download and run iperf to check network speeds, you need one machine on the network as a server and another as a client",
+    "syntax": "[-mode <string>]\n[-IP <string>]",
     "shell": "powershell",
     "supported_platforms": [
       "windows"
