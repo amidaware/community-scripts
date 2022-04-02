@@ -307,5 +307,3 @@ Write-OutPut "Onedrive is operating fine"
 Write-OutPut $ODStatus
 exit 0
 }
-
-Exit $LASTEXITCODE
