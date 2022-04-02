@@ -8,11 +8,11 @@ $FeatureName = "Windows-Defender-ApplicationGuard"
 # If Feature Installed already then skips otherwise installs.
 if((Get-WindowsOptionalFeature -FeatureName $FeatureName -Online).State -eq "Enabled") {
 
-        write-output "Installed"
+        write-output "Windows Defender Application Guard Installed"
 
     } else {
 
-        write-output "not Installed"
+        write-output "Windows Defender Application Guard Not Installed"
 
 Enable-WindowsOptionalFeature -online -FeatureName $FeatureName -NoRestart
 
