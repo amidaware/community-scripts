@@ -640,6 +640,7 @@
     "submittedBy": "https://github.com/dinger1986",
     "name": "Test Network Speeds - Powershell",
     "description": "This will download and run iperf to check network speeds, you need one machine on the network as a server and another as a client",
+    "syntax": "[-mode <string>]\n[-IP <string>]",
     "shell": "powershell",
     "supported_platforms": [
       "windows"
