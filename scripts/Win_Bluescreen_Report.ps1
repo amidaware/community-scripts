@@ -34,4 +34,3 @@ if (Get-WinEvent -FilterHashtable @{LogName = 'application'; ID = '1001'; Provid
     exit 0
 }
 
-Exit $LASTEXITCODE

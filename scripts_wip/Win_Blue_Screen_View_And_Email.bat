@@ -1,35 +1,58 @@
-## Update this script for your company, Modify the "mail variables" section
-## Also, host BlueScreenView.exe on a website and update the $url variable
-## location accordingly
-##
-## Blue Screen View is available as freeware at
-##  https://www.nirsoft.net/utils/blue_screen_view.html
+
+If (!(test-path "c:\temp")) {
+    New-Item -ItemType Directory -Force -Path "c:\temp"
+}
+
+If(!(test-path $env:programdata\RMMScripts\))
+{
+      New-Item -ItemType Directory -Force -Path $env:programdata\TRMMScripts\
+}
+
+If (!(test-path 'C:\Program Files\TacticalAgent\bluescreenview.exe')) {
+cd c:\temp
+Invoke-WebRequest https://www.nirsoft.net/utils/bluescreenview.zip -Outfile bluescreenview.zip
+expand-archive bluescreenview.zip
+cd C:\TEMP\bluescreenview\
+move .\bluescreenview.exe 'C:\Program Files\TacticalAgent\'
+
+start sleep -Seconds 5
+
+Remove-Item -LiteralPath "c:\temp\bluescreenview.zip" -Force -Recurse
+& 'C:\Program Files\TacticalAgent\bluescreenview.exe' /stext "$env:programdata\TRMMScripts\crashes.txt"
+get-content '$env:programdata\TRMMScripts\crashes.txt'
+}
+
+else {
+& 'C:\Program Files\TacticalAgent\bluescreenview.exe' /stext "$env:programdata\TRMMScripts\crashes.txt"
+get-content '$env:programdata\TRMMScripts\crashes.txt'
+}
 
 
-###script variables
- $scriptName = "Blue Screen View"
- $computerName = (get-wmiObject win32_computersystem).name
- $computerDomain = (get-wmiObject win32_computersystem).domain
- if($computerdomain -notlike '*.*'){ #if there's no period in the domain, (workgroup)
-	$computerDomain = "$computerDomain.local"	
- }
-
-###mail variables
- $smtpServer = 'mail.server.com'
- $smtpPort = '25'
- $smtpFrom = "Atera-$computername@$computerdomain"
- $smtpTo = 'support@YOURDOMAIN.com'
- $messageSubject = "Atera Script: $computerName, $scriptName"
- $attachment = "c:\windows\temp\crashes.html"
- $messageBody += "----See Attachment----"
-
-###script start
- $messageBody = "----Blue Screen View Results----`r`n"
- $url = "https://YOURDOMAIN.com/files/BlueScreenView.exe"
- $filename = "BlueScreenView.exe"
- $client = New-Object System.Net.WebClient
- $client.DownloadFile($url, "$env:temp\$filename")
- Start-Process -FilePath "$env:temp\$filename" -ArgumentList "/shtml","c:\Windows\temp\crashes.html","/sort 2","/sort ~1"""
-
-###send mail
- Send-MailMessage -Port $smtpPort -SmtpServer $smtpServer -From $smtpFrom -To $smtpTo -Subject $messageSubject -Body $messageBody -Attachments $attachment
+################
+try {
+    Invoke-WebRequest -Uri "https://www.nirsoft.net/utils/bluescreenview.zip" -OutFile "$($ENV:Temp)\bluescreeview.zip"
+    Expand-Archive "$($ENV:Temp)\bluescreeview.zip" -DestinationPath "$($ENV:Temp)" -Force
+    Start-Process -FilePath "$($ENV:Temp)\Bluescreenview.exe" -ArgumentList "/scomma `"$($ENV:Temp)\Export.csv`"" -Wait
+ 
+}
+catch {
+    Write-Host "BSODView Command has Failed: $($_.Exception.Message)"
+    exit 1
+}
+ 
+$BSODs = get-content "$($ENV:Temp)\Export.csv" | ConvertFrom-Csv -Delimiter ',' `
+ -Header Dumpfile, Timestamp, Reason, Errorcode, Parameter1, Parameter2, Parameter3, Parameter4, CausedByDriver | foreach-object { $_.Timestamp = [datetime]::Parse($_.timestamp, [System.Globalization.CultureInfo]::CurrentCulture); $_ }
+Remove-item "$($ENV:Temp)\Export.csv" -Force
+ 
+#$BSODFilter = $BSODs | where-object { $_.Timestamp -gt ((get-date).addhours(-24)) }
+$BSODFilter = $BSODs
+ 
+if (!$BSODFilter) {
+    #write-host "Healthy - No BSODs found in the last 24 hours"
+	write-host "Healthy - No BSODs found"
+}
+else {
+    write-host "Unhealthy - BSOD found. Check Diagnostics"
+    $BSODFilter
+    exit 1
+}
