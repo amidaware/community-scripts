@@ -567,6 +567,7 @@
     "name": "Defender - Enable",
     "description": "Enables Windows Defender and sets preferences",
     "shell": "powershell",
+    "syntax": "[-NoControlledFolders][-AuditOnly]",
     "supported_platforms": [
       "windows"
     ],
