@@ -6,7 +6,7 @@
       .EXAMPLE
       -Drive D:\
       .NOTE
-      TODO Needs parameters fro number of files
+      TODO Needs parameters for number of files
   #>
 
 param (
