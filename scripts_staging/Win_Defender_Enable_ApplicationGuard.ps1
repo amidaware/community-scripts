@@ -1,4 +1,4 @@
-# Should be part of the full Defender Enable script as a parameter
+# Should be part of the full Defender Enable script as a parameter, once fully tested.
 # Script to Install Windows Defender Application Guard.
 # Created by TechCentre with the help and assistance of the internet.
 # Restart Required to complete install.
