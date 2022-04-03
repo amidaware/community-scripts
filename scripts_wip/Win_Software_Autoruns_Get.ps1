@@ -6,18 +6,29 @@
 #
 # Running assumes acceptance of the Sysinternals and Virus Total licenses.
 ###
+If (!(test-path "c:\temp")) {
+    New-Item -ItemType Directory -Force -Path "c:\temp"
+}
 
-$AutorunsUrl = "https://download.sysinternals.com/files/Autoruns.zip"
-$AutorunsOut = Join-Path $env:TEMP "Autoruns.zip"
-$Autoruns = Join-Path $env:TEMP "Autoruns"
-$OutputFile = Join-Path $Autoruns "autoruns.csv"
+If(!(test-path $env:programdata\RMMScripts\))
+{
+      New-Item -ItemType Directory -Force -Path $env:programdata\TRMMScripts\
+}
+If (!(test-path 'C:\Program Files\TacticalAgent\Autorunsc.exe')) {
+cd c:\temp
+Invoke-WebRequest https://download.sysinternals.com/files/Autoruns.zip -Outfile Autoruns.zip
+expand-archive Autoruns.zip
+cd C:\TEMP\Autoruns\
+move .\Autorunsc.exe 'C:\Program Files\TacticalAgent\'
 
-Invoke-WebRequest -Uri $AutorunsUrl -OutFile $AutorunsOut
+start sleep -Seconds 5
 
-Expand-Archive -Path $AutorunsOut -DestinationPath $Autoruns
+Remove-Item -LiteralPath "c:\temp\bluescreenview.zip" -Force -Recurse
+Start-Process -Wait -FilePath C:\Program Files\TacticalAgent\autorunsc.exe -NoNewWindow -PassThru -ArgumentList @("-v", "-vt", "-c", "-o $env:programdata\TRMMScripts\autoruns.txt")
+get-content $env:programdata\TRMMScripts\autoruns.txt
+}
 
-Start-Process -Wait -FilePath $Autoruns/autorunsc.exe -NoNewWindow -PassThru -ArgumentList @("-v", "-vt", "-c", "-o $OutputFile")
-
-Import-Csv -Path $OutputFile
-
-Write-Host "Complete Autoruns output stored at $OutputFile"
+else {
+Start-Process -Wait -FilePath C:\Program Files\TacticalAgent\autorunsc.exe -NoNewWindow -PassThru -ArgumentList @("-v", "-vt", "-c", "-o $env:programdata\TRMMScripts\autoruns.txt")
+get-content $env:programdata\TRMMScripts\autoruns.txt
+}
