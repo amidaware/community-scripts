@@ -1,6 +1,6 @@
-# Checks Disk space usage on Linux
-
 #!/bin/bash
+
+# Checks Disk space usage on Linux
 
 output=$(df -h | grep -vE '^Filesystem|tmpfs|cdrom|udev' | awk '{ print $5 " " $1 }')
 
