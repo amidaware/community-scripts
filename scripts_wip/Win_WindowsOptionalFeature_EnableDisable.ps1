@@ -1,7 +1,15 @@
-# Script to Install Windows Defender Application Guard.
-# Created by TechCentre with the help and assistance of the internet.
-# Restart Required to complete install.
-# TODO Needs parameterization for enable/disable
+<#
+      .SYNOPSIS
+      Script to Install Widnows Optional Features. 
+      .PARAMETER Mode
+      The Enable is assumed, to disable feature use -mode disable
+      .PARAMETER FeatureName
+      Set Feature to install by using -FeatureName NameofFeature
+      .EXAMPLE
+      -FeatureName NameofFeature -mode disable
+      .EXAMPLE
+      -FeatureName NameofFeature
+  #>
 
 param (
     [string] $FeatureName,
