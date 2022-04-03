@@ -5,4 +5,4 @@ If(!(test-path $env:programdata\RMMScripts\))
 
 powercfg /batteryreport /output "$env:programdata\TRMMScripts\battery-report.txt"
 
-get-content '$env:programdata\TRMMScripts\battery-report.txt'
+get-content "$env:programdata\TRMMScripts\battery-report.txt"
