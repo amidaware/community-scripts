@@ -1,3 +1,7 @@
+#This Script will clear all chrome history, cookies and cache for the currently logged in user.
+#
+#
+
 ECHO --------------------------------------
 ECHO **** Clearing Chrome cache
 $liu = ((Get-CimInstance -ClassName Win32_ComputerSystem | Select-Object UserName).Username).Split("\")[1]
