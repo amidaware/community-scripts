@@ -5,6 +5,8 @@
       The assumed drive letter is C:\ to scan another drive use -Drive D:\
       .EXAMPLE
       -Drive D:\
+      .NOTE
+      TODO Needs parameters fro number of files
   #>
 
 param (
