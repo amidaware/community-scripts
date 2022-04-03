@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Monitors Cron for any changes
+
 new="/opt/cronmonitor/current_status_new"
 old="/opt/cronmonitor/current_status_old"
 
