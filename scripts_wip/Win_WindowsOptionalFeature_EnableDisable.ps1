@@ -1,6 +1,6 @@
 <#
       .SYNOPSIS
-      Script to Install Widnows Optional Features. 
+      Script to Install Windows Optional Features. 
       .PARAMETER Mode
       The Enable is assumed, to disable feature use -mode disable
       .PARAMETER FeatureName
