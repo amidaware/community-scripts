@@ -20,6 +20,5 @@ $Partitions | ForEach-Object {
     Health = $Disk.HealthStatus
     SystemDrive = $env:SystemDrive[0] -eq $_.DriveLetter ? $true : $false
   }
-}
 
 $Output | Format-Table
