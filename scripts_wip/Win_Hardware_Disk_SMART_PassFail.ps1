@@ -1,3 +1,5 @@
+# Checks Hardware for Smart Errors
+
 $ErrorActionPreference= 'silentlycontinue'
 $smartst = (Get-WmiObject -namespace root\wmi -class MSStorageDriver_FailurePredictStatus).PredictFailure
 
