@@ -1,3 +1,5 @@
+# Creates a full report of battery installed in client machine.
+
 If(!(test-path $env:programdata\RMMScripts\))
 {
       New-Item -ItemType Directory -Force -Path $env:programdata\TRMMScripts\
