@@ -1,3 +1,5 @@
+# Script will disable saving or offering to save to Onedrive when saving in office.
+
 if (Get-PackageProvider -Name NuGet) {
     Write-Output "NuGet Already Added"
 } 
