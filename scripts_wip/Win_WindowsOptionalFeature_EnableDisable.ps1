@@ -3,8 +3,10 @@
 # Restart Required to complete install.
 # TODO Needs parameterization for enable/disable
 
-# Sets Variable for feature to be installed.
-$FeatureName = "Windows-Defender-ApplicationGuard"  
+param (
+    [string] $FeatureName,
+    [string] $Mode
+)
 
 # If Feature Installed already then skips otherwise installs.
 if ((Get-WindowsOptionalFeature -FeatureName $FeatureName -Online).State -eq "Enabled") {
@@ -19,4 +21,12 @@ else {
     Enable-WindowsOptionalFeature -online -FeatureName $FeatureName -NoRestart
 
 }
-    
+if ($Mode -eq "disable") {
+    Write-Output "Disabling $FeatureName"
+    Disable-WindowsOptionalFeature -online -FeatureName $FeatureName -NoRestart
+}
+
+else {
+    Write-Output "Enabling $FeatureName"
+    Enable-WindowsOptionalFeature -online -FeatureName $FeatureName -NoRestart
+}
