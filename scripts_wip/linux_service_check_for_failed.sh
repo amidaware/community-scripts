@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#
 # Returns 1 if there are failed services, and listed failed services
 
 HAS_SYSTEMD=$(ps --no-headers -o comm 1)
