@@ -28,7 +28,7 @@ get-content '$env:programdata\TRMMScripts\crashes.txt'
 }
 
 
-################
+#################
 try {
     Invoke-WebRequest -Uri "https://www.nirsoft.net/utils/bluescreenview.zip" -OutFile "$($ENV:Temp)\bluescreeview.zip"
     Expand-Archive "$($ENV:Temp)\bluescreeview.zip" -DestinationPath "$($ENV:Temp)" -Force
