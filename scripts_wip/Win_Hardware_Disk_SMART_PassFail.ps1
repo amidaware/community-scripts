@@ -13,6 +13,3 @@ else
 Write-Output "There are SMART Failures detected"
 exit 1
 }
-
-
-Exit $LASTEXITCODE
