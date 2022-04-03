@@ -1,4 +1,4 @@
-## Getting Chrome version (would work for any software)
+## Gets Chrome version installed on Client (would work for any software)
 
 $ResultWow6432 = (Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Where-Object { $_ -match "Chrome" } | Select-Object -ExpandProperty DisplayVersion)
 $Result = (Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Where-Object { $_ -match "Chrome" } | Select-Object -ExpandProperty DisplayVersion)
