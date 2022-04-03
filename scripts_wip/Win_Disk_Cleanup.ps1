@@ -1,4 +1,4 @@
-# Create reg keys
+## Create reg keys
 $volumeCaches = Get-ChildItem "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches"
 foreach($key in $volumeCaches)
 {
