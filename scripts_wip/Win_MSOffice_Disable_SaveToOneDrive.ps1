@@ -28,10 +28,10 @@ If (!(test-path "$env:programdata\Tactical RMM\temp\curpsxpolicy.txt")) {
 Set-ItemProperty -Path HKLM:\SOFTWARE\Microsoft\PowerShell\1\ShellIds\Microsoft.PowerShell -Name ExecutionPolicy -Value Unrestricted
 
 
-REG ADD "HKEY_CURRENT_USER\SOFTWARE\Microsoft\Office\$Version\Common\General" /f /v PreferCloudSaveLocations /t REG_DWORD /d 0
-REG ADD "HKEY_CURRENT_USER\SOFTWARE\Microsoft\Office\$Version\Common\Internet" /f /v OnlineStorage /t REG_DWORD /d 3
-
 Invoke-AsCurrentUser -scriptblock {
+    $ofc = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
+    $OfficeInstall = Get-ChildItem -Path $ofc -Recurse | Where-Object {
+    $_.GetValue('DisplayName') -like "Microsoft Office*" -or $_.GetValue('DisplayName') -like "Microsoft 365 Apps*"}
     $Version = $OfficeInstall.GetValue('DisplayVersion')[0..3] -join ""
     New-ItemProperty -Path HKCU:\SOFTWARE\Microsoft\Office\$Version\Common\General -Name PreferCloudSaveLocations -Value 0  -PropertyType DWORD
     New-ItemProperty -Path HKCU:\SOFTWARE\Microsoft\Office\$Version\Common\Internet -Name OnlineStorage -Value 3  -PropertyType DWORD
