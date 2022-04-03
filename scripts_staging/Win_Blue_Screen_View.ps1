@@ -1,3 +1,4 @@
+# TODO needs standard comment headers
 
 If (!(test-path "c:\temp")) {
     New-Item -ItemType Directory -Force -Path "c:\temp"
