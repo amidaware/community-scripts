@@ -15,13 +15,13 @@ If(!(test-path $env:programdata\RMMScripts\))
       New-Item -ItemType Directory -Force -Path $env:programdata\TRMMScripts\
 }
 If (!(test-path 'C:\Program Files\TacticalAgent\Autorunsc.exe')) {
-cd c:\temp
+Set-Location c:\temp
 Invoke-WebRequest https://download.sysinternals.com/files/Autoruns.zip -Outfile Autoruns.zip
 expand-archive Autoruns.zip
-cd C:\TEMP\Autoruns\
-move .\Autorunsc.exe 'C:\Program Files\TacticalAgent\'
+Set-Location C:\TEMP\Autoruns\
+Move-Item .\Autorunsc.exe 'C:\Program Files\TacticalAgent\'
 
-start sleep -Seconds 5
+Start-Process sleep -Seconds 5
 
 Remove-Item -LiteralPath "c:\temp\bluescreenview.zip" -Force -Recurse
 Start-Process -Wait -FilePath C:\Program Files\TacticalAgent\autorunsc.exe -NoNewWindow -PassThru -ArgumentList @("-v", "-vt", "-c", "-o $env:programdata\TRMMScripts\autoruns.txt")
