@@ -22,8 +22,8 @@ Set-Location C:\TEMP\Autoruns\
 Move-Item .\Autorunsc.exe 'C:\Program Files\TacticalAgent\'
 
 Start-sleep -Seconds 5
-
-Remove-Item -LiteralPath "c:\temp\bluescreenview.zip" -Force -Recurse
+REG ADD HKCU\Software\Sysinternals /v EulaAccepted /t REG_DWORD /d 1 /f
+Remove-Item -LiteralPath "c:\temp\autoruns.zip" -Force -Recurse
 Start-Process -Wait -FilePath 'C:\Program Files\TacticalAgent\autorunsc.exe' -NoNewWindow -PassThru -ArgumentList @("-v", "-vt", "-c", "-o $env:programdata\TRMMScripts\autoruns.txt")
 get-content $env:programdata\TRMMScripts\autoruns.txt
 }
