@@ -2,8 +2,8 @@
 #
 #
 
-ECHO --------------------------------------
-ECHO **** Clearing Chrome cache
+Write-Output --------------------------------------
+Write-Output **** Clearing Chrome cache
 $liu = ((Get-CimInstance -ClassName Win32_ComputerSystem | Select-Object UserName).Username).Split("\")[1]
 taskkill /F /IM "chrome.exe"
 
@@ -18,4 +18,4 @@ $ChromeCache = %ChromeDataDir%\Cache
 Get-ChildItem $ChromeCache -Recurse | Remove-Item -Force  
 Get-ChildItem $ChromeDataDir\*Cookies -Recurse | Remove-Item -Force   
 Get-ChildItem $ChromeDataDir\*History -Recurse | Remove-Item -Force   
-ECHO **** Clearing Chrome cache DONE
+Write-Output **** Clearing Chrome cache DONE

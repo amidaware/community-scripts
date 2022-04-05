@@ -17,13 +17,14 @@ If (!(test-path 'C:\Program Files\TacticalAgent\bluescreenview.exe')) {
 
     Start-sleep -Seconds 5
 
+
     Remove-Item -LiteralPath "c:\temp\bluescreenview.zip" -Force -Recurse
     & 'C:\Program Files\TacticalAgent\bluescreenview.exe' /stext "$env:programdata\TRMMScripts\crashes.txt"
-    get-content '$env:programdata\TRMMScripts\crashes.txt'
+    get-content "$env:programdata\TRMMScripts\crashes.txt"
 }
 
 else {
     & 'C:\Program Files\TacticalAgent\bluescreenview.exe' /stext "$env:programdata\TRMMScripts\crashes.txt"
-    get-content '$env:programdata\TRMMScripts\crashes.txt'
+    get-content "$env:programdata\TRMMScripts\crashes.txt"
 }
 
