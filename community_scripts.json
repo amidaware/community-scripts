@@ -623,7 +623,7 @@
     ],
     "category": "TRMM (Win):Network"
   },
-    {
+  {
     "guid": "5aabbecd-4f3b-47a4-9810-95d9992d2e3f",
     "filename": "Win_Network_Scan.ps1",
     "submittedBy": "https://github.com/dinger1986",
@@ -635,7 +635,7 @@
     ],
     "category": "TRMM (Win):Network"
   },
-      {
+  {
     "guid": "caeeab69-71a4-4ef4-bf69-0641b6ff01df",
     "filename": "Win_Network_Speed_Test.ps1",
     "submittedBy": "https://github.com/dinger1986",
@@ -831,7 +831,7 @@
     "filename": "Win_Bluescreen_Report.ps1",
     "submittedBy": "https://github.com/bbrendon",
     "name": "Event Viewer - Bluescreen Notification",
-    "description": "Event Viewer Monitor - Notify Bluescreen events on your system",
+    "description": "Event Viewer Monitor - Notify on BSOD events on your system",
     "syntax": "[<int>]",
     "shell": "powershell",
     "supported_platforms": [
