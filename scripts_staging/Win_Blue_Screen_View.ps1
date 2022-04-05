@@ -15,7 +15,7 @@ If (!(test-path 'C:\Program Files\TacticalAgent\bluescreenview.exe')) {
     Set-Location C:\TEMP\bluescreenview\
     Move-Item .\bluescreenview.exe 'C:\Program Files\TacticalAgent\'
 
-    Start-Process sleep -Seconds 5
+    Start-sleep -Seconds 5
 
     Remove-Item -LiteralPath "c:\temp\bluescreenview.zip" -Force -Recurse
     & 'C:\Program Files\TacticalAgent\bluescreenview.exe' /stext "$env:programdata\TRMMScripts\crashes.txt"
