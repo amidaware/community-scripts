@@ -20,19 +20,19 @@ If (!(test-path "c:\temp")) {
     New-Item -ItemType Directory -Force -Path "c:\temp"
 }
 
-cd c:\temp
+Set-Location c:\temp
 
 If (!(test-path "C:\Program Files\TacticalAgent\iperf3.exe")) {
 Invoke-WebRequest https://iperf.fr/download/windows/iperf-3.1.3-win64.zip -Outfile iperf3.zip
 
 expand-archive iperf3.zip
 
-cd C:\TEMP\iperf3\iperf-3.1.3-win64
+Set-Location C:\TEMP\iperf3\iperf-3.1.3-win64
 
-move .\cygwin1.dll 'C:\Program Files\TacticalAgent\'
-move .\iperf3.exe 'C:\Program Files\TacticalAgent\'
+Move-Item .\cygwin1.dll 'C:\Program Files\TacticalAgent\'
+Move-Item .\iperf3.exe 'C:\Program Files\TacticalAgent\'
 
-start sleep -Seconds 5
+Start-Process sleep -Seconds 5
 
 Remove-Item -LiteralPath "c:\temp\iperf3.zip" -Force -Recurse
 }

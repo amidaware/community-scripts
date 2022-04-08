@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# Checks for 3cx backups in the past 24 hours on Linux
+
 # Use for production
 #last_run=$(grep 'ManagementConsoleJS.Services.BackupService.*created' /var/lib/3cxpbx/Instance1/Data/Logs/3cxManagementConsole.log |
 #   tail -n 1 |

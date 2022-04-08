@@ -1,4 +1,6 @@
-# Create reg keys
+# Runs disk cleanup for all volumes using default options
+
+## Create reg keys
 $volumeCaches = Get-ChildItem "HKLM:\Software\Microsoft\Windows\CurrentVersion\Explorer\VolumeCaches"
 foreach($key in $volumeCaches)
 {

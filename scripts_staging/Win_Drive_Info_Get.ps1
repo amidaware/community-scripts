@@ -1,7 +1,7 @@
 ###
 # Author: Dave Long <dlong@cagedata.com>
 # Gets a list of all mount points and what type of drive the
-# mount point is stored on
+# mount point is stored on  
 ###
 
 # Get all of the physical disks attached to system
@@ -20,6 +20,5 @@ $Partitions | ForEach-Object {
     Health = $Disk.HealthStatus
     SystemDrive = $env:SystemDrive[0] -eq $_.DriveLetter ? $true : $false
   }
-}
 
 $Output | Format-Table
