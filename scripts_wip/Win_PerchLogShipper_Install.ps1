@@ -46,7 +46,7 @@ function Win_PerchLogShipper_Install {
             $source = "https://cdn.perchsecurity.com/downloads/perch-log-shipper-latest.exe"
             $destination = "C:\packages$random\perch-log-shipper-latest.exe"
             Invoke-WebRequest -Uri $source -OutFile $destination
-            $arguments = @("/qn", "OUTPUT='TOKEN'", "VALUE='$Token'")
+            $arguments = @("/qn", "OUTPUT=TOKEN", "VALUE=$Token")
             $process = Start-Process -NoNewWindow -FilePath $destination -ArgumentList $arguments -PassThru
             $timedOut = $null
             $process | Wait-Process -Timeout 300 -ErrorAction SilentlyContinue -ErrorVariable timedOut
