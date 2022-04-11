@@ -2,6 +2,8 @@
 Requires client or site variable for nextdns as "NextDNS" and action as either install, uninstall, start, stop, restart or upgrade (install is the default)
 NextDNS is the ID of the NextDNS Configuration obtained from https://my.nextdns.io/
 This script will also install the NextDNS root certificate by default, to allow for a pretty block page
+Syntax:
+-nextdns {{site.NextDNS}} -action {(install) | uninstall | start | stop | restart | upgrade}
 #>
 param (
    [string] $nextdns,
@@ -41,7 +43,7 @@ if ($action -eq "uninstall") {
     Start-Process -FilePath "c:\Program Files\NextDNS\nextdns.exe" -ArgumentList "upgrade" -Wait
     Write-Output "NextDNS Upgraded"
     exit 0
-} elseif ($action -eq "install") {
+} else {
 try {
     # If 32-bit
     if ([System.IntPtr]::Size -eq 4) {
@@ -50,7 +52,7 @@ try {
     Start-Process -FilePath "c:\Program Files\NextDNS\nextdns.exe" -ArgumentList "install -config $nextdns -report-client-info -auto-activate" -Wait
     Write-Output "Installed NextDNS"
     Invoke-WebRequest -Uri "$cert" -OutFile "$($ENV:Temp)\NextDNS.cer"
-    Import-Certificate -FilePath "$($ENV:Temp)\NextDNS.cer" -CertStoreLocation "Cert:\LocalMachine\Root" -Verbose -WhatIf
+    Import-Certificate -FilePath "$($ENV:Temp)\NextDNS.cer" -CertStoreLocation "Cert:\LocalMachine\Root" -Verbose
     Remove-Item -recurse "$($ENV:Temp)\NextDNS.cer"
     Remove-Item -recurse "$($ENV:Temp)\nextdns.zip"
     Write-Output "Installed Certificate"
@@ -61,7 +63,7 @@ try {
     Start-Process -FilePath "c:\Program Files\NextDNS\nextdns.exe" -ArgumentList "install -config $nextdns -report-client-info -auto-activate" -Wait    
     Write-Output "Installed NextDNS"
     Invoke-WebRequest -Uri "$cert" -OutFile "$($ENV:Temp)\NextDNS.cer"
-    Import-Certificate -FilePath "$($ENV:Temp)\NextDNS.cer" -CertStoreLocation "Cert:\LocalMachine\Root" -Verbose -WhatIf
+    Import-Certificate -FilePath "$($ENV:Temp)\NextDNS.cer" -CertStoreLocation "Cert:\LocalMachine\Root" -Verbose
     Remove-Item -recurse "$($ENV:Temp)\NextDNS.cer"
     Remove-Item -recurse "$($ENV:Temp)\nextdns.zip"
     Write-Output "Installed Certificate"
