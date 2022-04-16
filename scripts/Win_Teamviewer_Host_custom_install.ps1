@@ -30,5 +30,44 @@ param (
    [string] $apitw
 )
 
-(New-Object Net.WebClient).Downloadfile("$urlmsitw", "$env:Temp\TeamViewer_Host.msi")
-msiexec.exe /i "$env:Temp\TeamViewer_Host.msi" /qn CUSTOMCONFIGID=$customidtw APITOKEN=$apitw ASSIGNMENTOPTIONS="--grant-easy-access"
+if ([string]::IsNullOrEmpty($urlmsitw)) {
+    throw "URL must be defined. Use -urlmsitw <value> to pass it."
+}
+if ([string]::IsNullOrEmpty($customidtw)) {
+    throw "Custom ID must be defined. Use -customidtw <value> to pass it."
+}
+if ([string]::IsNullOrEmpty($apitw)) {
+    throw "API must be defined. Use -apitw <value> to pass it."
+}
+Write-Host "Running TeamViewer Host customized with API on: $env:COMPUTERNAME"
+
+    Write-Host "Checking if TeamViewer Host is installed.  Please wait..."
+    $installedSoftware = Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Where-Object {$_.DisplayName -like "*teamviewer*"}
+if ($installedSoftware){
+if (Select-String -InputObject $installedSoftware.DisplayName -Pattern "Host"){
+Write-Host "Host Client Version is installed. Converting Host."
+Set-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\TeamViewer" -Name "InstallationConfigurationId" -Type String -Value $customidtw
+Write-Host "Closing TeamViewer Host."
+Taskkill /IM teamviewer.exe /F
+Write-Host "Opening and setting TeamViewer Host."
+$dirtw = ${env:ProgramFiles(x86)} + '\TeamViewer\TeamViewer.exe'
+Start-Process $dirtw -ArgumentList "assign --api-token $apitw --reassign --alias $ENV:COMPUTERNAME --grant-easy-access"
+Write-Host "Installation of TeamViewer Host completed."
+}
+else{
+Write-Host "Full Client Version is installed. Skipping installation."
+}
+Write-host "installed version is" $installedSoftware.VersionMajor
+}
+else {
+    Write-Host "TeamVIewer Host is NOT installed. Installing now..."
+    Write-Host "Downloading TeamViewer Host from " + $urlmsitw + " Please wait..." 
+    $tmpDir = [System.IO.Path]::GetTempPath()
+    $outpath = $tmpDir + "TeamViewer_Host.msi"
+    Write-Host "Saving file to " + $outpath
+    $ProgressPreference = 'SilentlyContinue'
+    Invoke-WebRequest -Uri $urlmsitw -OutFile $outpath
+    Write-Host "Running TeamViewer Host Setup... Please wait up to 10 minutes for install to complete." 
+    msiexec.exe /i $outpath /qn CUSTOMCONFIGID=$customidtw APITOKEN=$apitw ASSIGNMENTOPTIONS="--grant-easy-access"
+	Write-Host "Installation of TeamViewer Host completed."
+}
