@@ -1407,5 +1407,5 @@
     "supported_platforms": ["windows"],
     "shell": "powershell",
     "category": "TRMM (Win):3rd Party Software"
-  },
+  }
 ]
