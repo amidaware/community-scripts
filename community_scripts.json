@@ -1392,4 +1392,20 @@
     ],
     "category": "TRMM (Win):Updates"
   }
+  {
+    "guid": "ace9aecf-a466-4589-865c-54817436f194",
+    "filename": "Win_Teamviewer_Host_custom_install.ps1",
+    "submittedBy": "https://github.com/clanto007/",
+    "name": "TeamViewer Host with Custom ID and API",
+    "description": "Installs TeamViewer Host with Custom ID and API. The script requires API credentials, Custom ID, TeamViewer Corporate, Custom Fields, and Arguments passed to script.  See script comments for details",
+    "args": [
+      "-urlmsitw {{client.LinkMSITW}}",
+      "-customidtw {{client.CUSTOMIDTW}}",
+      "-apitw {{client.TeamViewerAPI}}"
+    ],
+    "default_timeout": "600",
+    "supported_platforms": ["windows"],
+    "shell": "powershell",
+    "category": "TRMM (Win):3rd Party Software"
+  },
 ]
