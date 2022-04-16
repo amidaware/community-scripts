@@ -1391,7 +1391,7 @@
       "windows"
     ],
     "category": "TRMM (Win):Updates"
-  }
+  },
   {
     "guid": "ace9aecf-a466-4589-865c-54817436f194",
     "filename": "Win_Teamviewer_Host_custom_install.ps1",
