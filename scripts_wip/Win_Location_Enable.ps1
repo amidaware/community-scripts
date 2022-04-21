@@ -40,7 +40,7 @@ param (
 
 # HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore\location
 if (Get-PackageProvider -Name NuGet) {
-    Write-Output "NuGet Already Added"
+    Write-Output "NuGet Already Installed"
 } 
 else {
     Write-Host "Installing NuGet"

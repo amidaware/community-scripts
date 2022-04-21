@@ -8,7 +8,7 @@
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 if (Get-PackageProvider -Name NuGet) {
-    #Write-Host "NuGet Already Added"
+    #Write-Host "NuGet Already Installed"
 } 
 else {
     Write-Host "Installing NuGet"

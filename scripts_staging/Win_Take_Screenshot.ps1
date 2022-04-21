@@ -1,7 +1,7 @@
 ## Take screenshot of curently logged in user, will not work on RDS with multiple sessions
 
 if (Get-PackageProvider -Name NuGet) {
-    Write-Output "NuGet Already Added"
+    Write-Output "NuGet Already Installed"
 } 
 else {
     Write-Host "Installing NuGet"

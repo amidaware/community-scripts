@@ -11,7 +11,7 @@
 #>
 
 if (Get-PackageProvider -Name NuGet) {
-    Write-Output "NuGet Already Added"
+    Write-Output "NuGet Already Installed"
 } 
 else {
     Write-Host "Installing NuGet"

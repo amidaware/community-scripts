@@ -1,7 +1,7 @@
 # Changes the default of 50GB of Outlook data files (PST/OST) storage to 100GB
 
 if (Get-PackageProvider -Name NuGet) {
-    Write-Output "NuGet Already Added"
+    Write-Output "NuGet Already Installed"
 } 
 else {
     Write-Host "Installing NuGet"
@@ -33,7 +33,7 @@ Set-ItemProperty -Path HKLM:\SOFTWARE\Microsoft\PowerShell\1\ShellIds\Microsoft.
 Invoke-AsCurrentUser -scriptblock {
     $ofc = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"
     $OfficeInstall = Get-ChildItem -Path $ofc -Recurse | Where-Object {
-    $_.GetValue('DisplayName') -like "Microsoft Office*" -or $_.GetValue('DisplayName') -like "Microsoft 365 Apps*"}
+        $_.GetValue('DisplayName') -like "Microsoft Office*" -or $_.GetValue('DisplayName') -like "Microsoft 365 Apps*" }
     $Version = $OfficeInstall.GetValue('DisplayVersion')[0..3] -join ""
     New-ItemProperty -Path HKCU:\SOFTWARE\Microsoft\Office\$Version\Outlook\PST -Name WarnLargeFileSize -Value 95000  -PropertyType DWORD
     New-ItemProperty -Path HKCU:\SOFTWARE\Microsoft\Office\$Version\Outlook\PST -Name MaxLargeFileSize -Value 100000  -PropertyType DWORD

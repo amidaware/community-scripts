@@ -24,7 +24,7 @@ try{
 
 # Check for, and install pre-reqs if not found.
 if (Get-PackageProvider -Name NuGet) {
-    #Write-Host "NuGet Already Added"
+    #Write-Host "NuGet Already Installed"
 } 
 else {
     Write-Host "Installing NuGet"
