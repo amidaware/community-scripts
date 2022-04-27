@@ -55,7 +55,7 @@ if ([string]::IsNullOrEmpty($Products)) {
     $Products = "antivirus,intercept"
 }
 
-Write-Host "Running Sophos Endpoint Installation Script On: $env:COMPUTERNAME"
+Write-Output "Running Sophos Endpoint Installation Script On: $env:COMPUTERNAME"
 
 # Set TLS Version for web requests
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -144,7 +144,7 @@ $requestHeaders = @{
     'X-Tenant-ID'   = $tenantId 
 }
 
-$urlEndpoint = "https://api-" + $tenantRegion + ".central.sophos.com/endpoint/v1/downloads"
+$urlEndpoint = "https://api-$tenantRegion.central.sophos.com/endpoint/v1/downloads"
 $endpointDownloadResponse = (Invoke-RestMethod -Method 'Get' -headers $requestHeaders -Uri $urlEndpoint)
 $endpointInstallers = $endpointDownloadResponse.installers
 
@@ -171,30 +171,30 @@ foreach ($installer in $endpointInstallers) {
 }
 
 try {
-    Write-Host "Checking if Sophos Endpoint installed.  Please wait..."
+    Write-Output "Checking if Sophos Endpoint installed. Please wait..."
 
     $software = "Sophos Endpoint Agent";
     $installed = ((Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*).DisplayName -Match $software).Length -gt 0
 
     if (-Not $installed) {
-        Write-Host "Sophos Endpoint is NOT installed.  Installing now..."
+        Write-Output "Sophos Endpoint is NOT installed. Installing now..."
 
-        Write-Host "Downloading Sophos from " + $installUrl + " Please wait..." 
+        Write-Output "Downloading Sophos from $installUrl. Please wait..." 
         $tmpDir = [System.IO.Path]::GetTempPath()
     
-        $outpath = $tmpDir + "SophosSetup.exe"
+        $outpath = "$tmpDir\SophosSetup.exe"
         
-        Write-Host "Saving file to " + $outpath
+        Write-Output "Saving file to $outpath"
         
         Invoke-WebRequest -Uri $installUrl -OutFile $outpath
 
-        Write-Host "Running Sophos Setup... Please wait up to 20 minutes for install to complete." 
-        $appArgs = @("--products=" + $Products + " --quiet ")
+        Write-Output "Running Sophos Setup... Please wait up to 20 minutes for install to complete." 
+        $appArgs = @("--products=" + ($Products -join ","), "--quiet")
         Start-Process -Filepath $outpath -ArgumentList $appArgs
 
     }
     else {
-        Write-Host "Sophos Endpoint is installed.  Skipping installation."
+        Write-Output "Sophos Endpoint is installed.  Skipping installation."
     }
 }
 catch {
