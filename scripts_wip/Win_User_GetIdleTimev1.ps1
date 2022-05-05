@@ -75,5 +75,5 @@ namespace PInvoke.Win32 {
 }
 invoke-ascurrentuser -scriptblock $scriptblock -NoWait | Out-Null
 Start-Sleep -Seconds 2
-type "C:\Temp\IdleTime.txt"
-del "C:\Temp\IdleTime.txt"
+Get-Content "C:\Temp\IdleTime.txt"
+Remove-Item "C:\Temp\IdleTime.txt"
