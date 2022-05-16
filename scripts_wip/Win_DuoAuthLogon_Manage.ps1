@@ -5,9 +5,11 @@
    Downloads the Duo Auth Logon install for Duo.
    Add additional parameters as needed.
 .EXAMPLE
-    Win_DuoAuthLogon_Install -IntegrationKey "ikey" -SecretKey "skey" -ApiHost "apihost-hostname"
+    Win_DuoAuthLogon_Manage -IntegrationKey "ikey" -SecretKey "skey" -ApiHost "apihost-hostname"
 .EXAMPLE
-    Win_DuoAuthLogon_Install -IntegrationKey "ikey" -SecretKey "skey" -ApiHost "apihost-hostname" -AutoPush 1 -FailOpen 0 -RdpOnly 0
+    Win_DuoAuthLogon_Manage -IntegrationKey "ikey" -SecretKey "skey" -ApiHost "apihost-hostname" -Uninstall
+.EXAMPLE
+    Win_DuoAuthLogon_Manage -IntegrationKey "ikey" -SecretKey "skey" -ApiHost "apihost-hostname" -AutoPush 1 -FailOpen 0 -RdpOnly 0
 .INSTRUCTIONS
     1. Create a Microsoft RDP application in Duo. Copy the values provided in the details.
     2. In Tactical RMM, Go to Settings >> Global Settings >> Custom Fields and under Clients, create the following custom fields: 
@@ -54,7 +56,9 @@ Param(
     $EnableOffline = "1",
 
     [ValidateSet("2", "1", "0")]
-    $UsernameFormat = "1"
+    $UsernameFormat = "1",
+
+    [switch]$Uninstall
 )
 
 function ConvertTo-StringData {
@@ -75,7 +79,7 @@ function ConvertTo-StringData {
     }
 }
 
-function Win_DuoAuthLogon_Install {
+function Win_DuoAuthLogon_Manage {
     [CmdletBinding()]
     Param(
         [Parameter(Mandatory)]
@@ -106,11 +110,13 @@ function Win_DuoAuthLogon_Install {
         $EnableOffline = "1",
 
         [ValidateSet("2", "1", "0")]
-        $UsernameFormat = "1"
+        $UsernameFormat = "1",
+
+        [switch]$Uninstall
     )
 
     Begin {
-        if ($null -ne (Get-WmiObject -Class Win32_Product | Where-Object { $_.Name -Match "Duo Authentication" })) {
+        if ($null -ne (Get-WmiObject -Class Win32_Product | Where-Object { $_.Name -Match "Duo Authentication" }) -and -Not($Uninstall)) {
             Write-Output "Duo Authentication already installed."
             Exit 0
         }
@@ -122,6 +128,12 @@ function Win_DuoAuthLogon_Install {
 
     Process {
         Try {
+            if ($Uninstall) {
+                (Get-WmiObject -Class Win32_Product -Filter "Name = 'Duo Authentication for Windows Logon x64'").Uninstall()
+                Write-Output "Uninstalled Duo Authentication for Windows"
+                Exit 0
+            }
+
             Write-Output "Starting installation."
             $source = "https://dl.duosecurity.com/duo-win-login-latest.exe"
             $destination = "C:\packages$random\duo-win-login-latest.exe"
@@ -174,7 +186,7 @@ function Win_DuoAuthLogon_Install {
     }
 }
 
-if (-not(Get-Command 'Win_DuoAuthLogon_Install' -errorAction SilentlyContinue)) {
+if (-not(Get-Command 'Win_DuoAuthLogon_Manage' -errorAction SilentlyContinue)) {
     . $MyInvocation.MyCommand.Path
 }
  
@@ -189,6 +201,7 @@ $scriptArgs = @{
     WrapSmartcard  = $WrapSmartcard
     EnableOffline  = $EnableOffline
     UsernameFormat = $UsernameFormat
+    Uninstall      = $Uninstall
 }
  
-Win_DuoAuthLogon_Install @scriptArgs
+Win_DuoAuthLogon_Manage @scriptArgs
