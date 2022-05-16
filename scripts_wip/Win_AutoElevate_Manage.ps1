@@ -6,9 +6,11 @@
     Navigate to the AutoElevate MSP dashboard > settings and get your license key.
     Fill out the remaining variables based on what you've setup in AutoElevate.
 .EXAMPLE
-    Win_AutoElevate_Install -LicenseKey "abcdefg" -CompanyName "MyCompany" -LocationName "Main" -AgentMode live
+    Win_AutoElevate_Manage -LicenseKey "abcdefg" -CompanyName "MyCompany" -LocationName "Main" -AgentMode live
 .EXAMPLE
-    Win_AutoElevate_Install -LicenseKey "abcdefg" -CompanyName "MyCompany" -CompanyInitials "MC" -LocationName "Main" -AgentMode live
+    Win_AutoElevate_Manage -LicenseKey "abcdefg" -CompanyName "MyCompany" -LocationName "Main" -AgentMode live -Uninstall
+.EXAMPLE
+    Win_AutoElevate_Manage -LicenseKey "abcdefg" -CompanyName "MyCompany" -CompanyInitials "MC" -LocationName "Main" -AgentMode live
 .INSTRUCTIONS
     1. In Tactical RMM, Go to Settings >> Global Settings >> Custom Fields and under Clients, create the following custom fields: 
         a) AutoElevateLicenseKey as type text
@@ -43,10 +45,12 @@ Param(
     
     [Parameter(Mandatory)]
     [ValidateSet("live", "policy", "audit", "technician")]
-    $AgentMode
+    $AgentMode,
+
+    [switch]$Uninstall
 )
 
-function Win_AutoElevate_Install {
+function Win_AutoElevate_Manage {
     [CmdletBinding()]
     Param(
         [Parameter(Mandatory)]
@@ -62,11 +66,13 @@ function Win_AutoElevate_Install {
         
         [Parameter(Mandatory)]
         [ValidateSet("live", "policy", "audit", "technician")]
-        $AgentMode
+        $AgentMode,
+
+        [switch]$Uninstall
     )
 
     Begin {
-        if ($null -ne (Get-Service | Where-Object { $_.DisplayName -Match "AutoElevate" })) {
+        if ($null -ne (Get-Service | Where-Object { $_.DisplayName -Match "AutoElevate" }) -and -Not($Uninstall)) {
             Write-Output "AutoElevate already installed."
             Exit 0
         }
@@ -78,6 +84,12 @@ function Win_AutoElevate_Install {
 
     Process {
         Try {
+            if ($Uninstall) {
+                (Get-WmiObject -Class Win32_Product -Filter "Name = 'AutoElevate'").Uninstall()
+                Write-Output "Uninstalled AutoElevate"
+                Exit 0
+            }
+
             $source = "https://autoelevate-installers.s3.us-east-2.amazonaws.com/current/AESetup.msi"
             $destination = "C:\packages$random\AESetup.msi"
             Invoke-WebRequest -Uri $source -OutFile $destination
@@ -115,16 +127,17 @@ function Win_AutoElevate_Install {
     }
 }
 
-if (-not(Get-Command 'Win_AutoElevate_Install' -errorAction SilentlyContinue)) {
+if (-not(Get-Command 'Win_AutoElevate_Manage' -errorAction SilentlyContinue)) {
     . $MyInvocation.MyCommand.Path
 }
  
 $scriptArgs = @{
-    LicenseKey = $LicenseKey
-    CompanyName = $CompanyName
+    LicenseKey      = $LicenseKey
+    CompanyName     = $CompanyName
     CompanyInitials = $CompanyInitials
-    LocationName = $LocationName
-    AgentMode = $AgentMode
+    LocationName    = $LocationName
+    AgentMode       = $AgentMode
+    Uninstall       = $Uninstall
 }
  
-Win_AutoElevate_Install @scriptArgs
+Win_AutoElevate_Manage @scriptArgs
