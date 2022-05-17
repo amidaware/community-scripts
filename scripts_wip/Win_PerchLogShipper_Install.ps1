@@ -20,18 +20,22 @@
 
 Param(
     [Parameter(Mandatory)]
-    [string]$Token
+    [string]$Token,
+
+    [switch]$Uninstall
 )
 
 function Win_PerchLogShipper_Install {
     [CmdletBinding()]
     Param(
         [Parameter(Mandatory)]
-        [string]$Token
+        [string]$Token,
+
+        [switch]$Uninstall
     )
 
     Begin {
-        if ($null -ne (Get-Service | Where-Object { $_.DisplayName -Match "perch" })) {
+        if ($null -ne (Get-Service | Where-Object { $_.DisplayName -Match "perch" }) -and -Not($Uninstall)) {
             Write-Output "Perch already installed."
             Exit 0
         }
@@ -43,6 +47,12 @@ function Win_PerchLogShipper_Install {
 
     Process {
         Try {
+            if ($Uninstall) {
+                cmd /c 'msiexec.exe /X{67341EFC-044D-465A-B770-D8B34B6AB2C5} /qn'
+                Write-Output "Perch log shipper uninstalled."
+                Exit 0
+            }
+
             $source = "https://cdn.perchsecurity.com/downloads/perch-log-shipper-latest.exe"
             $destination = "C:\packages$random\perch-log-shipper-latest.exe"
             Invoke-WebRequest -Uri $source -OutFile $destination
@@ -82,7 +92,8 @@ if (-not(Get-Command 'Win_PerchLogShipper_Install' -errorAction SilentlyContinue
 }
  
 $scriptArgs = @{
-    Token = $Token
+    Token     = $Token
+    Uninstall = $Uninstall
 }
  
 Win_PerchLogShipper_Install @scriptArgs
