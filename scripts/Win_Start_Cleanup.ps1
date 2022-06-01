@@ -1,11 +1,11 @@
 Function Start-Cleanup {
 <# 
 .SYNOPSIS
-   Automate cleaning up a C:\ drive with low disk space
+   Automate cleaning up the C:\ drive with low disk space warning.
 
 .DESCRIPTION
-   Cleans the C: drive's Window Temperary files, Windows SoftwareDistribution folder, 
-   the local users Temperary folder, IIS logs(if applicable) and empties the recycling bin. 
+   Cleans the C: drive's Windows Temporary files, Windows SoftwareDistribution folder, 
+   the local users Temporary folder, IIS logs(if applicable) and empties the recycle bin. 
    All deleted files will go into a log transcript in $env:TEMP. By default this 
    script leaves files that are newer than 7 days old however this variable can be edited.
 
@@ -85,7 +85,7 @@ param(
         Restart-Service ccmexec -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
     }
 
-    ## Deletes the contents of windows software distribution.
+    ## Deletes the contents of Windows Software Distribution.
     Get-ChildItem "C:\Windows\SoftwareDistribution\*" -Recurse -Force -ErrorAction SilentlyContinue | Remove-Item -recurse -ErrorAction SilentlyContinue -Verbose
     Write-Host "The Contents of Windows SoftwareDistribution have been removed successfully!                      " -NoNewline -ForegroundColor Green
     Write-Host "[DONE]" -ForegroundColor Green -BackgroundColor Black
@@ -213,7 +213,7 @@ param(
             Write-Host "[WARNING]" -ForegroundColor DarkYellow -BackgroundColor Black
     }
 
-    ## Cleans up each users temp folder
+    ## Cleans up each user's temp folder
     if (Test-Path "C:\Users\*\AppData\Local\Temp\") {
         Remove-Item -Path "C:\Users\*\AppData\Local\Temp\*" -Force -Recurse -Verbose -ErrorAction SilentlyContinue
     } else {
@@ -221,7 +221,7 @@ param(
             Write-Host "[WARNING]" -ForegroundColor DarkYellow -BackgroundColor Black
     }
 
-    ## Cleans up all users windows error reporting
+    ## Cleans up all user's Windows error reporting
     if (Test-Path "C:\Users\*\AppData\Local\Microsoft\Windows\WER\") {
         Remove-Item -Path "C:\Users\*\AppData\Local\Microsoft\Windows\WER\*" -Force -Recurse -Verbose -ErrorAction SilentlyContinue
     } else {
@@ -229,7 +229,7 @@ param(
             Write-Host "[WARNING]" -ForegroundColor DarkYellow -BackgroundColor Black
     }
 
-    ## Cleans up users temporary internet files
+    ## Cleans up user's temporary internet files
     if (Test-Path "C:\Users\*\AppData\Local\Microsoft\Windows\Temporary Internet Files\") {
         Remove-Item -Path "C:\Users\*\AppData\Local\Microsoft\Windows\Temporary Internet Files\*" -Force -Recurse -Verbose -ErrorAction SilentlyContinue
     } else {
@@ -288,7 +288,7 @@ param(
     Write-host "Removing System and User Temp Files                                                               " -NoNewline -ForegroundColor Green
     Write-Host "[DONE]" -ForegroundColor Green -BackgroundColor Black
 
-    ## Removes the hidden recycling bin.
+    ## Removes the hidden recycle bin.
     if (Test-path 'C:\$Recycle.Bin'){
         Remove-Item 'C:\$Recycle.Bin' -Recurse -Force -Verbose -ErrorAction SilentlyContinue
     } else {
@@ -303,10 +303,10 @@ param(
     ## If PowerShell version 4 or below is installed the following will process
     if ($PSVersionTable.PSVersion.Major -le 4) {
 
-        ## Empties the recycling bin, the desktop recyling bin
+        ## Empties the recycle bin, the desktop recycle bin
         $Recycler = (New-Object -ComObject Shell.Application).NameSpace(0xa)
         $Recycler.items() | ForEach-Object { 
-            ## If PowerShell version 4 or bewlow is installed the following will process
+            ## If PowerShell version 4 or below is installed the following will process
             Remove-Item -Include $_.path -Force -Recurse -Verbose
             Write-Host "The recycling bin has been cleaned up successfully!                                        " -NoNewline -ForegroundColor Green
             Write-Host "[DONE]" -ForegroundColor Green -BackgroundColor Black
