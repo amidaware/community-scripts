@@ -1,3 +1,4 @@
+$ErrorActionPreference= 'silentlycontinue'
 # Get RustDesk ID
 
 If (!("C:\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config\RustDesk.toml")) {
