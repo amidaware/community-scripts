@@ -1,17 +1,24 @@
+$ErrorActionPreference= 'silentlycontinue'
 # Get RustDesk ID
 
-$Paths = @($Env:APPDATA, $Env:ProgramData, $Env:ALLUSERSPROFILE)
+If (!("C:\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config\RustDesk.toml")) {
+$username = ((Get-WMIObject -ClassName Win32_ComputerSystem).Username).Split('\')[1]
+$rustid=(Get-content C:\Users\$username\AppData\Roaming\RustDesk\config\RustDesk.toml | Where-Object { $_.Contains("id") })
+$rustid = $rustid.Split("'")[1]
 
-foreach ($Path in $Paths) {
-    If (Test-Path $Path\RustDesk) {
-        $GoodPath = $Path
-    }
+$rustpword = (Get-content C:\Users\$username\AppData\Roaming\RustDesk\config\RustDesk.toml | Where-Object { $_.Contains("password") })
+$rustpword = $rustpword.Split("'")[1]
+Write-output "Config file found in user folder"
+Write-output "$rustid"
+Write-output "$rustpword"
 }
+else {
+$rustid=(Get-content C:\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config\RustDesk.toml | Where-Object { $_.Contains("id") })
+$rustid = $rustid.Split("'")[1]
 
-$ConfigPath = $GoodPath + "\RustDesk\Config\RustDesk.toml"
-
-$ResultsIdSearch = Select-String -Path $ConfigPath -Pattern id
-
-$Result = @($ResultsIdSearch -split '=')
-
-$Result[1]
+$rustpword = (Get-content C:\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config\RustDesk.toml | Where-Object { $_.Contains("password") })
+$rustpword = $rustpword.Split("'")[1]
+Write-output "Config file found in windows service folder"
+Write-output "$rustid"
+Write-output "$rustpword"
+}
