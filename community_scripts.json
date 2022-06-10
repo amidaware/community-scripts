@@ -370,7 +370,7 @@
     "category": "TRMM (Win):Collectors"
   },
   {
-    "guid": "9cfdfe8f-82bf-4081-a59f-576d694f4649",
+    "guid": "4f1f20e8-b3f6-495d-8436-c7368500b5f6",
     "filename": "Win_Supremo_GetID.ps1",
     "submittedBy": "https://github.com/silversword411",
     "name": "Supremo - Get ClientID for client",
