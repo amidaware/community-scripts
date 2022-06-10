@@ -370,6 +370,18 @@
     "category": "TRMM (Win):Collectors"
   },
   {
+    "guid": "9cfdfe8f-82bf-4081-a59f-576d694f4649",
+    "filename": "Win_Supremo_GetID.ps1",
+    "submittedBy": "https://github.com/silversword411",
+    "name": "Supremo - Get ClientID for client",
+    "description": "Returns Supremo ClientID for client - Use with Custom Fields for later use.",
+    "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
+    "category": "TRMM (Win):Collectors"
+  },
+  {
     "guid": "e43081d4-6f71-4ce3-881a-22da749f7a57",
     "filename": "Win_AnyDesk_Get_Anynet_ID.ps1",
     "submittedBy": "https://github.com/meuchels",
