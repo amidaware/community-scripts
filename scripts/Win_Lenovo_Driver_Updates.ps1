@@ -9,8 +9,12 @@
 	V1.0 Initial Release by https://github.com/maltekiefer
 #>
 
+if (-not (Get-PackageProvider -Name NuGet)) {
+    Install-PackageProvider -Name NuGet -Force
+} 
+
 if (-not (Get-Module -ListAvailable -Name LSUClient)) {
-    Install-Module -Name 'LSUClient'
+    Install-Module -Name 'LSUClient' -Force
 }
 
 # Install only packages that can be installed silently and non-interactively
