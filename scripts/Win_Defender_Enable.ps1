@@ -1,6 +1,6 @@
 <#
       .SYNOPSIS
-      Enables Windows Defender and sets preferences to lock Defender down
+      Enables Windows Defender and sets preferences to lock Defender down on workstations Win10+
       .DESCRIPTION
       Windows Defender in its default configuration does basic protections. Running this script will enable many additional settings to increase security.
       .PARAMETER NoControlledFolders
@@ -11,6 +11,7 @@
       9/2021 v1 Initial release dinger1986
       11/24/2021 v1.1 adding command parameters for Controller Folder access by Tremor and silversword
       30/03/2022 v1.2 adding command parameter for audit mode for ASR and added extra ASR rules suggested by SDM216
+      Not for use on servers
   #>
 
 param (
@@ -19,39 +20,31 @@ param (
 )
 
 # Verifies that script is running on Windows 10 or greater
-function Check-IsWindows10
-{
-    if ([System.Environment]::OSVersion.Version.Major -ge "10") 
-    {
+function Check-IsWindows10 {
+    if ([System.Environment]::OSVersion.Version.Major -ge "10") {
         Write-Output $true
     }
-    else
-    {
+    else {
         Write-Output $false
     }
 }
 
 # Verifies that script is running on Windows 10 1709 or greater
-function Check-IsWindows10-1709
-{
-    if ([System.Environment]::OSVersion.Version.Minor -ge "16299") 
-    {
+function Check-IsWindows10-1709 {
+    if ([System.Environment]::OSVersion.Version.Minor -ge "16299") {
         Write-Output $true
     }
-    else
-    {
+    else {
         Write-Output $false
     }
 }
 
-function SetRegistryKey([string]$key, [int]$value)
-{
+function SetRegistryKey([string]$key, [int]$value) {
     #Editing Windows Defender settings AV via registry is NOT supported. This is a scripting workaround instead of using Group Policy or SCCM for Windows 10 version 1703
     $amRegistryPath = "HKLM:\Software\Policies\Microsoft\Microsoft Antimalware\MpEngine"
     $wdRegistryPath = "HKLM:\Software\Policies\Microsoft\Windows Defender\MpEngine"
     $regPathToUse = $wdRegistryPath #Default to WD path
-    if (Test-Path $amRegistryPath)
-    {
+    if (Test-Path $amRegistryPath) {
         $regPathToUse = $amRegistryPath
     }
     New-ItemProperty -Path $regPathToUse -Name $key -Value $value -PropertyType DWORD -Force | Out-Null
@@ -102,8 +95,7 @@ Set-MpPreference -DisableArchiveScanning 0
 # Enable email scanning# 
 Set-MpPreference -DisableEmailScanning 0
 
-if (!(Check-IsWindows10-1709))
-{
+if (!(Check-IsWindows10-1709)) {
     # Set cloud block level to 'High'# 
     Set-MpPreference -CloudBlockLevel High
 
@@ -112,8 +104,7 @@ if (!(Check-IsWindows10-1709))
 
     Write-Host # `nUpdating Windows Defender Exploit Guard settings`n#  -ForegroundColor Green 
 
-    if ($NoControlledFolders) # Check if user has run with -NoControlledFolders parameter
-    {
+    if ($NoControlledFolders) { # Check if user has run with -NoControlledFolders parameter
         Write-Host "Skipping enabling Controlled folders"
     }
     else {
@@ -124,8 +115,7 @@ if (!(Check-IsWindows10-1709))
     Write-Host # Enabling Network Protection and setting to block mode# 
     Set-MpPreference -EnableNetworkProtection Enabled
 
-  if ($AuditOnly) # Check if user has run with -AuditOnly parameter for ASR Rules
-    {
+    if ($AuditOnly) { # Check if user has run with -AuditOnly parameter for ASR Rules
         Write-Host "Enabling Exploit Guard ASR rules and setting to Audit mode"
         #Block abuse of exploited vulnerable signed drivers     
         Set-MpPreference -AttackSurfaceReductionRules_Ids "56a863a9-875e-4185-98a7-b882c64b5ce5" -AttackSurfaceReductionRules_Actions AuditMode
@@ -197,8 +187,7 @@ if (!(Check-IsWindows10-1709))
         Add-MpPreference -AttackSurfaceReductionRules_Ids "e6db77e5-3df2-4cf1-b95a-636979351e5b" -AttackSurfaceReductionRules_Actions Enabled
     }
 
-    if ($false -eq (Test-Path ProcessMitigation.xml))
-    {
+    if ($false -eq (Test-Path ProcessMitigation.xml)) {
         Write-Host # Downloading Process Mitigation file from https://demo.wd.microsoft.com/Content/ProcessMitigation.xml# 
         $url = 'https://demo.wd.microsoft.com/Content/ProcessMitigation.xml'
         Invoke-WebRequest $url -OutFile ProcessMitigation.xml
@@ -209,8 +198,7 @@ if (!(Check-IsWindows10-1709))
 
 }
 
-else
-{
+else {
     # #  Workaround for Windows 10 version 1703
     # Set cloud block level to 'High'# 
     SetRegistryKey -key MpCloudBlockLevel -value 2
