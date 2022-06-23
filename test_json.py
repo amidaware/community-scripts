@@ -2,12 +2,22 @@ import json
 import os
 
 
+def _check_for_duplicate_keys(items):
+    tmp = {}
+    for k, v in items:
+        if k in tmp:
+            raise ValueError(f"Duplicated key detected: {k}")
+        else:
+            tmp[k] = v
+    return tmp
+
+
 def test_community_script_json_file():
     valid_shells = ["powershell", "python", "cmd"]
     valid_os = ["windows", "linux", "darwin"]
 
     with open("community_scripts.json") as f:
-        info = json.load(f)
+        info = json.load(f, object_pairs_hook=_check_for_duplicate_keys)
 
     guids = []
     for script in info:
