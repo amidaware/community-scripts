@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright 2012 Matt Martz
 # All Rights Reserved.
@@ -15,18 +15,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
-import re
 import csv
-import sys
-import math
+import datetime
 import errno
+import math
+import os
+import platform
+import re
 import signal
 import socket
-import timeit
-import datetime
-import platform
+import sys
 import threading
+import timeit
 import xml.parsers.expat
 
 try:
@@ -37,7 +37,7 @@ except ImportError:
     gzip = None
     GZIP_BASE = object
 
-__version__ = "2.1.3"
+__version__ = "2.1.4b1"
 
 
 class FakeShutdownEvent(object):
@@ -50,6 +50,8 @@ class FakeShutdownEvent(object):
         "Dummy method to always return false" ""
         return False
 
+    is_set = isSet
+
 
 # Some global variables we use
 DEBUG = False
@@ -57,6 +59,7 @@ _GLOBAL_DEFAULT_TIMEOUT = object()
 PY25PLUS = sys.version_info[:2] >= (2, 5)
 PY26PLUS = sys.version_info[:2] >= (2, 6)
 PY32PLUS = sys.version_info[:2] >= (3, 2)
+PY310PLUS = sys.version_info[:2] >= (3, 10)
 
 # Begin import game to handle Python 2 and Python 3
 try:
@@ -216,7 +219,6 @@ except ImportError:
             kwargs["file"] = kwargs.get("file", _py3_utf8_stdout)
         _py3_print(*args, **kwargs)
 
-
 else:
     del __builtin__
 
@@ -292,17 +294,6 @@ else:
         write(end)
 
 
-if PY32PLUS:
-    etree_iter = ET.Element.iter
-elif PY25PLUS:
-    etree_iter = ET_Element.getiterator
-
-if PY26PLUS:
-    thread_is_alive = threading.Thread.is_alive
-else:
-    thread_is_alive = threading.Thread.isAlive
-
-
 # Exception "constants" to support Python 2 through Python 3
 try:
     import ssl
@@ -322,6 +313,23 @@ try:
 except ImportError:
     ssl = None
     HTTP_ERRORS = (HTTPError, URLError, socket.error, BadStatusLine)
+
+if PY32PLUS:
+    etree_iter = ET.Element.iter
+elif PY25PLUS:
+    etree_iter = ET_Element.getiterator
+
+if PY26PLUS:
+    thread_is_alive = threading.Thread.is_alive
+else:
+    thread_is_alive = threading.Thread.isAlive
+
+
+def event_is_set(event):
+    try:
+        return event.is_set()
+    except AttributeError:
+        return event.isSet()
 
 
 class SpeedtestException(Exception):
@@ -793,7 +801,7 @@ def print_dots(shutdown_event):
     """
 
     def inner(current, total, start=False, end=False):
-        if shutdown_event.isSet():
+        if event_is_set(shutdown_event):
             return
 
         sys.stdout.write(".")
@@ -833,7 +841,7 @@ class HTTPDownloader(threading.Thread):
             if (timeit.default_timer() - self.starttime) <= self.timeout:
                 f = self._opener(self.request)
                 while (
-                    not self._shutdown_event.isSet()
+                    not event_is_set(self._shutdown_event)
                     and (timeit.default_timer() - self.starttime) <= self.timeout
                 ):
                     self.result.append(len(f.read(10240)))
@@ -888,9 +896,9 @@ class HTTPUploaderData(object):
         return self._data
 
     def read(self, n=10240):
-        if (
-            timeit.default_timer() - self.start
-        ) <= self.timeout and not self._shutdown_event.isSet():
+        if (timeit.default_timer() - self.start) <= self.timeout and not event_is_set(
+            self._shutdown_event
+        ):
             chunk = self.data.read(n)
             self.total.append(len(chunk))
             return chunk
@@ -930,7 +938,7 @@ class HTTPUploader(threading.Thread):
         try:
             if (
                 timeit.default_timer() - self.starttime
-            ) <= self.timeout and not self._shutdown_event.isSet():
+            ) <= self.timeout and not event_is_set(self._shutdown_event):
                 try:
                     f = self._opener(request)
                 except TypeError:
