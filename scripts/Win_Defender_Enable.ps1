@@ -12,7 +12,7 @@
       11/24/2021 v1.1 adding command parameters for Controller Folder access by Tremor and silversword
       30/03/2022 v1.2 adding command parameter for audit mode for ASR and added extra ASR rules suggested by SDM216
       Not for use on servers
-  #>
+#>
 
 param (
     [switch] $NoControlledFolders,
@@ -104,7 +104,8 @@ if (!(Check-IsWindows10-1709)) {
 
     Write-Host # `nUpdating Windows Defender Exploit Guard settings`n#  -ForegroundColor Green 
 
-    if ($NoControlledFolders) { # Check if user has run with -NoControlledFolders parameter
+    if ($NoControlledFolders) {
+        # Check if user has run with -NoControlledFolders parameter
         Write-Host "Skipping enabling Controlled folders"
     }
     else {
@@ -115,7 +116,8 @@ if (!(Check-IsWindows10-1709)) {
     Write-Host # Enabling Network Protection and setting to block mode# 
     Set-MpPreference -EnableNetworkProtection Enabled
 
-    if ($AuditOnly) { # Check if user has run with -AuditOnly parameter for ASR Rules
+    if ($AuditOnly) {
+        # Check if user has run with -AuditOnly parameter for ASR Rules
         Write-Host "Enabling Exploit Guard ASR rules and setting to Audit mode"
         #Block abuse of exploited vulnerable signed drivers     
         Set-MpPreference -AttackSurfaceReductionRules_Ids "56a863a9-875e-4185-98a7-b882c64b5ce5" -AttackSurfaceReductionRules_Actions AuditMode

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# ping checker
 
 import subprocess
 import sys
