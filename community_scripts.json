@@ -1312,7 +1312,7 @@
     "supported_platforms": [
       "windows"
     ],
-    "default_timeout": "1"
+    "default_timeout": "90"
   },
   {
     "guid": "168037d8-78e6-4a6a-a9a9-8ec2c1dbe949",
@@ -1325,7 +1325,20 @@
     "supported_platforms": [
       "windows"
     ],
-    "default_timeout": "1"
+    "default_timeout": "600"
+  },
+  {
+    "guid": "8076124b-1be2-4d4d-a432-f41a260f1153",
+    "filename": "Win_RunAsUser_Example.ps1",
+    "submittedBy": "https://github.com/silversword411",
+    "name": "EXAMPLE RunAsUser Template",
+    "description": "Reference Script: Will need manual tweaking, for executing scripts in User context",
+    "shell": "powershell",
+    "category": "TRMM (Win):Misc>Reference",
+    "supported_platforms": [
+      "windows"
+    ],
+    "default_timeout": "90"
   },
   {
     "guid": "453c6d22-84b7-4767-8b5f-b825f233cf55",
