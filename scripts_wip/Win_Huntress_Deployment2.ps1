@@ -26,7 +26,7 @@ Else {
     Write-Host "Huntress key $huntresskey" 
 
     # Replace __ACCOUNT_KEY__ with your account secret key
-    $AccountKey = "5cb80b1b66ef8b7282bfa9d6472a2ad2"
+    $AccountKey = "lkjdlkjasflkajsdflkasjdf"
 
     # Replace __ORGANIZATION_KEY__ with a unique identifier for the organization/client
     $OrganizationKey = "$huntresskey"
