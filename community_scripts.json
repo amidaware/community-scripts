@@ -210,7 +210,7 @@
     "guid": "e2a21b69-b446-429c-ab56-328d4e8696fb",
     "filename": "Win_TRMM_Agent_Debugmode.bat",
     "submittedBy": "https://github.com/silversword411",
-    "name": "TacticalRMM - Put TRMM Agent into Debug Mode",
+    "name": "TacticalRMM - TRMM Agent enable Debug Mode",
     "description": "Puts TRMM agent into debug mode temporarily. Restart PC to end debug session. Pull logs with Get Agent Logs script.",
     "shell": "cmd",
     "supported_platforms": [
@@ -222,9 +222,21 @@
     "guid": "910e4ac3-5c6d-47a2-ab99-0d8bb2ddf166",
     "filename": "Win_TRMM_Agent_DebugmodeUndo.bat",
     "submittedBy": "https://github.com/silversword411",
-    "name": "TacticalRMM - Undo TRMM Agent Debug Mode",
+    "name": "TacticalRMM - TRMM Agent disable Debug Mode",
     "description": "Reverts TRMM agent debug mode back to normal mode. Pull logs with Get Agent Logs script.",
     "shell": "cmd",
+    "supported_platforms": [
+      "windows"
+    ],
+    "category": "TRMM (Win):TacticalRMM Related"
+  },
+  {
+    "guid": "2af2e283-8397-41df-899d-474c581a36cb",
+    "filename": "Win_TRMM_Mesh_Debug.ps1",
+    "submittedBy": "https://github.com/silversword411",
+    "name": "TacticalRMM - Check Mesh Agent for problems",
+    "description": "For debugging mesh, see if something is broken",
+    "shell": "powershell",
     "supported_platforms": [
       "windows"
     ],
