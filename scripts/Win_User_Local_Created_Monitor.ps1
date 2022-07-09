@@ -29,5 +29,3 @@ else {
     exit 0
 }
 
-
-Exit $LASTEXITCODE

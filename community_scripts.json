@@ -888,7 +888,7 @@
   },
   {
     "guid": "8373846f-facc-49b9-9891-3a780a394c89",
-    "filename": "Win_Local_User_Created_Monitor.ps1",
+    "filename": "Win_User_Local_Created_Monitor.ps1",
     "submittedBy": "https://github.com/dinger1986",
     "name": "Event Viewer - New User Notification",
     "description": "Event Viewer Monitor - Notify when new Local user is created. If parameter provided will search back that number of days",
