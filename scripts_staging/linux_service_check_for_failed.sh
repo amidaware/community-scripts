@@ -9,7 +9,7 @@ if [ "${HAS_SYSTEMD}" != 'systemd' ]; then
     exit 0
 fi
 
-failsvc=$(systemctl --failed)
+failsvc=$(systemctl --failed | grep -v 'fwupd-refresh.service')
 
 if [[ "$failsvc" == *"failed"* ]]; then
     echo -e 'You have failed services'
@@ -19,5 +19,3 @@ else
     echo  'All services are running'
     exit 0
 fi
-
-  
