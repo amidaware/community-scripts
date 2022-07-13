@@ -1,4 +1,5 @@
 # Checks for Mesh service, folder, and .exe. Returns 1 if there's a problem
+# Useful to run as a monitoring script to check for AV deleting mesh
 
 $serviceName = "Mesh Agent"
 $ErrorCount = 0
