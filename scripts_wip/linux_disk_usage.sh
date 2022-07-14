@@ -13,11 +13,11 @@ for line in $(df -hP | egrep '^/dev/[^loop]' | awk '{ print $1 "_:_" $5 }')
 
     if [ $DISK_USAGE -ge $VALUE ];
     then
-      echo -e "Disk Usage Alert: Needs Attention!" "A disk is using $DISK_USAGE% greater than threshold $VALUE%"
+      echo -e "Disk Usage Alert: Needs Attention!" "$FILESYSTEM is using $DISK_USAGE% greater than threshold $VALUE%"
       df -hP
       OUTCODE+=1
     else
-      echo "Disk usage okay."
+      echo "$FILESYSTEM disk usage okay at $DISK_USAGE%"
     fi
 done
 
