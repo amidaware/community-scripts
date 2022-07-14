@@ -20,7 +20,7 @@ $webclient = New-Object System.Net.WebClient
 $downloadstart_time = Get-Date
 $webclient.DownloadFile($downloadurl, $localfile)
 $downloadtimetaken = $((Get-Date).Subtract($downloadstart_time).Seconds)
-$downloadspeed = ($size / $downloadtimetaken)*8
+$downloadspeed = ($size / $downloadtimetaken) * 8
 Write-Output "Time taken: $downloadtimetaken second(s) | Download Speed: $downloadspeed mbps"
 
 #RUN UPLOAD & CALCULATE UPLOAD SPEED
@@ -34,16 +34,12 @@ Write-Output "Time taken: $downloadtimetaken second(s) | Download Speed: $downlo
 Remove-Item -path $localfile
 
 #SEND ALERTS IF BELOW MINIMUM THRESHOLD 
-if ($downloadspeed -ge $mindownloadspeed) 
-{ 
-Write-Output "Speed is acceptable. Current download speed at is $downloadspeed mbps which is above the threshold of $mindownloadspeed mbps" 
-exit 0
+if ($downloadspeed -ge $mindownloadspeed) { 
+    Write-Output "Speed is acceptable. Current download speed at is $downloadspeed mbps which is above the threshold of $mindownloadspeed mbps" 
+    exit 0
 }
 
-else 
-{ 
-Write-Output "Current download speed at is $downloadspeed mbps which is below the minimum threshold of $mindownloadspeed mbps" 
-exit 1
+else { 
+    Write-Output "Current download speed at is $downloadspeed mbps which is below the minimum threshold of $mindownloadspeed mbps" 
+    exit 1
 }
-
-Exit $LASTEXITCODE

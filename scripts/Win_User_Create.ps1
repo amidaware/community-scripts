@@ -60,5 +60,3 @@ catch {
     Write-Output $_
     EXIT 1
 }
-
-EXIT $LASTEXITCODE

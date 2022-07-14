@@ -12,6 +12,3 @@ else {
     netsh advfirewall show currentprofile
     exit 0
 }
-
-
-Exit $LASTEXITCODE

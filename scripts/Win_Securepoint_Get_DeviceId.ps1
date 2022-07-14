@@ -16,5 +16,3 @@
 $SecurepointDeviceId = (Get-Item -Path 'HKLM:\SOFTWARE\Ikarus\guardx\cloud').GetValue('DeviceId')
 
 Write-Output $SecurepointDeviceId
-
-Exit $LASTEXITCODE

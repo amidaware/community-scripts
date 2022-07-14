@@ -17,6 +17,3 @@ else {
     Write-Output "UAC is Disabled"
     exit 1
 }
-
-
-Exit $LASTEXITCODE

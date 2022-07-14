@@ -18,5 +18,3 @@ else {
     Write-Output "WarningNoElevationOnInstall UpdatePromptSettings set to false. No vulnerabilities"
     exit 0
 }
-
-Exit $LASTEXITCODE

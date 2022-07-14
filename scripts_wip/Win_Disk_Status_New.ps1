@@ -36,5 +36,3 @@ else {
     Write-Output "Disks are Healthy"
     exit 0
 }
-
-Exit $LASTEXITCODE

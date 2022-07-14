@@ -46,5 +46,3 @@ Catch {
     Write-Host $Error[0]
     exit 1002
 }
-
-exit $LASTEXITCODE 

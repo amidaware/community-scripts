@@ -64,4 +64,3 @@ foreach ($Package in $PackagesNames) {
         Exit 0
     }
 }
-Exit $LASTEXITCODE

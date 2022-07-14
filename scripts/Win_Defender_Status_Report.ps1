@@ -22,22 +22,17 @@ else {
     $TimeSpan = (Get-Date) - (New-TimeSpan -Day $param1)
 }
 
-if (Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-Windows Defender/Operational';ID='1122','1012','1009','1119','1118','1008','1006','1116','1121','1015','1124','1123','1160';StartTime=$TimeSpan}) 
-
+if (Get-WinEvent -FilterHashtable @{LogName = 'Microsoft-Windows-Windows Defender/Operational'; ID = '1122', '1012', '1009', '1119', '1118', '1008', '1006', '1116', '1121', '1015', '1124', '1123', '1160'; StartTime = $TimeSpan }) 
 {
-Write-Output "Virus Found or Issue with Defender"
-Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-Windows Defender/Operational';ID='1122','1012','1009','1119','1118','1008','1006','1121','1116','1015','1124','1123','1160';StartTime=$TimeSpan} | Select-Object -ExpandProperty Message -First 1
-exit 1
+    Write-Output "Virus Found or Issue with Defender"
+    Get-WinEvent -FilterHashtable @{LogName = 'Microsoft-Windows-Windows Defender/Operational'; ID = '1122', '1012', '1009', '1119', '1118', '1008', '1006', '1121', '1116', '1015', '1124', '1123', '1160'; StartTime = $TimeSpan } | Select-Object -ExpandProperty Message -First 1
+    exit 1
 }
 
 
 else 
-
 {
-Write-Output "No Virus Found, Defender is Healthy"
-Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-Windows Defender/Operational';ID='1150','1001';StartTime=$TimeSpan}
-exit 0
+    Write-Output "No Virus Found, Defender is Healthy"
+    Get-WinEvent -FilterHashtable @{LogName = 'Microsoft-Windows-Windows Defender/Operational'; ID = '1150', '1001'; StartTime = $TimeSpan }
+    exit 0
 }
-
-
-Exit $LASTEXITCODE

@@ -58,6 +58,3 @@ if ($Mode -eq "upgrade") {
 Start-Sleep -Seconds $rnd; 
 choco $Mode $PackageName -y
 Exit 0
-
-
-Exit $LASTEXITCODE
