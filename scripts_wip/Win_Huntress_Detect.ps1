@@ -9,4 +9,3 @@ If (Get-Service $serviceName -ErrorAction SilentlyContinue) {
 Else {
     exit 1
 }
-Exit $LASTEXITCODE

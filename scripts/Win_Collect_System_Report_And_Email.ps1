@@ -44,99 +44,100 @@ param(
 
 #Parameter Checks with exit codes
 
-if ([string]::IsNullOrEmpty($agentname)){
+if ([string]::IsNullOrEmpty($agentname)) {
     write-host "You must directly enter a hostname or use the TRMM Script Variable {{agent.hostname}} to pass the hostname from the dashboard."
     exit 1
 }
 
-if ([string]::IsNullOrEmpty($file)){
+if ([string]::IsNullOrEmpty($file)) {
     Write-host "You must provide a file name with a .HTM extension."
     exit 1
 }
 
-if ([string]::IsNullOrEmpty($fromaddress)){
+if ([string]::IsNullOrEmpty($fromaddress)) {
     Write-host "You must provide a sender's email address."
     exit 1
 }
 
-if ([string]::IsNullOrEmpty($toaddress)){
+if ([string]::IsNullOrEmpty($toaddress)) {
     write-host "You must provide a recipient's email address."
     exit 1
 }
 
-if ([string]::IsNullOrEmpty($smtpserver)){
+if ([string]::IsNullOrEmpty($smtpserver)) {
     write-host "You must provide a SMTP server address."
     exit 1
 }
 
-if ([string]::IsNullOrEmpty($password)){
+if ([string]::IsNullOrEmpty($password)) {
     write-host "You must provide a password for the SMTP server"
     exit 1
 }
 
-if ([string]::IsNullOrEmpty($port)){
+if ([string]::IsNullOrEmpty($port)) {
     write-host "A valid port number is required to send the report."
     exit 1
 }
 
-else{
+else {
 
-$path = "C:\Temp"
-$destination = "$path\$file"
-
-
-if(!(Test-Path -Path $path)){
-write-host "Path does not exist. Creating path prior to generating report."
-New-Item -Path "C:\" -Name "Temp" -ItemType "directory"
-}
-
-else{
-    Write-host "Path alreaedy exists. Attempting to generate report."
-}
+    $path = "C:\Temp"
+    $destination = "$path\$file"
 
 
-#HTML Styling
+    if (!(Test-Path -Path $path)) {
+        write-host "Path does not exist. Creating path prior to generating report."
+        New-Item -Path "C:\" -Name "Temp" -ItemType "directory"
+    }
 
-$a = "<style>BODY{font-family: Calibri; font-size: 15pt;}"
-$a = $a + "TABLE{border: 1px solid black; border-collapse: collapse;}"
-$a = $a + "TH{border: 1px solid green; background: lightgreen; padding: 5px; }"
-$a = $a + "TD{border: 1px solid green; padding: 5px; }"
-$a = $a + "</style>"
+    else {
+        Write-host "Path alreaedy exists. Attempting to generate report."
+    }
+
+
+    #HTML Styling
+
+    $a = "<style>BODY{font-family: Calibri; font-size: 15pt;}"
+    $a = $a + "TABLE{border: 1px solid black; border-collapse: collapse;}"
+    $a = $a + "TH{border: 1px solid green; background: lightgreen; padding: 5px; }"
+    $a = $a + "TD{border: 1px solid green; padding: 5px; }"
+    $a = $a + "</style>"
  
-#Heading
+    #Heading
 
-"<H1 style='color:green;'>System Report For $agentname</H1>" | Out-File $destination -Append
+    "<H1 style='color:green;'>System Report For $agentname</H1>" | Out-File $destination -Append
 
-#Network Information
+    #Network Information
 
-Get-WmiObject win32_networkadapterconfiguration -filter "ipenabled = 'True'"| 
-Select PSComputername, DNSHostName, Description,
-@{Name = "IPAddress";Expression = 
-{[regex]$rx = "(\d{1,3}(\.?)){4}"
-$rx.matches($_.IPAddress).Value}},MACAddress | ConvertTo-HTML -Head "<H2 style='color:green;'>Network Information</H2>" -body $a | Out-file $destination -Append
+    Get-WmiObject win32_networkadapterconfiguration -filter "ipenabled = 'True'" | 
+    Select PSComputername, DNSHostName, Description,
+    @{Name = "IPAddress"; Expression = 
+        { [regex]$rx = "(\d{1,3}(\.?)){4}"
+            $rx.matches($_.IPAddress).Value }
+    }, MACAddress | ConvertTo-HTML -Head "<H2 style='color:green;'>Network Information</H2>" -body $a | Out-file $destination -Append
 
-#Get Event logs
+    #Get Event logs
 
-Get-EventLog -LogName Application -Newest 10 -EntryType Error | Select TimeGenerated, EventID, Source, Message |  ConvertTo-HTML -Head "<H2 style='color:green;'>Application Error Event Logs</H2>" -body $a | Out-file $file -Append
-Get-EventLog -LogName Application -Newest 10 -EntryType Warning | Select TimeGenerated, EventID, Source, Message | ConvertTo-HTML -Head "<H2 style='color:green;'>Application Warning Event Logs</H2>" -body $a | Out-file $file -Append
-Get-EventLog -LogName System -Newest 10 -EntryType Error | Select TimeGenerated, EventID, Source, Message | ConvertTo-HTML -Head "<H2 style='color:green;'>System Error Event Logs</H2>" -body $a | Out-file $file -Append
-Get-EventLog -LogName System -Newest 10 -EntryType Warning | Select TimeGenerated, EventID, Source, Message | ConvertTo-HTML -Head "<H2 style='color:green;'>System Warning Event Logs</H2>" -body $a | Out-file $file -Append
+    Get-EventLog -LogName Application -Newest 10 -EntryType Error | Select TimeGenerated, EventID, Source, Message |  ConvertTo-HTML -Head "<H2 style='color:green;'>Application Error Event Logs</H2>" -body $a | Out-file $file -Append
+    Get-EventLog -LogName Application -Newest 10 -EntryType Warning | Select TimeGenerated, EventID, Source, Message | ConvertTo-HTML -Head "<H2 style='color:green;'>Application Warning Event Logs</H2>" -body $a | Out-file $file -Append
+    Get-EventLog -LogName System -Newest 10 -EntryType Error | Select TimeGenerated, EventID, Source, Message | ConvertTo-HTML -Head "<H2 style='color:green;'>System Error Event Logs</H2>" -body $a | Out-file $file -Append
+    Get-EventLog -LogName System -Newest 10 -EntryType Warning | Select TimeGenerated, EventID, Source, Message | ConvertTo-HTML -Head "<H2 style='color:green;'>System Warning Event Logs</H2>" -body $a | Out-file $file -Append
 
-#Get Stopped Services
+    #Get Stopped Services
 
-Get-Service | Where {($_.Status) -eq "Stopped"} | Select Status, Name, DisplayName | ConvertTo-HTML -Head "<H2 style='color:green;'>Stopped Services</H2>" -body $a | Out-File $destination -Append
+    Get-Service | Where { ($_.Status) -eq "Stopped" } | Select Status, Name, DisplayName | ConvertTo-HTML -Head "<H2 style='color:green;'>Stopped Services</H2>" -body $a | Out-File $destination -Append
 
-#Get Processes and CPU
+    #Get Processes and CPU
 
-Get-Process | Select Id, ProcessName, CPU | ConvertTo-HTML -Head "<H2 style='color:green;'>Processes & CPU</H2>" -body $a | Out-File $destination -Append
+    Get-Process | Select Id, ProcessName, CPU | ConvertTo-HTML -Head "<H2 style='color:green;'>Processes & CPU</H2>" -body $a | Out-File $destination -Append
 
-#Get Mapped Drives
+    #Get Mapped Drives
 
-Get-PSDrive | Where {$_.Used -ne $null} | Select Name, @{n='Used';e={[float]($_.Used/1GB)}}, @{n='Free';e={[float]($_.Free/1GB)}}, Root| ConvertTo-HTML -Head "<H2 style='color:green;'>Mapped Drives</H2>" -body $a | Out-File $destination -Append
+    Get-PSDrive | Where { $_.Used -ne $null } | Select Name, @{n = 'Used'; e = { [float]($_.Used / 1GB) } }, @{n = 'Free'; e = { [float]($_.Free / 1GB) } }, Root | ConvertTo-HTML -Head "<H2 style='color:green;'>Mapped Drives</H2>" -body $a | Out-File $destination -Append
 
-#Get Printers
+    #Get Printers
 
-Get-Printer | Select Name, Type, PortName | ConvertTo-HTML -Head "<H2 style='color:green;'>Printers</H2>" -body $a | Out-file $destination -append
+    Get-Printer | Select Name, Type, PortName | ConvertTo-HTML -Head "<H2 style='color:green;'>Printers</H2>" -body $a | Out-file $destination -append
 
 
     
@@ -167,5 +168,3 @@ Get-Printer | Select Name, Type, PortName | ConvertTo-HTML -Head "<H2 style='col
         exit 1
     }
 }
-
-exit $LASTEXITCODE

@@ -10,6 +10,3 @@ else {
     Write-Output "Machine is not Azure Ad Joined"
     exit 1
 }
-
-
-Exit $LASTEXITCODE

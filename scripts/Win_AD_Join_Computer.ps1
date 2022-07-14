@@ -43,36 +43,34 @@ if ([string]::IsNullOrEmpty($UserAccount)) {
     EXIT 1
 }
 
-if ([string]::IsNullOrEmpty($password)){
+if ([string]::IsNullOrEmpty($password)) {
     Write-Output "Password must be defined. Use -password <value> to pass it."
     EXIT 1
 }
 
-else{
+else {
     $username = "$domain\$UserAccount"
     $password = ConvertTo-SecureString -string $password -asPlainText -Force
     $credential = New-Object System.Management.Automation.PSCredential($username, $password)
-    }
-
-try{
-
-if ([string]::IsNullOrEmpty($OUPath)){
-    Write-Output "OU Path is not defined. Computer object will be created in the default OU."
-    Add-Computer -DomainName $domain -Credential $credential -Restart
-    echo "Add-Computer -DomainName $domain -Credential $credential -Restart" >> C:\Temp\ADJoinCommand.log
-    EXIT 0
 }
 
-else {
-    Add-Computer -DomainName $domain -OUPath $OUPath -Credential $credential -Restart
-    echo "Add-Computer -DomainName $domain -OUPath $OUPath -Credential $credential -Restart" >> C:\Temp\ADJoinCommand.log
-    EXIT 0
+try {
+
+    if ([string]::IsNullOrEmpty($OUPath)) {
+        Write-Output "OU Path is not defined. Computer object will be created in the default OU."
+        Add-Computer -DomainName $domain -Credential $credential -Restart
+        echo "Add-Computer -DomainName $domain -Credential $credential -Restart" >> C:\Temp\ADJoinCommand.log
+        EXIT 0
+    }
+
+    else {
+        Add-Computer -DomainName $domain -OUPath $OUPath -Credential $credential -Restart
+        echo "Add-Computer -DomainName $domain -OUPath $OUPath -Credential $credential -Restart" >> C:\Temp\ADJoinCommand.log
+        EXIT 0
     }
 }
 
-catch{
+catch {
     Write-Output "An error has occured."
     EXIT 1
 }
-
-Exit $LASTEXITCODE

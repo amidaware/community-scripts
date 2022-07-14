@@ -25,6 +25,3 @@ foreach ($FullPath in $GoodPath) {
 
 }   
 Write-Output $TeamViewerID
-
-
-Exit $LASTEXITCODE

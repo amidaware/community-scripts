@@ -31,25 +31,18 @@
 # :END
 # SET DSTATUS=
 
-$ErrorActionPreference= 'silentlycontinue'
+$ErrorActionPreference = 'silentlycontinue'
 $TimeSpan = (Get-Date) - (New-TimeSpan -Day 1)
 
-if (Get-WinEvent -FilterHashtable @{LogName='Application';ID='202';StartTime=$TimeSpan}) 
-
-{
-Write-Output "Duplicati Backup Ended with Errors"
-Get-WinEvent -FilterHashtable @{LogName='Application';ID='205','201','202';StartTime=$TimeSpan}
-exit 1
+if (Get-WinEvent -FilterHashtable @{LogName = 'Application'; ID = '202'; StartTime = $TimeSpan }) {
+    Write-Output "Duplicati Backup Ended with Errors"
+    Get-WinEvent -FilterHashtable @{LogName = 'Application'; ID = '205', '201', '202'; StartTime = $TimeSpan }
+    exit 1
 }
 
 
-else 
-
-{
-Write-Output "Duplicati Backup Is Working Correctly"
-Get-WinEvent -FilterHashtable @{LogName='Application';ID='205','200','201'}
-exit 0
+else {
+    Write-Output "Duplicati Backup Is Working Correctly"
+    Get-WinEvent -FilterHashtable @{LogName = 'Application'; ID = '205', '200', '201' }
+    exit 0
 }
-
-
-Exit $LASTEXITCODE

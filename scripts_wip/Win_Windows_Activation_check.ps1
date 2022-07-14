@@ -9,5 +9,3 @@ else {
     Write-Output "Theres an issue $WinVerAct"
     exit 1
 }
-
-Exit $LASTEXITCODE

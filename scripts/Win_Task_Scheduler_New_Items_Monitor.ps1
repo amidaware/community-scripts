@@ -30,6 +30,3 @@ else {
     Write-Output "No changes with Task Scheduler"
     exit 0
 }
-
-
-Exit $LASTEXITCODE

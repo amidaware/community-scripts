@@ -31,5 +31,3 @@ if (Get-WinEvent -FilterHashtable @{LogName = 'application'; ID = '11707'; Start
     Write-Output "No Software install events detected in the past 24 hours."
     exit 0
 }
-
-Exit $LASTEXITCODE

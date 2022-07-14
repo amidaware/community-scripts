@@ -11,43 +11,12 @@
 
 If ((Test-Path -Path "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Tactical RMM Agent.lnk" -PathType Leaf) -eq $false ) {
     
-    Write-Output "No Shortcut"
-    exit 0
+   Write-Output "No Shortcut"
+   exit 0
 
 }
 Else {
 
-    Write-Output 'Shortcut Exists'
-    exit 1
+   Write-Output 'Shortcut Exists'
+   exit 1
 } 
-
-Exit $LASTEXITCODE
-
-# function Verb-Noun
-# {
-#     [CmdletBinding()]
-#     [Alias()]
-#     [OutputType([int])]
-#     Param
-#     (
-#         # Param1 help description
-#         [Parameter(Mandatory=$true,
-#                    ValueFromPipelineByPropertyName=$true,
-#                    Position=0)]
-#         $Param1,
-
-#         # Param2 help description
-#         [int]
-#         $Param2
-#     )
-
-#     Begin
-#     {
-#     }
-#     Process
-#     {
-#     }
-#     End
-#     {
-#     }
-# }
