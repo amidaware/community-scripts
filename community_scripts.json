@@ -886,6 +886,19 @@
     "category": "TRMM (Win):User Management"
   },
   {
+    "guid": "ad918098-510f-41a1-98a9-3e10a6443324",
+    "filename": "Win_User_Admin_LAPS.ps1",
+    "submittedBy": "https://github.com/silversword411",
+    "name": "For Setting up and running a LAPS (Local Administrator Password Solution) for non-AD",
+    "description": "This will create a local administrator, with each run it will change that localadmin user's password. This will let you make users non-administrators, but still have a local admin account.",
+    "syntax": "[-LAPSID <string>]\n[-PassLength <Int>]\n[HideUser]\n[ShowUser]",
+    "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
+    "category": "TRMM (Win):User Management"
+  },
+  {
     "guid": "71090fc4-faa6-460b-adb0-95d7863544e1",
     "filename": "Win_Bluescreen_Report.ps1",
     "submittedBy": "https://github.com/bbrendon",
