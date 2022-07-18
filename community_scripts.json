@@ -1483,7 +1483,7 @@
     "supported_platforms": [
       "linux"
     ],
-    "shell": "bash",
+    "shell": "shell",
     "category": "TRMM (Linux):Checks"
   }
 ]

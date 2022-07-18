@@ -13,7 +13,7 @@ def _check_for_duplicate_keys(items):
 
 
 def test_community_script_json_file():
-    valid_shells = ["powershell", "python", "cmd", "bash"]
+    valid_shells = ["powershell", "python", "cmd", "shell"]
     valid_os = ["windows", "linux", "darwin"]
 
     with open("community_scripts.json") as f:
