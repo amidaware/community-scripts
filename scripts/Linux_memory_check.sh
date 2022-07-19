@@ -24,7 +24,7 @@ MEM_FREE=$(printf "%.*f\n" "0" "$MEM_FREE")
 
 if [ $MEM_FREE -ge $min ]; 
 then
-	echo "$MEM_FREE% memory available. More than onfigured $min%"
+	echo "$MEM_FREE% memory available. More than configured $min%"
 	exit 0
 else
 	echo "$MEM_FREE% memory available. Less than configured $min%"
