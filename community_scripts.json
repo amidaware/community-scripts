@@ -349,7 +349,8 @@
     "supported_platforms": [
       "windows"
     ],
-    "category": "TRMM (Win):Hardware"
+    "category": "TRMM (Win):Hardware",
+    "default_timeout": "3600"
   },
   {
     "guid": "72c56717-28ed-4cc6-b30f-b362d30fb4b6",
@@ -1490,7 +1491,7 @@
     "name": "Memory Usage Check",
     "description": "Used to check the current physical memory available on a linux machine and error out if too low. (Default threshold is 20%, can be changed by passing a new value to the check)",
     "args": [
-	  "min=20"
+      "min=20"
     ],
     "default_timeout": "60",
     "supported_platforms": [
