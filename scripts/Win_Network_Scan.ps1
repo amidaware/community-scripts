@@ -30,7 +30,7 @@ $Subnet = ($IP -split "`r`n" | ForEach-Object {
 1..254 | ForEach-Object {
   Start-Process -WindowStyle Hidden ping.exe -Argumentlist "-n 1 -l 0 -f -i 2 -w 1 -4 $SubNet$_"
 }
-$Computers = (arp.exe -a | Select-String "$SubNet.*dynam") -replace ' +', ',' |
+$Computers = (arp.exe -a | Select-String "$SubNet.*dynam") -replace ' +', ', ' |
 ConvertFrom-Csv -Header Computername, IPv4, MAC, x, Vendor |
 Select-Object Computername, IPv4, MAC
 
