@@ -1488,9 +1488,25 @@
     "filename": "Linux_memory_check.sh",
     "submittedBy": "https://github.com/BelleNottelling",
     "name": "Memory Usage Check",
-    "description": "Used to check the current physical memory available on a linux machine and error out if too low. (Default threshold is 20%, can be changed by passing a new value to the check)",
+    "description": "Used to check the current physical memory available on a linux machine and error out if it's too low. (Default threshold is 20%, can be changed by passing a new value to the check)",
     "args": [
 	  "min=20"
+    ],
+    "default_timeout": "60",
+    "supported_platforms": [
+      "linux"
+    ],
+    "shell": "shell",
+    "category": "TRMM (Linux):Checks"
+  },
+  {
+    "guid": "8d5faedc-17cc-4a40-afc5-1dccc5097842",
+    "filename": "Linux_CPU_check.sh",
+    "submittedBy": "https://github.com/BelleNottelling",
+    "name": "CPU Usage Check",
+    "description": "Used to check the CPU usage on a linux machine and error out if it's too high. (Default threshold is 80%, can be changed by passing a new value to the check)",
+    "args": [
+	  "max=80"
     ],
     "default_timeout": "60",
     "supported_platforms": [
