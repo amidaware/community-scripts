@@ -5,7 +5,7 @@
    https://www.microsoft.com/en-us/download/details.aspx?id=46899
 
 .DESCRIPTION
-   This will create a local administrator, with each run it will change that localadmin user's password. This will let you make users non-administrators, but still have a local admin account.  
+   This will create a local administrator, with each run it will change that localadmin user's password. This will let you make users non-administrators, but still have a local admin account.
    Walkthru here: https://docs.tacticalrmm.com/functions/examples/#setup-laps-local-administrator-password-solution
 
 .PARAMETER LAPSID
