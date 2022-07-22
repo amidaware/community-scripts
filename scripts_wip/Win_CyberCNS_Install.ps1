@@ -106,7 +106,7 @@ function Win_CyberCNS_Install {
             $source = $ExecutableLocation
             $destination = "C:\packages$random\cybercnsagent.exe"
             Invoke-WebRequest -Uri $source -OutFile $destination
-            $arguments = @("-c $CompanyID", "-a $ClientID", "-s $ClientSecret", "-b $Portal", "-i $Type")
+            $arguments = @("-c $CompanyID", "-a $ClientID", "-s $ClientSecret", "-b $Portal", "-e $Tenant", "-i $Type")
             $process = Start-Process -NoNewWindow -FilePath $destination -ArgumentList $arguments -PassThru
             $timedOut = $null
             $process | Wait-Process -Timeout 300 -ErrorAction SilentlyContinue -ErrorVariable timedOut
