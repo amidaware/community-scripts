@@ -35,6 +35,10 @@
 #>
 
 Param(
+
+	[Parameter(Mandatory)]
+	[string]$ExecutableLocation,
+
     [Parameter(Mandatory)]
     [string]$Tenant,
 
@@ -47,6 +51,9 @@ Param(
     [Parameter(Mandatory)]
     [string]$ClientSecret,
 
+	[Paremeter(Mandatory)]
+	[string]$Portal,
+
     [Parameter(Mandatory)]
     [ValidateSet("Probe", "LightWeight", "Scan")]
     $Type
@@ -55,6 +62,9 @@ Param(
 function Win_CyberCNS_Install {
     [CmdletBinding()]
     Param(
+		[Parameter(Mandatory)]
+		[string]$ExecutableLocation,
+
         [Parameter(Mandatory)]
         [string]$Tenant,
 
@@ -66,6 +76,9 @@ function Win_CyberCNS_Install {
 
         [Parameter(Mandatory)]
         [string]$ClientSecret,
+
+		[Paremeter(Mandatory)]
+		[string]$Portal,
 
         [Parameter(Mandatory)]
         [ValidateSet("Probe", "LightWeight", "Scan")]
@@ -85,10 +98,10 @@ function Win_CyberCNS_Install {
 
     Process {
         Try {
-            $source = "https://$Tenant.mycybercns.com/agents/ccnsagent/cybercnsagent.exe"
+            $source = $ExecutableLocation
             $destination = "C:\packages$random\cybercnsagent.exe"
             Invoke-WebRequest -Uri $source -OutFile $destination
-            $arguments = @("-c $CompanyID", "-a $ClientID", "-s $ClientSecret", "-b $Tenant.mycybercns.com", "-i $Type")
+            $arguments = @("-c $CompanyID", "-a $ClientID", "-s $ClientSecret", "-b $Portal", "-i $Type")
             $process = Start-Process -NoNewWindow -FilePath $destination -ArgumentList $arguments -PassThru
             $timedOut = $null
             $process | Wait-Process -Timeout 300 -ErrorAction SilentlyContinue -ErrorVariable timedOut
@@ -124,10 +137,12 @@ if (-not(Get-Command 'Win_CyberCNS_Install' -errorAction SilentlyContinue)) {
 }
  
 $scriptArgs = @{
+	ExecutableLocation = $ExecutableLocation
     Tenant       = $Tenant
     CompanyID    = $CompanyID
     ClientID     = $ClientID
     ClientSecret = $ClientSecret
+	Portal       = $Portal
     Type         = $Type
 }
  
