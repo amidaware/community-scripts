@@ -82,7 +82,7 @@
     "filename": "Win_Duplicati_Install.bat",
     "submittedBy": "https://github.com/dinger1986",
     "name": "Duplicati - Install 2.0.6.100 to work with Community Check Status",
-    "description": "This script installs Duplicati 2.0.6.100 as a service and creates status files to be used with commuity check",
+    "description": "This script installs Duplicati 2.0.6.100 as a service and creates status files to be used with community check",
     "shell": "cmd",
     "category": "TRMM (Win):3rd Party Software",
     "supported_platforms": [
@@ -272,7 +272,7 @@
     "filename": "Win_Bitlocker_Retrieve_Status_Report.ps1",
     "submittedBy": "https://github.com/ThatsNASt",
     "name": "Bitlocker - Retrieve Status Report",
-    "description": "Retreives a Bitlocker status report.",
+    "description": "Retrieves a Bitlocker status report.",
     "shell": "powershell",
     "supported_platforms": [
       "windows"
@@ -284,7 +284,7 @@
     "filename": "Win_Bitlocker_Get_Recovery_Keys.ps1",
     "submittedBy": "https://github.com/silversword411",
     "name": "Bitlocker - Get Recovery Keys",
-    "description": "Retreives a Bitlocker Recovery Keys",
+    "description": "Retrieves a Bitlocker Recovery Keys",
     "shell": "powershell",
     "supported_platforms": [
       "windows"
@@ -308,7 +308,7 @@
     "filename": "Win_Bios_Check.ps1",
     "submittedBy": "https://github.com/ThatsNASt",
     "name": "BIOS - Check Information",
-    "description": "Retreives and reports on BIOS make, version, and date.",
+    "description": "Retrieves and reports on BIOS make, version, and date.",
     "shell": "powershell",
     "supported_platforms": [
       "windows"
@@ -320,7 +320,7 @@
     "filename": "Win_Hardware_Monitor_Get_Info.ps1",
     "submittedBy": "https://github.com/MaxAnderson95/",
     "name": "Monitor - Get Info",
-    "description": "Retreives and reports on Monitor info: Manufacturer, Model, Serial",
+    "description": "Retrieves and reports on Monitor info: Manufacturer, Model, Serial",
     "shell": "powershell",
     "supported_platforms": [
       "windows"
@@ -332,7 +332,7 @@
     "filename": "Win_Hardware_RAM_Status.ps1",
     "submittedBy": "https://github.com/silversword411",
     "name": "RAM - Check Information",
-    "description": "Retreives and reports on RAM info: DIMM's, total memory, slots total and used",
+    "description": "Retrieves and reports on RAM info: DIMM's, total memory, slots total and used",
     "shell": "powershell",
     "supported_platforms": [
       "windows"
