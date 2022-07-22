@@ -13,21 +13,26 @@
 .EXAMPLE
     Win_CyberCNS_Install -Type Scan
 .INSTRUCTIONS
-    1. Navigate to your CyberCNS portal and create a Probe/Agent deployment.
-    2. In Tactical RMM, Go to Settings >> Global Settings >> Custom Fields and under Clients, create the following custom fields: 
-        a) CyberCNSTenant as type text
-        b) CyberCNSCompanyID as type text
-        c) CyberCNSClientID as type text
-        d) CyberCNSClientSecret as type text
-        e) CyberCNSType as type Dropdown Multiple with options Probe, LightWeight, and Scan
-    3. In Tactical RMM, Right-click on each client and select Edit. Fill in the CyberCNSTenant, CyberCNSCompanyID, CyberCNSClientID, 
+	1. Download the CyberCNS executable and upload to a location accessable by your clients.
+    2. Navigate to your CyberCNS portal and create a Probe/Agent deployment.
+    3. In Tactical RMM, Go to Settings >> Global Settings >> Custom Fields and under Clients, create the following custom fields: 
+		a) ExecutableLocation as type text
+        b) CyberCNSTenant as type text
+        c) CyberCNSCompanyID as type text
+        d) CyberCNSClientID as type text
+        e) CyberCNSClientSecret as type text
+		f) Portal as type text
+        g) CyberCNSType as type Dropdown Multiple with options Probe, LightWeight, and Scan
+    4. In Tactical RMM, Right-click on each client and select Edit. Fill in the CyberCNSTenant, CyberCNSCompanyID, CyberCNSClientID, 
         and CyberCNSClientSecret.
-    4. Create the follow script arguments
-        a) -Tenant {{client.CyberCNSTenant}}
-        b) -CompanyID {{client.CyberCNSCompanyID}}
-        c) -ClientID {{client.CyberCNSClientID}}
-        d) -ClientSecret {{client.CyberCNSClientSecret}}
-        e) -Type {{client.CyberCNSType}}
+    5. Create the follow script arguments
+		a) -ExecutableLocation {{client.ExecutableLocation}}
+        b) -Tenant {{client.CyberCNSTenant}}
+        c) -CompanyID {{client.CyberCNSCompanyID}}
+        d) -ClientID {{client.CyberCNSClientID}}
+        e) -ClientSecret {{client.CyberCNSClientSecret}}
+		f) -Portal {{client.Portal}}
+        g) -Type {{client.CyberCNSType}}
 .NOTES
    Version: 1.0
    Author: redanthrax
