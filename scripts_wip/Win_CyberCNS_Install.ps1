@@ -56,7 +56,7 @@ Param(
     [Parameter(Mandatory)]
     [string]$ClientSecret,
 
-	[Paremeter(Mandatory)]
+	[Parameter(Mandatory)]
 	[string]$Portal,
 
     [Parameter(Mandatory)]
@@ -82,7 +82,7 @@ function Win_CyberCNS_Install {
         [Parameter(Mandatory)]
         [string]$ClientSecret,
 
-		[Paremeter(Mandatory)]
+		[Parameter(Mandatory)]
 		[string]$Portal,
 
         [Parameter(Mandatory)]
