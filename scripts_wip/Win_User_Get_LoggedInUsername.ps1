@@ -5,8 +5,13 @@ $ErrorActionPreference = 'silentlycontinue'
 
 $currentuser = ((Get-WMIObject -ClassName Win32_ComputerSystem).Username).Split('\')[1]
 
-# (Get-CimInstance -ClassName Win32_ComputerSystem).Username #ComputerName\LoggedInUsername
-#((Get-WMIObject -ClassName Win32_ComputerSystem).Username).Split('\')[1] #LoggedInUsername
+# (Get-CimInstance -ClassName Win32_ComputerSystem).Username                    # ComputerName\LoggedInUsername
+#((Get-WMIObject -ClassName Win32_ComputerSystem).Username).Split('\')[1]       # LoggedInUsername
+
+$Domain = (Get-WmiObject Win32_ComputerSystem | Select-Object Username).Username.Split("\\")[0]             # Get Domain
+$UserName = (Get-WmiObject Win32_ComputerSystem | Select-Object Username).Username.Split("\\")[1]           # Get Logged In Username
+$SID = (New-Object System.Security.Principal.NTAccount($Domain, $UserName)).Translate([System.Security.Principal.SecurityIdentifier]).Value     # Get Logged In Users SID
+
 
 If (!$currentuser) {    
     Write-Output "Noone currently logged in"
