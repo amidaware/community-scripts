@@ -19,7 +19,7 @@ then
     min="20"
 fi
 
-MEM_FREE=$(free | grep Mem | awk '{print $4/$2 * 100.0}')
+MEM_FREE=$(free | grep Mem | awk '{print $7/$2 * 100.0}')
 MEM_FREE=$(printf "%.*f\n" "0" "$MEM_FREE")
 
 if [ $MEM_FREE -ge $min ]; 
