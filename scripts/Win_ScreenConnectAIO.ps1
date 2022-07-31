@@ -36,9 +36,7 @@ exit 1
 if ($action -eq "uninstall") {
         $MyApp = Get-WmiObject -Class Win32_Product | Where-Object{$_.Name -eq "$serviceName"}
         $MyApp.Uninstall()
-} else {
-    If (Get-Service $serviceName -ErrorAction SilentlyContinue) {
-
+} elseif ($action -eq "stop") {
         If ((Get-Service $serviceName).Status -eq 'Running') {
             Try
             {
@@ -57,7 +55,8 @@ if ($action -eq "uninstall") {
                 {
                 }
 
-        } Else {
+        }
+} elseif ($action -eq "start") {
 
             Try
             {
@@ -76,9 +75,11 @@ if ($action -eq "uninstall") {
                 {
                 }
 
-        }
-
-    } Else {
+} else {
+    If (Get-Service $serviceName -ErrorAction SilentlyContinue) {
+            Write-Output "$serviceName already installed"
+            exit 0
+            } Else {
 
         $OutPath = $env:TMP
         $output = "screenconnect.exe"
