@@ -1,0 +1,48 @@
+#Modified from Kelvin at Cyberdrain https://www.cyberdrain.com/monitoring-with-powershell-notifying-users-of-windows-updates/
+#Removed run as user in code as Tactical can do this natively (make sure you use it!)
+#Remember to customise the $heroimage = New-BTImage -Source 
+#Remember to customise message from IT Provider
+#I intend to run a script checking for uptime of say 14-30 days every hour or day - when found it will put a registry entry to bug to reboot and will only clear once rebooted. This means the script doesn't have to be run more than once
+
+#Checking if ToastReboot:// protocol handler is present
+Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
+New-PSDrive -Name HKCR -PSProvider Registry -Root HKEY_CLASSES_ROOT -erroraction silentlycontinue | out-null
+$ProtocolHandler = get-item 'HKCR:\ToastReboot' -erroraction 'silentlycontinue'
+if (!$ProtocolHandler) {
+    #create handler for reboot
+    New-item 'HKCR:\ToastReboot' -force
+    set-itemproperty 'HKCR:\ToastReboot' -name '(DEFAULT)' -value 'url:ToastReboot' -force
+    set-itemproperty 'HKCR:\ToastReboot' -name 'URL Protocol' -value '' -force
+    new-itemproperty -path 'HKCR:\ToastReboot' -propertytype dword -name 'EditFlags' -value 2162688
+    New-item 'HKCR:\ToastReboot\Shell\Open\command' -force
+    set-itemproperty 'HKCR:\ToastReboot\Shell\Open\command' -name '(DEFAULT)' -value 'C:\Windows\System32\shutdown.exe -r -t 00' -force
+}
+ 
+
+
+Install-Module -Name BurntToast
+
+#Get Uptime
+$bootuptime = (Get-CimInstance -ClassName Win32_OperatingSystem).LastBootUpTime
+$CurrentDate = Get-Date
+$uptime = $CurrentDate - $bootuptime
+$uptimedays = $uptime.days
+ 
+    $heroimage = New-BTImage -Source 'https://media.giphy.com/media/someprettygifgoeshere/giphygiphygiffgiff.gif' -HeroImage
+    $Text1 = New-BTText -Content  "Message from IT Provider"
+    $Text2 = New-BTText -Content "Your device has not been restarted for $uptimedays days. This can cause performance and reliability issues. Please select if you'd like to reboot now, or snooze this message."
+    $Button = New-BTButton -Content "Snooze" -snooze -id 'SnoozeTime'
+    $Button2 = New-BTButton -Content "Reboot now" -Arguments "ToastReboot:" -ActivationType Protocol
+    $5Min = New-BTSelectionBoxItem -Id 5 -Content '5 minutes'
+    $10Min = New-BTSelectionBoxItem -Id 10 -Content '10 minutes'
+    $1Hour = New-BTSelectionBoxItem -Id 60 -Content '1 hour'
+    $4Hour = New-BTSelectionBoxItem -Id 240 -Content '4 hours'
+    $1Day = New-BTSelectionBoxItem -Id 1440 -Content '1 day'
+    $Items = $5Min, $10Min, $1Hour, $4Hour, $1Day
+    $SelectionBox = New-BTInput -Id 'SnoozeTime' -DefaultSelectionBoxItemId 10 -Items $Items
+    $action = New-BTAction -Buttons $Button, $Button2 -inputs $SelectionBox
+    $Binding = New-BTBinding -Children $text1, $text2 -HeroImage $heroimage
+    $Visual = New-BTVisual -BindingGeneric $Binding
+    $Audio1 = New-BTAudio -Silent
+    $Content = New-BTContent -Visual $Visual -Actions $action -Scenario Alarm -Audio $Audio1
+    Submit-BTNotification -Content $Content
