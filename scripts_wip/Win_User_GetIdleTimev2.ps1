@@ -1,4 +1,5 @@
 # bradhawkins https://discord.com/channels/736478043522072608/744281869499105290/890570620469915698
+# 0.5 seconds
 
 $idlecode = @'
 using System;
