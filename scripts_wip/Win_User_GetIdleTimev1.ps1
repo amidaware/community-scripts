@@ -1,4 +1,4 @@
-
+#Takes 2.5 seconds to run
 
 if (Get-Module -ListAvailable -Name RunAsUser) {
 } 
