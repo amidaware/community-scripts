@@ -1,5 +1,5 @@
 #Modified from Kelvin at Cyberdrain https://www.cyberdrain.com/monitoring-with-powershell-notifying-users-of-windows-updates/
-#Removed run as user in code as Tactical can do this natively (make sure you use it!)
+#Top section needs to run as system, so you need the runasuser section for below
 #Remember to customise the $heroimage = New-BTImage -Source 
 #Remember to customise message from IT Provider
 #I intend to run a script checking for uptime of say 14-30 days every hour or day - when found it will put a registry entry to bug to reboot and will only clear once rebooted. This means the script doesn't have to be run more than once
@@ -21,6 +21,8 @@ if (!$ProtocolHandler) {
 
 
 Install-Module -Name BurntToast
+Install-module -Name RunAsUser
+invoke-ascurrentuser -scriptblock {
 
 #Get Uptime
 $bootuptime = (Get-CimInstance -ClassName Win32_OperatingSystem).LastBootUpTime
@@ -46,3 +48,5 @@ $uptimedays = $uptime.days
     $Audio1 = New-BTAudio -Silent
     $Content = New-BTContent -Visual $Visual -Actions $action -Scenario Alarm -Audio $Audio1
     Submit-BTNotification -Content $Content
+    
+    }
