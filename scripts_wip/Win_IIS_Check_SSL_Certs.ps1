@@ -15,9 +15,14 @@
    Creation Date: 2022-08-08
 #>
 
+param
+(
+    $NumDays = 60
+)
+
 Import-Module WebAdministration
 
-$NumDays= 60
+# $NumDays= 60
 
 $days = (Get-Date).AddDays($NumDays)
 $TxtBindings = (& netsh http show sslcert) | select-object -skip 3 | out-string
