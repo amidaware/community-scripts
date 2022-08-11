@@ -1502,7 +1502,7 @@
     },
     {
         "guid": "8d5faedc-17cc-4a40-afc5-1dccc5097842",
-        "filename": "linux_cpu_check.sh",
+        "filename": "Linux_CPU_check.sh",
         "submittedby": "https://github.com/bellenottelling",
         "name": "cpu usage check",
         "description": "used to check the cpu usage on a linux machine and error out if it's too high. (default threshold is 80%, can be changed by passing a new value to the check)",
