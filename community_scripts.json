@@ -1504,8 +1504,8 @@
     "guid": "8d5faedc-17cc-4a40-afc5-1dccc5097842",
     "filename": "Linux_CPU_check.sh",
     "submittedby": "https://github.com/bellenottelling",
-    "name": "cpu usage check",
-    "description": "used to check the cpu usage on a linux machine and error out if it's too high. (default threshold is 80%, can be changed by passing a new value to the check)",
+    "name": "CPU Usage Check",
+    "description": "Used to check the CPU usage on a linux machine and error out if it's too high. (Default threshold is 80%, can be changed by passing a new value to the check)",
     "args": [
       "max=80"
     ],
@@ -1514,7 +1514,7 @@
       "linux"
     ],
     "shell": "shell",
-    "category": "trmm (linux):checks"
+    "category": "TRMM (Linux):Checks"
   },
   {
     "guid": "a8ddc705-c285-429e-a44c-b4ea6b889df5",
