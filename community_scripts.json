@@ -1507,7 +1507,7 @@
     "name": "CPU Usage Check",
     "description": "Used to check the CPU usage on a linux machine and error out if it's too high. (Default threshold is 80%, can be changed by passing a new value to the check)",
     "args": [
-	  "max=80"
+      "max=80"
     ],
     "default_timeout": "60",
     "supported_platforms": [
@@ -1515,5 +1515,21 @@
     ],
     "shell": "shell",
     "category": "TRMM (Linux):Checks"
+  },
+  {
+    "guid": "a8ddc705-c285-429e-a44c-b4ea6b889df5",
+    "filename": "Win_IIS_Check_SSL_Certs.ps1",
+    "submittedby": "https://github.com/ebdavison",
+    "name": "Check IIS Certs for Expiry",
+    "description": "Checks the IIS sites for https bindings and then checks the associated SSL certificate to see if it is expiring in 'NumDays'.  'NumDays' is set to 60 days as the default.",
+    "args": [
+      "-NumDays 60"
+    ],
+    "default_timeout": "60",
+    "supported_platforms": [
+      "windows"
+    ],
+    "shell": "powershell",
+    "category": "TRMM (Win):Monitoring"
   }
 ]
