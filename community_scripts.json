@@ -862,6 +862,20 @@
     ],
     "default_timeout": "600"
   },
+    {
+    "guid": "b2362f48-cedd-4f5b-8848-68fe58131c98",
+    "filename": "Win_WinGet_Manage_Apps.ps1",
+    "submittedBy": "https://github.com/dinger1986",
+    "name": "Winget - Install, Uninstall and Upgrade Software",
+    "description": "This script installs, uninstalls and updates software using winget. Mode install/uninstall/upgrade/search",
+    "syntax": "-$PackageName <string>]\n[-mode {install | search | upgrade | uninstall }]",
+    "shell": "powershell",
+    "category": "TRMM (Win):3rd Party Software>WinGet",
+    "supported_platforms": [
+      "windows"
+    ],
+    "default_timeout": "600"
+  },
   {
     "guid": "fff8024d-d72e-4457-84fa-6c780f69a16f",
     "filename": "Win_AD_Check_And_Enable_AD_Recycle_Bin.ps1",
