@@ -2,7 +2,7 @@
       .SYNOPSIS
       This will install software using the winget which should be on any up to date Windows PC
       .DESCRIPTION
-      For installing packages using winget. If running on more than 30 agents at a time make sure you also change the script timeout setting.
+      For installing packages using winget.
       .PARAMETER Mode
       4 options: install, uninstall, search or upgrade.
       .PARAMETER PackageName
