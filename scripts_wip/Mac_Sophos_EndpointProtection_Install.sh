@@ -165,6 +165,11 @@ do
     esac
 done
 
+#Fixes for extra single quotes from rmm
+clientId=$( echo $clientId | sed -e "s/'//g" )
+clientSecret=$( echo $clientSecret | sed -e "s/'//g" )
+tenantName=$( echo $tenantName | sed -e "s/'//g" )
+
 if ! [ -z $uninstall ]
 then
     echo "Uninstalling Sophos..."
