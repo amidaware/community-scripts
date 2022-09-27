@@ -1,3 +1,3 @@
 rem List apps installed by Chocolatey
 
-choco list --localonly
+choco list --local-only
