@@ -197,7 +197,7 @@
     "guid": "01845406-d83d-4ba5-960e-06bafe67a235",
     "filename": "Win_TRMM_GetLogs.ps1",
     "submittedBy": "https://github.com/RemiOS0456",
-    "name": "TacticalRMM - Get Agent Logs",
+    "name": "TacticalRMM - Get Agent Logs for debugging",
     "description": "Pulls last 50 lines, unless more are requested from TRMM agent and Mesh Agent",
     "syntax": "[-Lines <Int>]",
     "shell": "powershell",
@@ -862,7 +862,7 @@
     ],
     "default_timeout": "600"
   },
-    {
+  {
     "guid": "b2362f48-cedd-4f5b-8848-68fe58131c98",
     "filename": "Win_WinGet_Manage_Apps.ps1",
     "submittedBy": "https://github.com/dinger1986",
