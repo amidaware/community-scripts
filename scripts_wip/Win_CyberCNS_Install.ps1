@@ -61,7 +61,9 @@ Param(
 
     [Parameter(Mandatory)]
     [ValidateSet("Probe", "LightWeight", "Scan")]
-    $Type
+    $Type,
+
+    [switch]$Uninstall
 )
 
 function Win_CyberCNS_Install {
@@ -87,11 +89,13 @@ function Win_CyberCNS_Install {
 
         [Parameter(Mandatory)]
         [ValidateSet("Probe", "LightWeight", "Scan")]
-        $Type
+        $Type,
+
+        [switch]$Uninstall
     )
 
     Begin {
-        if ($null -ne (Get-Service | Where-Object { $_.DisplayName -Match "CyberCNS" })) {
+        if ($null -ne (Get-Service | Where-Object { $_.DisplayName -Match "CyberCNS" }) -and -Not($Uninstall)) {
             Write-Output "CyberCNS already installed."
             Exit 0
         }
@@ -103,6 +107,16 @@ function Win_CyberCNS_Install {
 
     Process {
         Try {
+            if ($Uninstall) {
+                if (Test-Path "C:\Program Files (x86)\CyberCNSAgentV2\cybercnsagentv2.exe.new") {
+                    Move-Item "C:\Program Files (x86)\CyberCNSAgentV2\cybercnsagentv2.exe.new" "C:\Program Files (x86)\CyberCNSAgentV2\cybercnsagentv2.exe"
+                }
+
+                net stop cybercnsagentv2
+                & "C:\Program Files (x86)\CyberCNSAgentV2\cybercnsagentv2.exe" -r
+                Exit 0 
+            }
+
             $source = $ExecutableLocation
             $destination = "C:\packages$random\cybercnsagent.exe"
             Invoke-WebRequest -Uri $source -OutFile $destination
@@ -149,6 +163,7 @@ $scriptArgs = @{
     ClientSecret = $ClientSecret
 	Portal       = $Portal
     Type         = $Type
+    Uninstall    = $Uninstall
 }
  
 Win_CyberCNS_Install @scriptArgs
