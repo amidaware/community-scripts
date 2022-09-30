@@ -18,7 +18,7 @@ function Win_PatchPercentage {
         Try {
             $updates = (New-Object -c Microsoft.Update.Session).CreateUpdateSearcher()
             $installed = $updates.Search("IsInstalled=1").Updates.Count
-            $missing = $updates.Search("IsInstalled=0").Updates.Count
+            $missing = $updates.Search("IsInstalled=0 AND Type='Software' AND IsHidden=0").Updates.Count
             $complete = ($installed / ($installed + $missing)).ToString("P")
             Write-Output $complete
         }
