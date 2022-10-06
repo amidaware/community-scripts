@@ -81,8 +81,8 @@
     "guid": "7b1d90a1-3eda-48ab-9c49-20e714c9e82a",
     "filename": "Win_Duplicati_Install.bat",
     "submittedBy": "https://github.com/dinger1986",
-    "name": "Duplicati - Install 2.0.6.100 to work with Community Check Status",
-    "description": "This script installs Duplicati 2.0.6.100 as a service and creates status files to be used with community check",
+    "name": "Duplicati - Install 2.0.6.3 to work with Community Check Status",
+    "description": "This script installs Duplicati 2.0.6.3 as a service and creates status files to be used with community check",
     "shell": "cmd",
     "category": "TRMM (Win):3rd Party Software",
     "supported_platforms": [
