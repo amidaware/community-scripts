@@ -243,6 +243,19 @@
     "category": "TRMM (Win):TacticalRMM Related"
   },
   {
+    "guid": "b90fb6a1-cf53-48d4-9747-60dd333c7159",
+    "filename": "Win_TRMM_Mesh_Install.ps1",
+    "submittedBy": "https://github.com/NiceGuyIT",
+    "name": "TacticalRMM - Install Mesh Agent if it's not installed",
+    "description": "For deployments where Mesh Agent was not installed or failed to be installed. See script notes for requirements.",
+    "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
+    "syntax": "API_KEY <string>",
+    "category": "TRMM (Win):TacticalRMM Related"
+  },
+  {
     "guid": "525ae965-1dcf-4c17-92b3-5da3cf6819f5",
     "filename": "Win_Bitlocker_Drive_Check_Status.ps1",
     "submittedBy": "https://github.com/silversword411",
