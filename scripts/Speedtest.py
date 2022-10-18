@@ -1193,7 +1193,7 @@ class Speedtest(object):
         if gzip:
             headers["Accept-Encoding"] = "gzip"
         request = build_request(
-            "://www.speedtest.net/speedtest-config.php",
+            "https://www.speedtest.net/speedtest-config.php",
             headers=headers,
             secure=self._secure,
         )
