@@ -12,13 +12,14 @@ $Output = @()
 $Partitions | ForEach-Object {
   $Disk = Get-PhysicalDisk -DeviceNumber $_.DiskNumber
   $Output += [PSCustomObject]@{
-    MountPoint = $_.DriveLetter
-    DiskType = $Disk.MediaType
-    DriveName = $Disk.FriendlyName
+    MountPoint        = $_.DriveLetter
+    DiskType          = $Disk.MediaType
+    DriveName         = $Disk.FriendlyName
     DriveSerialNumber = $Disk.SerialNumber
-    SizeInGigabytes = $Disk.Size/1GB
-    Health = $Disk.HealthStatus
-    SystemDrive = $env:SystemDrive[0] -eq $_.DriveLetter ? $true : $false
+    SizeInGigabytes   = $Disk.Size / 1GB
+    Health            = $Disk.HealthStatus
+    SystemDrive       = ($env:SystemDrive[0] -eq $_.DriveLetter)
   }
+}
 
 $Output | Format-Table
