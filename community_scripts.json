@@ -252,7 +252,7 @@
     "supported_platforms": [
       "windows"
     ],
-    "syntax": "API_KEY <string>",
+    "syntax": "[-Reinstall]\n[-UseTemp]\nEnvironmental: TRMM_API_KEY=<string>",
     "category": "TRMM (Win):TacticalRMM Related"
   },
   {
