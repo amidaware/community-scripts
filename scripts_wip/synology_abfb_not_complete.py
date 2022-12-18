@@ -23,12 +23,14 @@ This example will return logs where the "last_backup_status" is *not* "complete"
     --ago-unit=hours --ago-value=12 -> Search the logs for the past 12 hours and return entries
         where the "backup_result.last_backup_status" is not "complete".
 
-$ python3 trmm-example-3.py --help
-usage: trmm-example-3.py [-h]
-                         [--log-level {debug,info,warning,error,critical}]
-                         [--log-path LOG_PATH] [--log-glob LOG_GLOB]
-                         [--ago-unit AGO_UNIT] [--ago-value AGO_VALUE]
-                         [--auto-upgrade]
+$ python3 trmm-synology_abfb_not_complete.py --help
+usage: trmm-synology_abfb_not_complete.py [-h]
+                                          [--log-level {debug,info,warning,error,critical}]
+                                          [--log-path LOG_PATH]
+                                          [--log-glob LOG_GLOB]
+                                          [--ago-unit AGO_UNIT]
+                                          [--ago-value AGO_VALUE]
+                                          [--auto-upgrade]
 
 Parse the Synology Active Backup for Business logs.
 
@@ -183,9 +185,9 @@ def main(logger=logging.getLogger(), ago_unit='days', ago_value=1, log_path=None
                 print(f"{ts}: {event['json']['backup_result']}    Days/Hours ago: {delta_backup}")
 
         except TypeError as err:
-            logging.warning(f'Failed to check for key before using. Skipping this event. ERR: {err}')
-            logging.warning(traceback.format_exc())
-            logging.warning(f'Event: {event}')
+            logger.warning(f'Failed to check for key before using. Skipping this event. ERR: {err}')
+            logger.warning(traceback.format_exc())
+            logger.warning(f'Event: {event}')
             continue
 
     if errors_found:

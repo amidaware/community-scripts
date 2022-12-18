@@ -26,12 +26,15 @@ using the --ago-unit and --ago-value parameters.
     --ago-unit=days --ago-value=7 -> Search the logs for the past 7 days.
     --ago-unit=weeks --ago-value=1 -> Same as above. Search the logs for the past 1 week.
 
-$ python3 trmm-example-1.py --help
-usage: trmm-example-1.py [-h]
-                         [--log-level {debug,info,warning,error,critical}]
-                         [--log-path LOG_PATH] [--log-glob LOG_GLOB]
-                         [--ago-unit AGO_UNIT] [--ago-value AGO_VALUE]
-                         [--auto-upgrade]
+$ python3 trmm-synology_abfb_error_check.py --help
+usage: trmm-synology_abfb_error_check.py [-h]
+                                         [--log-level {debug,info,warning,error,critical}]
+                                         [--log-path LOG_PATH]
+                                         [--log-glob LOG_GLOB]
+                                         [--ago-unit AGO_UNIT]
+                                         [--ago-value AGO_VALUE]
+                                         [--auto-upgrade]
+
 Parse the Synology Active Backup for Business logs.
 
 optional arguments:
@@ -166,9 +169,9 @@ def main(logger=logging.getLogger(), ago_unit='days', ago_value=1, log_path=None
             # Always print the output, so it's visible to the users.
             print(f"{ts}: {event['priority']} {event['message']}")
         except TypeError as err:
-            logging.warning(f'Failed to check for key before using. Skipping this event. ERR: {err}')
-            logging.warning(traceback.format_exc())
-            logging.warning(f'Event: {event}')
+            logger.warning(f'Failed to check for key before using. Skipping this event. ERR: {err}')
+            logger.warning(traceback.format_exc())
+            logger.warning(f'Event: {event}')
             continue
 
     if errors_found:
