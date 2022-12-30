@@ -28,175 +28,233 @@
 	V1.1 Added error handling for each Invoke-Rest Call for easier troubleshooting and graceful exit.
 	V1.2 Added support for more than 100 tenants.
     V1.3 Removed Chocolately dependency
+    v1.4 Fixed logit handling
 	
 #>
 
-param(
-    $ClientId,
-    $ClientSecret,
-    $TenantName,
-    $Products
+Param(
+    [Parameter(Mandatory)]
+    [string]$ClientId,
+
+    [Parameter(Mandatory)]
+    [string]$ClientSecret,
+
+    [Parameter(Mandatory)]
+    [string]$TenantName,
+
+    [string]$Products = "antivirus,intercept",
+
+    [switch]$Uninstall
 )
 
-if ([string]::IsNullOrEmpty($ClientId)) {
-    throw "ClientId must be defined. Use -ClientId <value> to pass it."
-}
+function Get-InstallerUrl {
+    Param(
+        [Parameter(Mandatory)]
+        [string]$ClientId,
 
-if ([string]::IsNullOrEmpty($ClientSecret)) {
-    throw "ClientSecret must be defined. Use -ClientSecret <value> to pass it."
-}
+        [Parameter(Mandatory)]
+        [string]$ClientSecret,
 
-if ([string]::IsNullOrEmpty($TenantName)) {
-    throw "TenantName must be defined. Use -TenantName <value> to pass it."
-}
+        [Parameter(Mandatory)]
+        [int]$ProductType
+    )
 
-if ([string]::IsNullOrEmpty($Products)) {
-    Write-Output "No product options specified installing default antivirus and intercept."
-    $Products = "antivirus,intercept"
-}
+    $urlAuth = "https://id.sophos.com/api/v2/oauth2/token"
+    $urlWhoami = "https://api.central.sophos.com/whoami/v1"
+    $urlTenant = "https://api.central.sophos.com/partner/v1/tenants?pageTotal=true"
+    $authBody = @{
+        "grant_type"    = "client_credentials"
+        "client_id"     = $ClientId
+        "client_secret" = $ClientSecret
+        "scope"         = "token"
+    }
 
-Write-Output "Running Sophos Endpoint Installation Script On: $env:COMPUTERNAME"
+    $authResponse = (Invoke-RestMethod -Method 'post' -Uri $urlAuth -Body $authBody)
+    $authToken = $authResponse.access_token
+    $authHeaders = @{Authorization = "Bearer $authToken" }
+    if ($authToken.length -eq 0) {
+        throw "Error, no authentication token received.  Please check your api credentials.  Exiting script."
+    }
 
-# Set TLS Version for web requests
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    $whoAmIResponse = (Invoke-RestMethod -Method 'Get' -headers $authHeaders -Uri $urlWhoami)
+    $myId = $whoAmIResponse.Id
+    $myIdType = $whoAmIResponse.idType
+    if ($myIdType.length -eq 0) {
+        throw "Error, no Whoami Id Type received.  Please check your api credentials or network connections.  Exiting script."
+    }
 
-# Find if workstation or server.  osInfo.ProductType returns 1 = workstation, 2 = domain controller, 3 = server
-$osInfo = Get-CimInstance -ClassName Win32_OperatingSystem
+    $TextInfo = (Get-Culture).TextInfo
+    $myIdType = $TextInfo.ToTitleCase($myIdType)
 
-$urlAuth = "https://id.sophos.com/api/v2/oauth2/token"
-$urlWhoami = "https://api.central.sophos.com/whoami/v1"
-$urlTenant = "https://api.central.sophos.com/partner/v1/tenants?pageTotal=true"
+    $requestHeaders = @{
+        "Authorization" = "Bearer $authToken"
+        "X-$myIdType-ID"  = $myId
+    }
 
-$authBody = @{
-    "grant_type"    = "client_credentials"
-    "client_id"     = $ClientId
-    "client_secret" = $ClientSecret
-    "scope"         = "token"
-}
+    # Cycle through all tenants until a tenant match, or all pages have exhausted.  
+    $currentPage = 1
+    do {
+        Write-Output "Looking for tenant on page $currentPage.  Please wait..."
+        
+        if ($currentPage -ge 2) {
+            Start-Sleep -s 5
+            $urlTenant = "https://api.central.sophos.com/partner/v1/tenants?page=$currentPage"
+        }
+        
+        $tenantResponse = (Invoke-RestMethod -Method 'Get' -headers $requestHeaders -Uri $urlTenant)
+        $tenants = $tenantResponse.items
+        $totalPages	= [int]$tenantResponse.pages.total
+        
+        foreach ($tenant in $tenants) {
+            if ($tenant.name -eq $TenantName) {
+                $tenantRegion = $tenant.dataRegion
+                $tenantId = $tenant.id
+            }
+        }
+        $currentPage += 1
+    } until( $currentPage -gt $totalPages -Or ($tenantId.length -gt 1 ) )
 
-$authResponse = (Invoke-RestMethod -Method 'post' -Uri $urlAuth -Body $authBody)
-$authToken = $authResponse.access_token
-$authHeaders = @{Authorization = "Bearer $authToken" }
+    if ($tenantId.length -eq 0) {
+        throw "Error, no tenant found with the provided name.  Please check the name and try again.  Exiting script."
+    }
 
-if ($authToken.length -eq 0) {
-    throw "Error, no authentication token received.  Please check your api credentials.  Exiting script."
-}
-
-$whoAmIResponse = (Invoke-RestMethod -Method 'Get' -headers $authHeaders -Uri $urlWhoami)
-$myId = $whoAmIResponse.Id
-$myIdType = $whoAmIResponse.idType
-
-if ($myIdType.length -eq 0) {
-    throw "Error, no Whoami Id Type received.  Please check your api credentials or network connections.  Exiting script."
-}
-
-if ($myIdType -eq 'partner') {
     $requestHeaders = @{
         'Authorization' = "Bearer $authToken"
-        'X-Partner-ID'  = $myId
+        'X-Tenant-ID'   = $tenantId 
     }
-}
-elseif ($myIdType -eq 'organization') {
-    $requestHeaders = @{
-        'Authorization'     = "Bearer $authToken"
-        'X-Organization-ID' = $myId
-    }
-}
-elseif ($myIdType -eq 'tenant') {
-    $requestHeaders = @{
-        'Authorization' = "Bearer $authToken"
-        'X-Tenant-ID'   = $myId
-    }
-}
-else {
-    throw "Error finding id type.  This script only supports Partner, Organization, and Tenant API's."
-}
 
-# Cycle through all tenants until a tenant match, or all pages have exhausted.  
-$currentPage = 1
-do {
-    Write-Output "Looking for tenant on page $currentPage.  Please wait..."
-	
-    if ($currentPage -ge 2) {
-        Start-Sleep -s 5
-        $urlTenant = "https://api.central.sophos.com/partner/v1/tenants?page=$currentPage"
+    $urlEndpoint = "https://api-$tenantRegion.central.sophos.com/endpoint/v1/downloads"
+    $endpointDownloadResponse = (Invoke-RestMethod -Method 'Get' -headers $requestHeaders -Uri $urlEndpoint)
+    $endpointInstallers = $endpointDownloadResponse.installers
+
+    if ($endpointInstallers.length -eq 0) {
+        throw "Error, no installers received.  Please check your api credentials or network connections.  Exiting script."
     }
-	
-    $tenantResponse = (Invoke-RestMethod -Method 'Get' -headers $requestHeaders -Uri $urlTenant)
-    $tenants = $tenantResponse.items
-    $totalPages	= [int]$tenantResponse.pages.total
-	
-    foreach ($tenant in $tenants) {
-        if ($tenant.name -eq $TenantName) {
-            $tenantRegion = $tenant.dataRegion
-            $tenantId = $tenant.id
+
+    $installUrl = ""
+
+    foreach ($installer in $endpointInstallers) {
+        if ( ($installer.platform -eq "windows") -And ($installer.productName = "Sophos Endpoint Protection") ) {
+            if ( ($ProductType -eq 1) -And ($installer.type = "computer") ) {
+                # Workstation Install
+                $installUrl = $installer.downloadUrl
+            }
+            elseif ( ( ($ProductType -eq 2) -Or ($ProductType -eq 3) ) -And ($installer.type = "server") ) {
+                # Server Install
+                $installUrl = $installer.downloadUrl
+            }
+            else {
+                throw "Error, this script only supports producttype of 1) Work Station, 2) Domain Controller, or 3) Server."
+            }
         }
     }
-    $currentPage += 1
-} until( $currentPage -gt $totalPages -Or ($tenantId.length -gt 1 ) )
 
-if ($tenantId.length -eq 0) {
-    throw "Error, no tenant found with the provided name.  Please check the name and try again.  Exiting script."
+    return $installUrl
 }
 
-$requestHeaders = @{
-    'Authorization' = "Bearer $authToken"
-    'X-Tenant-ID'   = $tenantId 
-}
+function Win_Sophos_EndpointProtection_Install {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory)]
+        [string]$ClientId,
 
-$urlEndpoint = "https://api-$tenantRegion.central.sophos.com/endpoint/v1/downloads"
-$endpointDownloadResponse = (Invoke-RestMethod -Method 'Get' -headers $requestHeaders -Uri $urlEndpoint)
-$endpointInstallers = $endpointDownloadResponse.installers
+        [Parameter(Mandatory)]
+        [string]$ClientSecret,
 
-if ($endpointInstallers.length -eq 0) {
-    throw "Error, no installers received.  Please check your api credentials or network connections.  Exiting script."
-}
+        [Parameter(Mandatory)]
+        [string]$TenantName,
 
-foreach ($installer in $endpointInstallers) {
-    
-    if ( ($installer.platform -eq "windows") -And ($installer.productName = "Sophos Endpoint Protection") ) {
-        
-        if ( ($osInfo.ProductType -eq 1) -And ($installer.type = "computer") ) {
-            # Workstation Install
-            $installUrl = $installer.downloadUrl
+        [string]$Products,
+
+        [switch]$Uninstall
+    )
+
+    Begin {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        $random = ([char[]]([char]'a'..[char]'z') + 0..9 | sort { get-random })[0..12] -join ''
+        if (-not(Test-Path "C:\packages$random")) { New-Item -ItemType Directory -Force -Path "C:\packages$random" | Out-Null }
+    }
+
+    Process {
+        Try {
+            $software = "Sophos Endpoint Agent";
+            $installed = ((Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*).DisplayName -Match $software).Length -gt 0
+            if ($installed -and -Not($Uninstall)) {
+                Write-Output "Sophos already installed."
+                return
+            }
+
+            if ($installed -and $Uninstall) {
+                Write-Output "Uninstalling $software..."
+                & "C:\Program Files\Sophos\Sophos Endpoint Agent\uninstallcli.exe"
+                return
+            }
+
+            if (-Not($installed) -and $Uninstall) {
+                Write-Output "Sophos isn't installed."
+                return
+            }
+
+            Write-Output "Sophos wasn't detected. Starting setup..."
+            $error.clear()
+
+            #check for class, default to workstation if can't get
+            $osInfo = @{
+                ProductType = 1
+            }
+            
+            if (Get-CimClass | Where-Object { $_.CimCLassName -eq "Win32_OperatingSystem" }) {
+                $osInfo = Get-CimInstance -ClassName Win32_OperatingSystem
+            }
+
+            Write-Output "Getting installer URL from API..."
+            $installUrl = Get-InstallerUrl -ClientId $ClientId -ClientSecret $ClientSecret -ProductType $osInfo.ProductType
+            Write-Output "Saving installer..."
+            $outputPath = "C:\packages$random\SophosSetup.exe"
+            Invoke-WebRequest -Uri $installUrl[-1] -OutFile $outputPath
+            Write-Output "Starting Sophos Setup. Please wait, this will take a while..."
+            $arguments = @("--products=" + ($Products -join ","), "--quiet")
+            $process = Start-Process -NoNewWindow -FilePath $outputPath -ArgumentList $arguments -PassThru
+            $timedOut = $null
+            $process | Wait-Process -Timeout 1200 -ErrorAction SilentlyContinue -ErrorVariable timedOut
+            if($timedOut) {
+                $process | kill
+                Write-Output "Install timed out after 1200 seconds."
+            }
+            elseif ($process.ExitCode -ne 0) {
+                $code = $process.ExitCode
+                Write-Output "Install error code: $code"
+            }
         }
-        elseif ( ( ($osInfo.ProductType -eq 2) -Or ($osInfo.ProductType -eq 3) ) -And ($installer.type = "server") ) {
-            # Server Install
-            $installUrl = $installer.downloadUrl
+        Catch {
+            $exception = $_.Exception
+            Write-Output "Error: $exception"
         }
-        else {
-            throw "Error, this script only supports producttype of 1) Work Station, 2) Domain Controller, or 3) Server."
+    }
+
+    End {
+        if (Test-Path "C:\packages$random") {
+            Remove-Item -Path "C:\packages$random" -Recurse -Force
         }
+
+        if ($error) {
+            Exit 1
+        }
+
+        Exit 0
     }
 }
 
-try {
-    Write-Output "Checking if Sophos Endpoint installed. Please wait..."
-
-    $software = "Sophos Endpoint Agent";
-    $installed = ((Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*).DisplayName -Match $software).Length -gt 0
-
-    if (-Not $installed) {
-        Write-Output "Sophos Endpoint is NOT installed. Installing now..."
-
-        Write-Output "Downloading Sophos from $installUrl. Please wait..." 
-        $tmpDir = [System.IO.Path]::GetTempPath()
-    
-        $outpath = "$tmpDir\SophosSetup.exe"
-        
-        Write-Output "Saving file to $outpath"
-        
-        Invoke-WebRequest -Uri $installUrl -OutFile $outpath
-
-        Write-Output "Running Sophos Setup... Please wait up to 20 minutes for install to complete." 
-        $appArgs = @("--products=" + ($Products -join ","), "--quiet")
-        Start-Process -Filepath $outpath -ArgumentList $appArgs
-
-    }
-    else {
-        Write-Output "Sophos Endpoint is installed.  Skipping installation."
-    }
+if (-not(Get-Command "Win_Sophos_EndpointProtection_Install" -ErrorAction SilentlyContinue)) {
+    . $MyInvocation.MyCommand.Path
 }
-catch {
-    throw "Installation failed with error message: $($PSItem.ToString())"
+
+$scriptArgs = @{
+    ClientId     = $ClientId
+    ClientSecret = $ClientSecret
+    TenantName   = $TenantName
+    Products     = $Products
+    Uninstall    = $Uninstall
 }
+
+Win_Sophos_EndpointProtection_Install @scriptArgs
