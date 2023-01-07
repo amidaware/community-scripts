@@ -1,0 +1,77 @@
+<#
+    .Synopsis
+        WBAdmin Backup Monitoring
+    .DESCRIPTION
+        This script can be used to check the built-in Windows backup on Windows Server. 
+        The provided parameters check the 10 last jobs and in advance the last result.
+        The script from a Zabbix template was used as a template. Many thanks to net.cry.de for providing the code.
+        https://www.net-cry.de/windows/copy_of_wbadmin-ueberwachung-vom-backup-mit-nagios
+    .NOTES
+        - V1.0, creating the first script
+#>
+
+try {
+    $Summary = Get-WBSummary
+    $Backupdata_array = Get-WBJob -previous 10
+}
+catch {
+    write-host "Could not execute PowerShell command to get backup status: $($_.Exception.Message)"
+    exit 1
+}
+
+# Check quickly if backup was successfully
+if ($Summary.LastBackupResultHR -ne '0') {
+    write-host "Backup has completed with error code $($Summary.LastBackupResultHR). Last Backup Started at $($Summary.LastBackupTime)" 
+    exit 1
+}
+if ($Summary.LastSuccessfulBackupTime -lt (get-date).AddHours(-48)) { 
+    write-host "No succesfull backup for the last 48 hours." 
+    exit 1
+}
+
+# Go deeper and check last 10 jobs
+foreach ($backupdata in $Backupdata_array) {
+    $JobType = $backupdata.JobType
+
+    if ($Jobtype -eq "Backup" ) {
+        $starttime = $backupdata.startTime
+        $endtime = $backupdata.endTime
+        $errormsg = $backupdata.errorDescription
+        $originalerrormsg = $backupdata.errorDescription
+        $resultcode = $backupdata.HResult
+        $JobType = $backupdata.JobType
+
+        if ($backupdata.JobState -eq 'Running' -and $starttime -lt (get-date).AddHours(-23)) { 
+            write-host "Backup has been running for over 23 hours. Backup Started at $($starttime)" 
+            exit 1
+        }
+        if ($errormsg.Length -eq 0) {
+            $endtime_datetime = [datetime]::parseexact($endtime, 'dd.MM.yyyy HH:mm', $null)
+            $start_datetime = [datetime]::parseexact($starttime, 'dd.MM.yyyy HH:mm', $null)
+            $duration = $endtime_datetime - $start_datetime
+            break
+        }
+    }
+}
+
+$ts = New-TimeSpan -Days 1 -Hours 12
+$expired = (get-date) - $ts
+$endTime = [datetime]::parseexact($endtime, 'dd.MM.yyyy HH:mm', $null)
+
+if ($endtime_datetime -lt $expired ) {
+    Write-Host "error to old" $expr
+    write-host "Error: " $errormsg
+    write-host "Result code: " $resultcode 
+    write-host "Start time: " $startTime 
+    write-host "Start date: " $start_datetime 
+    write-host "Duration: " $duration 
+    exit 1
+}
+if ($errormsg.Length -eq 0) {
+    Write-Host "Backup was successfully performed in the last 24 hours!"
+    write-host "Result code: " $resultcode 
+    write-host "Start: " $start_datetime 
+    write-host "End: " $endTime 
+    write-host "Duration: " $duration 
+    exit 0
+}
