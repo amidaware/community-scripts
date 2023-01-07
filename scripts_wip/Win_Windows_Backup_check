@@ -1,0 +1,75 @@
+<#
+    .Synopsis
+        WBAdmin Backup Monitoring
+    .DESCRIPTION
+        
+    .NOTES
+        
+#>
+
+try {
+    $Summary = Get-WBSummary
+    $Backupdata_array = Get-WBJob -previous 10
+    $CurrentJob = Get-WBJob
+}
+catch {
+    write-host "Could not execute PowerShell command to get backup status: $($_.Exception.Message)"
+    exit 1
+}
+
+foreach ($backupdata in $Backupdata_array) {
+    $JobType = $backupdata.JobType
+
+    if ($Jobtype -eq "Backup" ) {
+        $starttime = $backupdata.startTime
+        $endtime = $backupdata.endTime
+        $errormsg = $backupdata.errorDescription
+        $originalerrormsg = $backupdata.errorDescription
+        $resultcode = $backupdata.HResult
+        $JobType = $backupdata.JobType
+
+        if ($errormsg.Length -eq 0) {
+            $endtime_datetime = [datetime]::parseexact($endtime, 'dd.MM.yyyy HH:mm', $null)
+            $start_datetime = [datetime]::parseexact($starttime, 'dd.MM.yyyy HH:mm', $null)
+            $duration = $endtime_datetime - $start_datetime
+            break
+        }
+    }
+}
+
+$ts = New-TimeSpan -Days 1 -Hours 12
+$expired = (get-date) - $ts
+$endTime = [datetime]::parseexact($endtime, 'dd.MM.yyyy HH:mm', $null)
+$Date = (get-date).AddHours(-48)
+
+$FailedBackups = invoke-command {
+    if ($CurrentJob.JobState -eq 'Running' -and $CurrentJob.StartTime -lt (get-date).AddHours(-23)) { 
+        write-host "Backup has been running for over 23 hours. Backup Started at $($CurrentJob.StartTime)" 
+        exit 1
+    }
+    if ($Summary.LastBackupResultHR -ne '0') {
+        write-host "Backup has completed with error code $($Summary.LastBackupResultHR). Last Backup Started at $($Summary.LastBackupTime)" 
+        exit 1
+    }
+    if ($Summary.LastSuccessfulBackupTime -lt $Date) { 
+        write-host "No succesfull backup for the last 48 hours." 
+        exit 1
+    }
+    if ($endtime_datetime -lt $expired ) {
+        Write-Host "error to old" $expr
+        write-host "Error: " $errormsg
+        write-host "Result code: " $resultcode 
+        write-host "Start time: " $startTime 
+        write-host "Start date: " $start_datetime 
+        write-host "Duration: " $duration 
+        exit 1
+    }
+    if ($errormsg.Length -eq 0) {
+        Write-Host "Backup was successfully performed in the last 24 hours!"
+        write-host "Result code: " $resultcode 
+        write-host "Start: " $start_datetime 
+        write-host "End: " $endTime 
+        write-host "Duration: " $duration 
+        exit 0
+    }
+}
