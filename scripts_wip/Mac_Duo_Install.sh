@@ -37,6 +37,11 @@ fi
 if [ -z "$ikey" ] || [ -z "$skey" ] || [ -z "$api_hostname" ]; then
     echo "Usage: ./Mac_Duo_Install.sh -i IKEY -s SKEY -a ApiHostname"
 else
+    if (( $(echo "$(sw_vers -productVersion) > 12.9" | bc))); then
+        echo "Duo is not compatible with this version of MacOS."
+        exit 0
+    fi
+
     echo "Checking if Duo is already installed..."
     if [ -f /private/var/root/Library/Preferences/com.duosecurity.maclogon.plist ]; then
         echo "Duo is already installed."
