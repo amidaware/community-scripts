@@ -61,7 +61,9 @@ Param(
 
     [Parameter(Mandatory)]
     [ValidateSet("Probe", "LightWeight", "Scan")]
-    $Type
+    $Type,
+
+    [switch]$Uninstall
 )
 
 function Win_CyberCNS_Install {
@@ -87,22 +89,52 @@ function Win_CyberCNS_Install {
 
         [Parameter(Mandatory)]
         [ValidateSet("Probe", "LightWeight", "Scan")]
-        $Type
+        $Type,
+
+        [switch]$Uninstall
     )
 
     Begin {
-        if ($null -ne (Get-Service | Where-Object { $_.DisplayName -Match "CyberCNS" })) {
-            Write-Output "CyberCNS already installed."
-            Exit 0
-        }
-
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         $random = ([char[]]([char]'a'..[char]'z') + 0..9 | sort { get-random })[0..12] -join ''
-        if (-not(Test-Path "C:\packages$random")) { New-Item -ItemType Directory -Force -Path "C:\packages$random" }
+        if (-not(Test-Path "C:\packages$random")) { New-Item -ItemType Directory -Force -Path "C:\packages$random" | Out-Null }
     }
 
     Process {
         Try {
+            if ($null -ne (Get-Service | Where-Object { $_.DisplayName -Match "CyberCNS" }) -and -Not($Uninstall)) {
+                Write-Output "CyberCNS already installed."
+                return
+            }
+            if ($Uninstall) {
+                if (Test-Path "C:\Program Files (x86)\CyberCNSAgentV2\cybercnsagentv2.exe.new") {
+                    Move-Item "C:\Program Files (x86)\CyberCNSAgentV2\cybercnsagentv2.exe.new" "C:\Program Files (x86)\CyberCNSAgentV2\cybercnsagentv2.exe"
+                }
+
+                $monitor = Get-Service -Name "CyberCNSAgentMonitor" -ErrorAction SilentlyContinue
+                if ($monitor.Length -gt 0) {
+                    Write-Output "Stopping service..."
+                    Stop-Service -Name "CyberCNSAgentMonitor"
+                    Write-Output "Removing service..."
+                    & "sc.exe" delete 'CyberCNSAgentMonitor'
+                }
+
+                $service = Get-Service -Name "CyberCNSAgentV2" -ErrorAction SilentlyContinue
+                if ($service.Length -gt 0) {
+                    Write-Output "Stopping service..."
+                    Stop-Service -Name "CyberCNSAgentV2"
+                    & "sc.exe" delete 'CyberCNSAgentV2'
+                }
+               
+                if (Test-Path "C:\Program Files (x86)\CyberCNSAgentV2\cybercnsagentv2.exe") {
+                    Write-Output "Running agent uninstaller..."
+                    & "C:\Program Files (x86)\CyberCNSAgentV2\cybercnsagentv2.exe" -r
+                }
+
+                Write-Output "CyberCNS uninstall complete."
+                return
+            }
+
             $source = $ExecutableLocation
             $destination = "C:\packages$random\cybercnsagent.exe"
             Invoke-WebRequest -Uri $source -OutFile $destination
@@ -113,24 +145,25 @@ function Win_CyberCNS_Install {
             if ($timedOut) {
                 $process | kill
                 Write-Output "Install timed out after 300 seconds."
-                Exit 1
             }
             elseif ($process.ExitCode -ne 0) {
                 $code = $process.ExitCode
                 Write-Output "Install error code: $code."
-                Exit 1
             }
         }
         Catch {
             $exception = $_.Exception
             Write-Output "Error: $exception"
-            Exit 1
         }
     }
 
     End {
         if (Test-Path "C:\packages$random") {
             Remove-Item -Path "C:\packages$random" -Recurse -Force
+        }
+
+        if ($error) {
+            Exit 1
         }
 
         Exit 0
@@ -149,6 +182,7 @@ $scriptArgs = @{
     ClientSecret = $ClientSecret
 	Portal       = $Portal
     Type         = $Type
+    Uninstall    = $Uninstall
 }
  
 Win_CyberCNS_Install @scriptArgs
