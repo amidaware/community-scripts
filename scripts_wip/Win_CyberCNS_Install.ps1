@@ -4,39 +4,35 @@
 .DESCRIPTION
    Downloads the CyberCNS Agent executable and installs based on selection.
    Must specify -Type when installing. Probe for the CyberCNS Probe, LightWeight for CyberCNS Lightweight Agent, and Scan for a single scan.
-   Tenant expects your CyberCNS tenant name, the mycompany part of mycompany.cybercns.com.
+   Tenant expects your CyberCNS tenant name, the mycompany part of mycompany.cybercns.com (unless obtained through a third-party like Pax8, in which ase you may have to analyze your URL more closely).
    Retrieve the CompanyID, ClientID, and ClientSecret from CyberCNS.
-.EXAMPLE
-    Win_CyberCNS_Install -Type Probe
-.EXAMPLE
-    Win_CyberCNS_Install -Type Agent
-.EXAMPLE
-    Win_CyberCNS_Install -Type Scan
 .INSTRUCTIONS
 	1. Download the CyberCNS executable and upload to a location accessable by your clients.
     2. Navigate to your CyberCNS portal and create a Probe/Agent deployment.
-    3. In Tactical RMM, Go to Settings >> Global Settings >> Custom Fields and under Clients, create the following custom fields: 
-		a) ExecutableLocation as type text
-        b) CyberCNSTenant as type text
-        c) CyberCNSCompanyID as type text
-        d) CyberCNSClientID as type text
-        e) CyberCNSClientSecret as type text
-		f) Portal as type text
-        g) CyberCNSType as type Dropdown Multiple with options Probe, LightWeight, and Scan
-    4. In Tactical RMM, Right-click on each client and select Edit. Fill in the CyberCNSTenant, CyberCNSCompanyID, CyberCNSClientID, 
+    3. In Tactical RMM, Go to Settings >> Global Settings >> Key Store and create the following custom fields and fill with the required information: 
+		a) CyberCNSExeLocation as type text - this is the location of the agent executable that you downloaded in step 1.
+        b) CyberCNSTenant as type text - this is your CyberCNS tenant, usually formatted like "tacticalrmm".
+		c) CyberCNSPortalHost as type text - this is your CyberCNS hostname from the URL like "portaluswest2.mycybercns.com".
+    4. In Tactical RMM, Go to Settings >> Global Settings >> Custom Fields and under Clients, create the following custom fields: 
+        a) CyberCNSCompanyID as type text
+        b) CyberCNSClientID as type text
+        c) CyberCNSClientSecret as type text
+    4. In Tactical RMM, Right-click on each client and select Edit. Fill in the CyberCNSCompanyID, CyberCNSClientID, 
         and CyberCNSClientSecret.
     5. Create the follow script arguments
-		a) -ExecutableLocation {{client.ExecutableLocation}}
-        b) -Tenant {{client.CyberCNSTenant}}
+		a) -ExecutableLocation {{global.CyberCNSExeLocation}}
+        b) -Tenant {{global.CyberCNSTenant}}
         c) -CompanyID {{client.CyberCNSCompanyID}}
         d) -ClientID {{client.CyberCNSClientID}}
         e) -ClientSecret {{client.CyberCNSClientSecret}}
-		f) -Portal {{client.Portal}}
-        g) -Type {{client.CyberCNSType}}
+		f) -Portal {{global.CyberCNSPortalHost}}
+        g) -Type Probe|LightWeight|Scan
+    6. If you want to trigger an uninstall of the agent, add the following variable:
+        a) -Uninstall
 .NOTES
-   Version: 1.0
-   Author: redanthrax
-   Creation Date: 2022-04-07
+   Version: 1.1
+   Author: cleveradmin
+   Creation Date: 2023-01-25
 #>
 
 Param(
