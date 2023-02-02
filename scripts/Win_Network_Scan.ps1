@@ -9,6 +9,11 @@
 .NOTES
    v1.0 dinger1986
    v1.1 silversword documenting, fixing problem when multiple active NICs etc.
+   v1.2 bbrendon. Script never worked. Fixed.
+   
+.KNOWN ISSUES
+ - Script doesn't list host running it
+ - Only works correctly on /24 nets
 #>
 
 # TODO: might expand to record this then do network intrusion
@@ -26,9 +31,11 @@ $Subnet = ($IP -split "`r`n" | ForEach-Object {
 # Write-Output "IP: $IP"
 # Write-Output "Subnet: $Subnet"
 
-## Ping subnet
-1..254 | ForEach-Object {
-  Start-Process -WindowStyle Hidden ping.exe -Argumentlist "-n 1 -l 0 -f -i 2 -w 1 -4 $SubNet$_"
+$SubNet | ForEach-Object {
+    $Net = $_
+    1..254 | ForEach-Object {
+        Start-Process -WindowStyle Hidden ping.exe -Argumentlist "-n 1 -l 0 -f -i 2 -w 1 -4 $Net.$_"
+    }
 }
 $Computers = (arp.exe -a | Select-String "$SubNet.*dynam") -replace ' +', ', ' |
 ConvertFrom-Csv -Header Computername, IPv4, MAC, x, Vendor |
