@@ -186,7 +186,7 @@ function Win_Sophos_EndpointProtection_Install {
 
             if ($installed -and $Uninstall) {
                 Write-Output "Uninstalling $software..."
-                & "C:\Program Files\Sophos\Sophos Endpoint Agent\uninstallcli.exe"
+                & "C:\Program Files\Sophos\Sophos Endpoint Agent\SophosUninstall.exe" --quiet
                 return
             }
 
