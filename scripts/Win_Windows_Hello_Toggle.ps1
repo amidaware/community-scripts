@@ -15,28 +15,47 @@ param (
     [string] $Mode
 )
 
+if ($Mode -eq "enable") {
 If (!(Test-Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork)) {
     New-Item HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork
-}
-
-if ($Mode -eq "enable") {
+    Write-Output "Adding New"
+    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Name Enabled -Value 1 -PropertyType DWORD
+    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Name DisablePostLogonProvisioning -Value 0 -PropertyType DWORD
+} Else {
+    Write-Output "Setting Existing"
     Set-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Name Enabled -Value 1 -PropertyType DWORD
     Set-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Name DisablePostLogonProvisioning -Value 0 -PropertyType DWORD
+}
+    
     Exit 0
 }
 
 if ($Mode -eq "disable") {
+If (!(Test-Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork)) {
+    New-Item HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork
+    Write-Output "Adding New"
+    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Name Enabled -Value 0 -PropertyType DWORD
+    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Name DisablePostLogonProvisioning -Value 1 -PropertyType DWORD
+} Else {
+    Write-Output "Setting Existing"
     Set-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Name Enabled -Value 0 -PropertyType DWORD
     Set-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Name DisablePostLogonProvisioning -Value 1 -PropertyType DWORD
+}
+    
     Exit 0
 }
 
+
 If (!(Test-Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork)) {
     New-Item HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork
-}
-
+    Write-Output "Adding New"
     New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Name Enabled -Value 0 -PropertyType DWORD
     New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Name DisablePostLogonProvisioning -Value 1 -PropertyType DWORD
-
+} Else {
+    Write-Output "Setting Existing"
+    Set-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Name Enabled -Value 0 -PropertyType DWORD
+    Set-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Name DisablePostLogonProvisioning -Value 1 -PropertyType DWORD
+}
+}
 
 
