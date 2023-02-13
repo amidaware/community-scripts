@@ -56,6 +56,3 @@ If (!(Test-Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork)) {
     Set-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Name Enabled -Value 0 -PropertyType DWORD
     Set-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Name DisablePostLogonProvisioning -Value 1 -PropertyType DWORD
 }
-}
-
-
