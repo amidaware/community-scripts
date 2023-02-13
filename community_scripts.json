@@ -1065,10 +1065,10 @@
   },
     {
     "guid": "3735f41c-d6cd-452f-8293-62396815749d",
-    "filename": "Win_Disable_Windows_Hello.ps1",
+    "filename": "Win_Windows_Hello_Toggle.ps1",
     "submittedBy": "https://github.com/dinger1986",
-    "name": "Windows Hello - Disable",
-    "description": "Disable Windows Hello System Wide",
+    "name": "Windows Hello Toggle",
+    "description": "Disable or Enable Windows Hello System Wide",
     "shell": "powershell",
     "category": "TRMM (Win):Other",
     "supported_platforms": [
