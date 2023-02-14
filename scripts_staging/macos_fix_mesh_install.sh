@@ -5,7 +5,7 @@
 #
 # The following actions are taken:
 # 1) Add the eXecute bit for directory traversal for the installation directory. This allows regular users
-#    access to run the binary inside the directory, fixing the "meshagent" LaunchAgent interation with the
+#    access to run the binary inside the directory, fixing the "meshagent" LaunchAgent integration with the
 #    user.
 # 2) Rename the LaunchAgent "meshagent.plist" to prevent conflicts with the LaunchDaemon "meshagent.plist".
 #    This may not be needed but is done for good measure.
