@@ -11,10 +11,48 @@
 #    This may not be needed but is done for good measure.
 # 3) Rename the service Label inside the plist. Using "defaults" causes the plist to be rewritten in plist
 #    format, not ascii.
+#
+# Here's the original plist from my install.
+# <?xml version="1.0" encoding="UTF-8"?>
+# <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+# <plist version="1.0">
+#   <dict>
+#       <key>Label</key>
+#      <string>meshagent</string>
+#      <key>ProgramArguments</key>
+#      <array>
+#          <string>/opt/tacticalmesh/meshagent</string>
+#          <string>-kvm1</string>
+#      </array>
+#
+#       <key>WorkingDirectory</key>
+#      <string>/opt/tacticalmesh</string>
+#
+#       <key>RunAtLoad</key>
+# <true/>
+#       <key>LimitLoadToSessionType</key>
+#       <array>
+#           <string>LoginWindow</string>
+#       </array>
+#       <key>KeepAlive</key>
+#       <dict>
+#          <key>Crashed</key>
+#          <true/>
+#       </dict>
+#   </dict>
+# </plist>
+
 
 mesh_install_dir="/opt/tacticalmesh/"
 mesh_agent_plist_old="/Library/LaunchAgents/meshagent.plist"
 mesh_agent_plist="/Library/LaunchAgents/meshagent-agent.plist"
+mesh_daemon_plist="/Library/LaunchDaemons/meshagent.plist"
+
+if [ ! -f "${mesh_daemon_plist}" ]
+then
+    echo "meshagent LaunchDaemon does not exist to cause the duplicate service name issue. Exiting."
+    exit 0
+fi
 
 if /usr/bin/stat -f "%Sp" "${mesh_install_dir}" | grep -v 'x$' >/dev/null
 then
@@ -42,10 +80,10 @@ then
     then
         echo "Renaming meshagent label in plist: ${mesh_agent_plist}"
         echo "Warning: This will convert the plist from a text file to a binary plist file."
-        echo "Here's the original in text format:"
-        echo "---------- START ${mesh_agent_plist} ----------"
-        cat "${mesh_agent_plist}"
-        echo "---------- END ${mesh_agent_plist} ----------"
+        #echo "Here's the original plist in text format:"
+        #echo "---------- START ${mesh_agent_plist} ----------"
+        #cat "${mesh_agent_plist}"
+        #echo "---------- END ${mesh_agent_plist} ----------"
         defaults write "${mesh_agent_plist}" Label "meshagent-agent"
     else
         echo "No action taken. meshagent label was already renamed: ${label}"
