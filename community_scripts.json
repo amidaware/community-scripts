@@ -1069,6 +1069,7 @@
     "submittedBy": "https://github.com/dinger1986",
     "name": "Windows Hello Toggle",
     "description": "Disable or Enable Windows Hello System Wide",
+    "syntax": "[-Mode {(disable) | enable}]",
     "shell": "powershell",
     "category": "TRMM (Win):Other",
     "supported_platforms": [
