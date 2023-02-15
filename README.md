@@ -33,5 +33,3 @@ pip install -r requirements.txt
 ```
 pytest
 ```
-
-Did it work?
