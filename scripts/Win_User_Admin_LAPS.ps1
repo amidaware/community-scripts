@@ -91,7 +91,7 @@ $checkuser = Get-LocalUser | where-Object Name -eq $LAPSID | Measure-Object
 if ($checkuser.Count -eq 0) {
     Write-Output "User $($LAPSID) was not found. Creating User and adding to Admin group"
     New-LocalUser -Name $LAPSID -Password ($LocalAdminPassword | ConvertTo-SecureString -AsPlainText -Force) -PasswordNeverExpires:$true
-    Add-LocalGroupMember -Group Administrators -Member $LAPSID
+    Add-LocalGroupMember -SID S-1-5-32-544 -Member $LAPSID
 }
 else {
     Write-Output "User $($LAPSID) was found. Setting password for existing user."
