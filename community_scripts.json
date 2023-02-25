@@ -603,7 +603,7 @@
       "-eset_cert_password {{client.eset_cert_password}}",
       "-eset_cert_auth {{client.eset_cert_auth}}",
       "-eset_static_group {{client.eset_static_group}}",
-      "-eset_custom_policy {{client.eset_custom_policy}}
+      "-eset_custom_policy {{client.eset_custom_policy}}"
     ],
     "default_timeout": "2500",
     "shell": "powershell",
