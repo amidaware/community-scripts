@@ -590,6 +590,29 @@
     "category": "TRMM (Win):3rd Party Software"
   },
   {
+    "guid": "7de49f72-d654-460d-9f32-44325e947ac0",
+    "filename": "Win_ESET_ProtectAgent_Install.ps1",
+    "submittedBy": "https://github.com/clanto007/",
+    "name": "ESET Protect Agent Install",
+    "description": "Installs ESET Protect Agent, requires client custom field setup. See script comments for details",
+    "syntax": "[-log]",
+    "args": [
+      "-eset_protect_host {{client.eset_protect_host}}",
+      "-eset_protect_port {{client.eset_protect_port}}",
+      "-eset_cert {{client.eset_cert}}",
+      "-eset_cert_password {{client.eset_cert_password}}",
+      "-eset_cert_auth {{client.eset_cert_auth}}",
+      "-eset_static_group {{client.eset_static_group}}",
+      "-eset_custom_policy {{client.eset_custom_policy}}"
+    ],
+    "default_timeout": "2500",
+    "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
+    "category": "TRMM (Win):3rd Party Software"
+  },
+  {
     "guid": "bfd61545-839b-45da-8b3d-75ffc4d43272",
     "filename": "Win_Sophos_EndpointProtection_Install.ps1",
     "submittedBy": "https://github.com/bc24fl/",
