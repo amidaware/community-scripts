@@ -103,4 +103,3 @@ Write-Host "Downloading latest Installer from ESET Please wait..."
 Write-Host "Installation log file will be at" $logpath
 Write-Host "Installing latest ESET Protect Agent... Please wait up to 10 minutes for install to complete."
 msiexec.exe /qr /i $outpath /l*v $logpath /norestart
-Exit(0)
