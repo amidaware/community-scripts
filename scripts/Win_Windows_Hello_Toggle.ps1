@@ -15,44 +15,37 @@ param (
     [string] $Mode
 )
 
+#$ErrorActionPreference= 'silentlycontinue'
+
+$ComputerName = (Get-CimInstance -ClassName Win32_ComputerSystem | Select-Object name).name
+
+#####################################################################
+
+if (!($Mode)) {
+    Write-Output "No Mode defined. Using disable"
+    $Mode = "disable"
+}
+
+#####################################################################
+
+
 if ($Mode -eq "enable") {
-If (!(Test-Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork)) {
-    New-Item HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork
-    Write-Output "Adding New"
-    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Name Enabled -Value 1 -PropertyType DWORD
-    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Name DisablePostLogonProvisioning -Value 0 -PropertyType DWORD
-} Else {
-    Write-Output "Setting Existing"
-    Set-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Name Enabled -Value 1
-    Set-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Name DisablePostLogonProvisioning -Value 0
+    Write-Output "Mode enable. Writing reg keys"
+    if ((Test-Path -LiteralPath "HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork\Enabled") -ne $true) {  
+        Write-Output "Creating Enabled Key"
+        New-Item "HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork" -force -ea SilentlyContinue 
+    };
+    New-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork' -Name Enabled -Value 1 -PropertyType DWord -Force -ea SilentlyContinue;
+    New-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork' -Name DisablePostLogonProvisioning -Value 0 -PropertyType DWord -Force -ea SilentlyContinue;
 }
-    
-    Exit 0
-}
-
-if ($Mode -eq "disable") {
-If (!(Test-Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork)) {
-    New-Item HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork
-    Write-Output "Adding New"
-    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Name Enabled -Value 0 -PropertyType DWORD
-    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Name DisablePostLogonProvisioning -Value 1 -PropertyType DWORD
-} Else {
-    Write-Output "Setting Existing"
-    Set-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Name Enabled -Value 0
-    Set-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Name DisablePostLogonProvisioning -Value 1
-}
-    
-    Exit 0
+else {
+    Write-Output "Mode disable. Writing reg keys"
+    if ((Test-Path -LiteralPath "HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork\Enabled") -ne $true) {  
+        Write-Output "Creating Disabled Keys"
+        New-Item "HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork" -force -ea SilentlyContinue 
+    };
+    New-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork' -Name Enabled -Value 0 -PropertyType DWord -Force -ea SilentlyContinue;
+    New-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork' -Name DisablePostLogonProvisioning -Value 1 -PropertyType DWord -Force -ea SilentlyContinue;
 }
 
-
-If (!(Test-Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork)) {
-    New-Item HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork
-    Write-Output "Adding New"
-    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Name Enabled -Value 0 -PropertyType DWORD
-    New-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Name DisablePostLogonProvisioning -Value 1 -PropertyType DWORD
-} Else {
-    Write-Output "Setting Existing"
-    Set-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Name Enabled -Value 0
-    Set-ItemProperty -Path HKLM:\SOFTWARE\Policies\Microsoft\PassportForWork -Name DisablePostLogonProvisioning -Value 1
-}
+Write-Output "Done"
