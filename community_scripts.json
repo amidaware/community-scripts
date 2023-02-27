@@ -1086,6 +1086,20 @@
     ],
     "default_timeout": "30"
   },
+    {
+    "guid": "3735f41c-d6cd-452f-8293-62396815749d",
+    "filename": "Win_Windows_Hello_Toggle.ps1",
+    "submittedBy": "https://github.com/dinger1986",
+    "name": "Windows Hello Toggle",
+    "description": "Disable or Enable Windows Hello System Wide",
+    "syntax": "[-Mode {(disable) | enable}]",
+    "shell": "powershell",
+    "category": "TRMM (Win):Other",
+    "supported_platforms": [
+      "windows"
+    ],
+    "default_timeout": "30"
+  },
   {
     "guid": "28ef1387-dd4f-4bab-b042-26250914e370",
     "filename": "Win_WOL_Enable_Status.ps1",
