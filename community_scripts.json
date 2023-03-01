@@ -456,6 +456,18 @@
     "category": "TRMM (Win):Collectors"
   },
   {
+    "guid": "3e9881a1-5860-4a4e-9e34-e2a091381da6",
+    "filename": "Win_RustDesk_GetID.ps1",
+    "submittedBy": "https://github.com/dinger1986/",
+    "name": "RustDesk - Get RustDeskID for client",
+    "description": "Returns RustDeskID for client - Use with Custom Fields for later use.",
+    "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
+    "category": "TRMM (Win):Collectors"
+  },
+  {
     "guid": "95a2ee6f-b89b-4551-856e-3081b041caa7",
     "filename": "Win_Power_Profile_Reset_High_Performance_to_Defaults.ps1",
     "submittedBy": "https://github.com/azulskyknight",
@@ -581,6 +593,29 @@
     "args": [
       "-url {{client.bdurl}}",
       "-exe {{client.bdexe}}"
+    ],
+    "default_timeout": "2500",
+    "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
+    "category": "TRMM (Win):3rd Party Software"
+  },
+  {
+    "guid": "7de49f72-d654-460d-9f32-44325e947ac0",
+    "filename": "Win_ESET_ProtectAgent_Install.ps1",
+    "submittedBy": "https://github.com/clanto007/",
+    "name": "ESET Protect Agent Install",
+    "description": "Installs ESET Protect Agent, requires client custom field setup. See script comments for details",
+    "syntax": "[-log]",
+    "args": [
+      "-eset_protect_host {{client.eset_protect_host}}",
+      "-eset_protect_port {{client.eset_protect_port}}",
+      "-eset_cert {{client.eset_cert}}",
+      "-eset_cert_password {{client.eset_cert_password}}",
+      "-eset_cert_auth {{client.eset_cert_auth}}",
+      "-eset_static_group {{client.eset_static_group}}",
+      "-eset_custom_policy {{client.eset_custom_policy}}"
     ],
     "default_timeout": "2500",
     "shell": "powershell",
@@ -1064,6 +1099,20 @@
     "default_timeout": "30"
   },
   {
+    "guid": "3735f41c-d6cd-452f-8293-62396815749d",
+    "filename": "Win_Windows_Hello_Toggle.ps1",
+    "submittedBy": "https://github.com/dinger1986",
+    "name": "Windows Hello Toggle",
+    "description": "Disable or Enable Windows Hello System Wide",
+    "syntax": "[-Mode {(disable) | enable}]",
+    "shell": "powershell",
+    "category": "TRMM (Win):Other",
+    "supported_platforms": [
+      "windows"
+    ],
+    "default_timeout": "30"
+  },
+  {
     "guid": "28ef1387-dd4f-4bab-b042-26250914e370",
     "filename": "Win_WOL_Enable_Status.ps1",
     "submittedBy": "https://github.com/silversword411",
@@ -1512,6 +1561,20 @@
     "category": "TRMM (Win):3rd Party Software"
   },
   {
+    "guid": "d81d56d8-211d-4910-9c2b-be465541c0fc",
+    "filename": "Win_Memory_ProcessCheck.ps1",
+    "submittedBy": "https://github.com/silversword411",
+    "name": "Memory check and alert of specific app",
+    "description": "Used to check the memory usage of a specific application and alert. Good for monitoring memory leaks etc",
+    "syntax": "-procname <string>\n-warnwhenovermemsize <Int>",
+    "default_timeout": "60",
+    "supported_platforms": [
+      "windows"
+    ],
+    "shell": "powershell",
+    "category": "TRMM (Win):Other"
+  },
+  {
     "guid": "1967a7c8-c25b-4b98-b6e5-f5220ff1d6f5",
     "filename": "Linux_memory_check.sh",
     "submittedBy": "https://github.com/BelleNottelling",
@@ -1546,7 +1609,7 @@
   {
     "guid": "a8ddc705-c285-429e-a44c-b4ea6b889df5",
     "filename": "Win_IIS_Check_SSL_Certs.ps1",
-    "submittedby": "https://github.com/ebdavison",
+    "submittedBy": "https://github.com/ebdavison",
     "name": "Check IIS Certs for Expiry",
     "description": "Checks the IIS sites for https bindings and then checks the associated SSL certificate to see if it is expiring in 'NumDays'.  'NumDays' is set to 60 days as the default.",
     "args": [
