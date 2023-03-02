@@ -1,1 +1,2 @@
-manage-bde -protectors C: -get
+(Get-BitLockerVolume -MountPoint C).KeyProtector.RecoveryPassword
+
