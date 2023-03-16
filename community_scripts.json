@@ -1564,8 +1564,8 @@
     "guid": "d81d56d8-211d-4910-9c2b-be465541c0fc",
     "filename": "Win_Memory_ProcessCheck.ps1",
     "submittedBy": "https://github.com/silversword411",
-    "name": "Memory check and alert of specific app",
-    "description": "Used to check the memory usage of a specific application and alert. Good for monitoring memory leaks etc",
+    "name": "Monitor processes memory usage and warn when exceeds certain level",
+    "description": "Used to check the memory usage of a specific application and alert if exceeds certain amount. Good for monitoring for memory leaks etc",
     "syntax": "-procname <string>\n-warnwhenovermemsize <Int>",
     "default_timeout": "60",
     "supported_platforms": [

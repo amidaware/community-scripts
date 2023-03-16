@@ -11,7 +11,7 @@
    To define what exe you want to monitor (don't include .exe)
 
 .PARAMETER warnwhenovermemsize (required)
-   To define what memory usage level you want to get an error return for alerting
+   To define what memory usage level in bytes that you want to get an error return for alerting
    
 .EXAMPLE
    -procname meshagent -warnwhenovermemsize 100000000
