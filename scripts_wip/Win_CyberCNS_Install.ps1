@@ -30,8 +30,8 @@
     6. If you want to trigger an uninstall of the agent, add the following variable:
         a) -Uninstall
 .NOTES
-   Version: 1.1
-   Author: cleveradmin
+   Version: 1.2
+   Author: redanthrax
    Creation Date: 2023-01-25
 #>
 
