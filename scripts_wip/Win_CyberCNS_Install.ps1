@@ -30,9 +30,10 @@
     6. If you want to trigger an uninstall of the agent, add the following variable:
         a) -Uninstall
 .NOTES
-   Version: 1.1
-   Author: cleveradmin
-   Creation Date: 2023-01-25
+   Version: 1.0
+   Author: redanthrax
+   Creation Date: 2022-04-07
+   Updated 2023-01-25 1.1 bionemesis
 #>
 
 Param(
