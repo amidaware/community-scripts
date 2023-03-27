@@ -299,6 +299,7 @@
     "name": "Bitlocker - Get Recovery Keys",
     "description": "Retrieves a Bitlocker Recovery Keys",
     "shell": "powershell",
+     "syntax": "[-KeyOnly]",
     "supported_platforms": [
       "windows"
     ],
