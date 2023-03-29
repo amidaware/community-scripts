@@ -19,7 +19,9 @@ Param(
     [string]$HeroImage,
 
     [Parameter(Mandatory)]
-    [string]$Name
+    [string]$Name,
+
+    [switch]$ForceTargetReset
 )
 
 function Win_UpdateNotify {
@@ -31,7 +33,9 @@ function Win_UpdateNotify {
         [string]$HeroImage,
 
         [Parameter(Mandatory)]
-        [string]$Name
+        [string]$Name,
+
+        [switch]$ForceTargetReset
     )
 
     Begin {
@@ -72,6 +76,13 @@ function Win_UpdateNotify {
 
         Set-ItemProperty 'HKCR:\ToastReboot' -name 'HeroImage' -value $HeroImage | Out-Null
         Set-ItemProperty 'HKCR:\ToastReboot' -name 'Name' -value $Name | Out-Null
+
+        if ($ForceTargetReset) {
+            RemoveRegistryValue 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate' 'TargetReleaseVersion'
+            RemoveRegistryValue 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate' 'TargetReleaseVersionInfo'
+            RemoveRegistryValue 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate' 'ProductVersion'
+            RemoveRegistryValue 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate' 'DisableOSUpgrade'
+        }
     }
 
     Process {
@@ -150,6 +161,13 @@ function Win_UpdateNotify {
     }
 }
 
+Function RemoveRegistryValue($path, $name) {
+    if (Get-ItemProperty -Path $path -Name $name -ErrorAction Ignore) {
+        Write-Output "Removing $name registry value"
+        Remove-ItemProperty -Path $path -Name $name -Force
+    }
+}
+
 if (-not(Get-Command 'Win_UpdateNotify' -errorAction SilentlyContinue)) {
     . $MyInvocation.MyCommand.Path
 }
@@ -158,6 +176,7 @@ $scriptArgs = @{
     IncludeDrivers = $IncludeDrivers
     HeroImage = $HeroImage
     Name = $Name
+    ForceTargetReset = $ForceTargetReset
 }
 
 Win_UpdateNotify @scriptArgs
