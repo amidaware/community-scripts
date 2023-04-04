@@ -1,26 +1,32 @@
 <#
-.Synopsis
-   Automatically document ADDS configuration
-.DESCRIPTION
-   Automatically document ADDS configuration. Submits generated documentation to your Hudu instance and associates it with the Company provided by ClientName. Requires Global Keystore variables for HuduBaseDomain and HuduApiKey.
-.INPUTS
-    -ClientName {{client.name}}
-	-HuduBaseDomain {{global.HuduBaseDomain}}
-	-HuduApiKey {{global.HuduApiKey}}
-.NOTES
-   v1.0
-   Based on https://github.com/lwhitelock/HuduAutomation/blob/main/CyberdrainRewrite/Hudu-ADDS-Documentation.ps1
-.COMPONENT
-   Hudu Documentation
-.ROLE
-   Documentation
+    .SYNOPSIS
+    Collects information about Active Directory and uploads it to Hudu
+    .DESCRIPTION
+    It retrieves Forest information, Site information, FSMO roles, UPN Suffixes, Default Password Policies, Domain Admins, and User count. Submits generated documentation to your Hudu instance and associates it with the Company provided by ClientName. Requires Global Keystore variables for HuduBaseDomain and HuduApiKey.
+    .PARAMETER ClientName
+        The name of the client in Hudu
+        -ClientName {{client.name}}
+    .PARAMETER HuduBaseDomain
+        The base domain of your Hudu instance without a trailing slash
+        -HuduBaseDomain {{global.HuduBaseDomain}}
+    .PARAMETER HuduApiKey
+        A valid Hudu API Key from your Hudu instance
+        -HuduApiKey {{global.HuduApiKey}}
+    .COMPONENT
+    Hudu Documentation
+    .ROLE
+    Documentation
+    .NOTES
+    v1.0 6/13/2021 Zak
+    Based on https://github.com/lwhitelock/HuduAutomation/blob/main/CyberdrainRewrite/Hudu-ADDS-Documentation.ps1
 #>
 
 param (
-  [string] $ClientName, 
-  [string] $HuduBaseDomain, 
-  [string] $HuduApiKey
+    [Parameter(Mandatory = $true)][string] $ClientName, 
+    [Parameter(Mandatory = $true)][string] $HuduBaseDomain, 
+    [Parameter(Mandatory = $true)][string] $HuduApiKey
 )
+
 
 if (!$ClientName) {
     write-output "Must provide -ClientName with a valid value that is identical to the name of a Company that exists in your Hudu instance. This should be the {{client.name}} value. `n"
@@ -36,7 +42,7 @@ if (!$HuduApiKey) {
 }
 
 if (!$ErrorCount -eq 0) {
-exit 1
+    exit 1
 }
 #####################################################################
 #
@@ -52,11 +58,12 @@ Write-Host "Connecting to $HuduBaseDomain"
 
 #Get the Hudu API Module if not installed
 if (Get-Module -ListAvailable -Name HuduAPI) {
-		Import-Module HuduAPI 
-	} else {
-		Install-Module HuduAPI -Force
-		Import-Module HuduAPI
-	}
+    Import-Module HuduAPI 
+}
+else {
+    Install-Module HuduAPI -Force
+    Import-Module HuduAPI
+}
   
 #Set Hudu logon information
 New-HuduAPIKey $HuduAPIKey
@@ -81,10 +88,10 @@ function Get-WinADForestInformation {
     }
       
     $Data.UPNSuffixes = Invoke-Command -ScriptBlock {
-        $UPNSuffixList  =  [PSCustomObject] @{ 
-                "Primary UPN" = $ForestInformation.RootDomain
-                "UPN Suffixes"   = $ForestInformation.UPNSuffixes -join ","
-            }  
+        $UPNSuffixList = [PSCustomObject] @{ 
+            "Primary UPN"  = $ForestInformation.RootDomain
+            "UPN Suffixes" = $ForestInformation.UPNSuffixes -join ","
+        }  
         return $UPNSuffixList
     }
       
@@ -92,12 +99,12 @@ function Get-WinADForestInformation {
     $Data.SPNSuffixes = $ForestInformation.SPNSuffixes
       
     $Data.Sites = Invoke-Command -ScriptBlock {
-      $Sites = [System.DirectoryServices.ActiveDirectory.Forest]::GetCurrentForest().Sites            
+        $Sites = [System.DirectoryServices.ActiveDirectory.Forest]::GetCurrentForest().Sites            
         $SiteData = foreach ($Site in $Sites) {          
-          [PSCustomObject] @{ 
+            [PSCustomObject] @{ 
                 "Site Name" = $site.Name
                 "Subnets"   = ($site.Subnets) -join ", "
-                "Servers" = ($Site.Servers) -join ", "
+                "Servers"   = ($Site.Servers) -join ", "
             }  
         }
         Return $SiteData
@@ -190,7 +197,7 @@ $SiteNice = $TableHeader + ($SiteRawInfo -replace $TableStyling) + $Whitespace
 $OptionalRawFeatures = new-object PSCustomObject -property $RawAD.OptionalFeatures | convertto-html -Fragment | Select-Object -Skip 1
 $OptionalNice = $TableHeader + ($OptionalRawFeatures -replace $TableStyling) + $Whitespace
   
-$UPNRawFeatures = $RawAD.UPNSuffixes |  convertto-html -Fragment -as list| Select-Object -Skip 1
+$UPNRawFeatures = $RawAD.UPNSuffixes |  convertto-html -Fragment -as list | Select-Object -Skip 1
 $UPNNice = $TableHeader + ($UPNRawFeatures -replace $TableStyling) + $Whitespace
   
 $DCRawFeatures = $RawAD.GlobalCatalogs | ForEach-Object { Add-Member -InputObject $_ -Type NoteProperty -Name "Domain Controller" -Value $_; $_ } | convertto-html -Fragment | Select-Object -Skip 1
@@ -221,107 +228,108 @@ There are <b> $AdminUsers </b> Domain Administrator users<br>
  
 # Setup the fields for the Asset 
 $AssetFields = @{
-            'domain_name'               = $RawAD.ForestName
-            'forest_summary'            = $ForestNice
-            'site_summary'              = $SiteNice
-            'domain_controllers'        = $DCNice
-            'fsmo_roles'                = $FSMONice
-            'optional_features'         = $OptionalNice
-            'upn_suffixes'              = $UPNNice
-            'default_password_policies' = $passwordpolicyNice
-            'domain_admins'             = $adminsnice
-            'user_count'                = $Users
-        }
+    'domain_name'               = $RawAD.ForestName
+    'forest_summary'            = $ForestNice
+    'site_summary'              = $SiteNice
+    'domain_controllers'        = $DCNice
+    'fsmo_roles'                = $FSMONice
+    'optional_features'         = $OptionalNice
+    'upn_suffixes'              = $UPNNice
+    'default_password_policies' = $passwordpolicyNice
+    'domain_admins'             = $adminsnice
+    'user_count'                = $Users
+}
  
 # Checking if the FlexibleAsset exists. If not, create a new one.
 $Layout = Get-HuduAssetLayouts -name $HuduAssetLayoutName
 
 if (!$Layout) { 
 
-$AssetLayoutFields = @(
-		@{
-			label = 'Domain Name'
-			field_type = 'Text'
-			show_in_list = 'true'
-			position = 1
-		},
-		@{
-			label = 'Forest Summary'
-			field_type = 'RichText'
-			show_in_list = 'false'
-			position = 2
-		},
-		@{
-			label = 'Site Summary'
-			field_type = 'RichText'
-			show_in_list = 'false'
-			position = 3
-		},
-		@{
-			label = 'Domain Controllers'
-			field_type = 'RichText'
-			show_in_list = 'false'
-			position = 4
-		},
-		@{
-			label = 'FSMO Roles'
-			field_type = 'RichText'
-			show_in_list = 'false'
-			position = 5
-		},
-		@{
-			label = 'Optional Features'
-			field_type = 'RichText'
-			show_in_list = 'false'
-			position = 6
-		},
-		@{
-			label = 'UPN Suffixes'
-			field_type = 'RichText'
-			show_in_list = 'false'
-			position = 7
-		},
-		@{
-			label = 'Default Password Policies'
-			field_type = 'RichText'
-			show_in_list = 'false'
-			position = 8
-		},
-		@{
-			label = 'Domain Admins'
-			field_type = 'RichText'
-			show_in_list = 'false'
-			position = 9
-		},
-		@{
-			label = 'User Count'
-			field_type = 'RichText'
-			show_in_list = 'false'
-			position = 10
-		}		
-	)
+    $AssetLayoutFields = @(
+        @{
+            label        = 'Domain Name'
+            field_type   = 'Text'
+            show_in_list = 'true'
+            position     = 1
+        },
+        @{
+            label        = 'Forest Summary'
+            field_type   = 'RichText'
+            show_in_list = 'false'
+            position     = 2
+        },
+        @{
+            label        = 'Site Summary'
+            field_type   = 'RichText'
+            show_in_list = 'false'
+            position     = 3
+        },
+        @{
+            label        = 'Domain Controllers'
+            field_type   = 'RichText'
+            show_in_list = 'false'
+            position     = 4
+        },
+        @{
+            label        = 'FSMO Roles'
+            field_type   = 'RichText'
+            show_in_list = 'false'
+            position     = 5
+        },
+        @{
+            label        = 'Optional Features'
+            field_type   = 'RichText'
+            show_in_list = 'false'
+            position     = 6
+        },
+        @{
+            label        = 'UPN Suffixes'
+            field_type   = 'RichText'
+            show_in_list = 'false'
+            position     = 7
+        },
+        @{
+            label        = 'Default Password Policies'
+            field_type   = 'RichText'
+            show_in_list = 'false'
+            position     = 8
+        },
+        @{
+            label        = 'Domain Admins'
+            field_type   = 'RichText'
+            show_in_list = 'false'
+            position     = 9
+        },
+        @{
+            label        = 'User Count'
+            field_type   = 'RichText'
+            show_in_list = 'false'
+            position     = 10
+        }		
+    )
 	
-	Write-Host "Creating New Asset Layout"
-	$NewLayout = New-HuduAssetLayout -name $HuduAssetLayoutName -icon "fas fa-sitemap" -color "#00adef" -icon_color "#000000" -include_passwords $false -include_photos $false -include_comments $false -include_files $false -fields $AssetLayoutFields
-	$Layout = Get-HuduAssetLayouts -name $HuduAssetLayoutName
+    Write-Host "Creating New Asset Layout"
+    $NewLayout = New-HuduAssetLayout -name $HuduAssetLayoutName -icon "fas fa-sitemap" -color "#00adef" -icon_color "#000000" -include_passwords $false -include_photos $false -include_comments $false -include_files $false -fields $AssetLayoutFields
+    $Layout = Get-HuduAssetLayouts -name $HuduAssetLayoutName
 }
 
 
 $Company = Get-HuduCompanies -name $ClientName
 if ($company) {	
-	#Upload data to Hudu
-	$Asset = Get-HuduAssets -name $RawAD.ForestName -companyid $company.id -assetlayoutid $layout.id
+    #Upload data to Hudu
+    $Asset = Get-HuduAssets -name $RawAD.ForestName -companyid $company.id -assetlayoutid $layout.id
 	
-	#If the Asset does not exist, we edit the body to be in the form of a new asset, if not, we just upload.
-	if (!$Asset) {
-		Write-Host "New Asset Created"
-		$Asset = New-HuduAsset -name $RawAD.ForestName -company_id $company.id -asset_layout_id $layout.id -fields $AssetFields	
-	}
-	else {
-    Write-Host "Asset has been Updated"
-    $Asset = Set-HuduAsset -asset_id $Asset.id -name $RawAD.ForestName -company_id $company.id -asset_layout_id $layout.id -fields $AssetFields	
-	}
+    #If the Asset does not exist, we edit the body to be in the form of a new asset, if not, we just upload.
+    if (!$Asset) {
+        Write-Host "New Asset Created"
+        $Asset = New-HuduAsset -name $RawAD.ForestName -company_id $company.id -asset_layout_id $layout.id -fields $AssetFields	
+    }
+    else {
+        Write-Host "Asset has been Updated"
+        $Asset = Set-HuduAsset -asset_id $Asset.id -name $RawAD.ForestName -company_id $company.id -asset_layout_id $layout.id -fields $AssetFields	
+    }
 
-} else {
-	Write-Host "$ClientName was not found in Hudu"
+}
+else {
+    Write-Host "$ClientName was not found in Hudu"
 }
