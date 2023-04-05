@@ -1,14 +1,13 @@
-powercfg.exe /h off
-powercfg /x -hibernate-timeout-ac 0
-powercfg /x -hibernate-timeout-dc 0
-powercfg /x -disk-timeout-ac 0
-powercfg /x -disk-timeout-dc 0
-powercfg /x -monitor-timeout-ac 0
-powercfg /x -monitor-timeout-dc 0
-Powercfg /x -standby-timeout-ac 0
-powercfg /x -standby-timeout-dc 0
-reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
-netsh advfirewall firewall set rule group="remote desktop" new enable=Yes
+REM WARNING : This script is a bit agressive with the power settings.
 
+powercfg.exe /hibernate off
+powercfg /CHANGE hibernate-timeout-ac 0
+powercfg /CHANGE hibernate-timeout-dc 0
+Powercfg /CHANGE standby-timeout-ac 0
+powercfg /CHANGE standby-timeout-dc 0
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 0 /f
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v fDenyTSConnections /f
+netsh advfirewall firewall set rule group="remote desktop" new enable=Yes
+net start TermService
 
 REM net localgroup "Remote Desktop Users" "%UserName%" /add
