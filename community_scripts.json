@@ -1622,5 +1622,20 @@
     ],
     "shell": "powershell",
     "category": "TRMM (Win):Monitoring"
+  },
+  {
+    "guid": "79108c30-8010-4303-81c0-6b56623a3b35",
+    "filename": "Win_ESET_ThreatScan.ps1",
+    "submittedBy": "https://github.com/lcsnetworks",
+    "name": "ESET - Threat Scan",
+    "description": "Runs a Smart Scan on the target system using ESET Endpoint Antivirus. Can be adjusted to different drives / paths + scan profiles via script Arguments.",
+    "args": [
+      "-target C:\\",
+      "-profile \"@Smart scan\""
+    ],
+    "default_timeout": "7200",
+    "supported_platforms": ["windows"],
+    "shell": "powershell",
+    "category": "TRMM (Win):3rd Party Software"
   }
 ]
