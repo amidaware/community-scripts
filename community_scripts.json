@@ -1629,6 +1629,7 @@
     "submittedBy": "https://github.com/lcsnetworks",
     "name": "ESET - Threat Scan",
     "description": "Runs a Smart Scan on the target system using ESET Endpoint Antivirus. Can be adjusted to different drives / paths + scan profiles via script Arguments.",
+    "syntax": "[-target] - sets the target drive(s) or path e.g. \"C:\\,D:\\\", \"C:\\Windows\"\n[-profile] - sets the target profile e.g. \"@Smart scan\", \"@In-depth scan\"",
     "args": [
       "-target C:\\",
       "-profile \"@Smart scan\""
