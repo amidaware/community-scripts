@@ -12,6 +12,12 @@
       2. Authorization Method -> "Application Path"
       3. Application path -> C:\Program Files\TacticalAgent\tacticalrmm.exe
 
+.PARAMETER Target
+    Comma-separated list; sets the target drive(s) or path e.g. "C:\,D:\", "C:\Windows"
+
+.PARAMETER Profile
+    Sets the target profile e.g. "@Smart scan", "@In-depth scan"
+
 .NOTES
     RMM trigger will *NOT* work unless the allowed application path is configured! OPTIONAL: You can disable authorization method, but this is DANGEROUS
     
