@@ -6,6 +6,8 @@
     Hello World example for a PowerShell script in TRMM.
     $log if provided will output verbose logs with timestamps. This can be used to determine how long the installer took.
 
+    This is a test of the pull request system. This is just a test.
+
 .Args
     -<param1> <string> #bound parameter
     -<agent> <string> #bound parameter
@@ -17,6 +19,7 @@
 .Example
     Win_Hello_World.ps1 -Agent "{{agent.hostname}}" -Site "{{site.name}}" -Client "{{client.name}}" "Bound first parameter" "Unbound second parameter" Third-param Fourth
  #>
+
 
 # Param needs to be the first statement or you will get an error:
 #   The term 'param' is not recognized as the name of a cmdlet, function, script file, or operable program.
