@@ -2,6 +2,11 @@
 # Copyright 2022, Nice Guy IT, LLC. All rights reserved.
 # SPDX-License-Identifier: MIT
 # Source: https://github.com/NiceGuyIT/synology_abfb_log_parser
+
+################################################################################
+# This script is deprecated. Use scripts_wip/all_python_module_manager.py
+################################################################################
+
 """
 **IMPORTANT**
 This script will install the "synology_abfb_log_parser" Python modules in the TRMM Python distribution.
