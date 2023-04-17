@@ -1638,5 +1638,22 @@
     "supported_platforms": ["windows"],
     "shell": "powershell",
     "category": "TRMM (Win):3rd Party Software"
+  },
+  {
+    "guid": "2953cafc-3bae-4717-88da-ddeb4b14eb9b",
+    "filename": "Win_Disk_Check_Repair.ps1",
+    "submittedBy": "https://github.com/lcsnetworks",
+    "name": "Disk - Check / Repair",
+    "description": "Check and optionally repair disk volume on the target system/drive",
+    "syntax": "[-driveletter <string>]\n[-spotfix]\n[-offline]",
+    "args": [
+      "-driveletter C"
+    ],
+    "default_timeout": "3600",
+    "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
+    "category": "TRMM (Win):Hardware"
   }
 ]
