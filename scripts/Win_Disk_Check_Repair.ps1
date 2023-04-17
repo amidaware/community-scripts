@@ -17,17 +17,17 @@
     When specified, the script performs a spot fix on the volume.
 
 .EXAMPLE
-    .\RepairVolume.ps1 -DriveLetter "C"
+    -DriveLetter "C"
 
     Performs an online scan of the volume with the drive letter "C"
 
 .EXAMPLE
-    .\RepairVolume.ps1 -DriveLetter "C" -Offline
+    -DriveLetter "C" -Offline
 
     Schedules an offline scan of the volume with the drive letter "C" upon next reboot
 
 .EXAMPLE
-    .\RepairVolume.ps1 -DriveLetter "C" -SpotFix
+    -DriveLetter "C" -SpotFix
 
     Performs a spot fix on the volume with the drive letter "C"
 #>
