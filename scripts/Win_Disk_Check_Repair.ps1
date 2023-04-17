@@ -43,14 +43,14 @@ param(
 
 # Perform the requested operation(s) on the volume
 if ($Offline) {
-    Write-Host "Performing offline scan on volume $DriveLetter`:"
+    Write-Output "Performing offline scan on volume $DriveLetter`:"
     Repair-Volume -DriveLetter $DriveLetter -OfflineScanAndFix
 }
 elseif ($SpotFix) {
-    Write-Host "Performing spot fix on volume $DriveLetter`:"
+    Write-Output "Performing spot fix on volume $DriveLetter`:"
     Repair-Volume -DriveLetter $DriveLetter -SpotFix
 }
 else {
-    Write-Host "Performing online scan on volume $DriveLetter`:"
+    Write-Output "Performing online scan on volume $DriveLetter`:"
     Repair-Volume -DriveLetter $DriveLetter -Scan
 }
