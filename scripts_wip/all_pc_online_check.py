@@ -1,13 +1,24 @@
 #!/usr/bin/env python3
 
-# This script will alert when a PC comes online. It does this by pinging the rmm server.
-#
-# Possible enhancements:
-#   Use ping3[1] or tcping[2] which do not require exec'ing an external program. The down side is they require
-#   installing another module.
-#
-# [1]: https://pypi.org/project/ping3/
-# [2]: https://pypi.org/project/tcping/
+__version__ = "0.1.0"
+__license__ = "MIT"
+__authors__ = "NiceGuyIT"
+
+"""
+This PC online check script will alert when a PC comes online. It does this by pinging an IP or host, preferably the
+RMM server.
+
+In Tactical RMM, a return code of 0 indicates success.
+  - If the ping is successful, a return code of 1 used to indicate failure so an alert can be sent.
+  - If the ping is not successful, a return code of 0 is used to indicate success and no alert is sent.
+
+Possible enhancements:
+  Use ping3[1] or tcping[2] which do not require exec'ing an external program. The down side is they require
+  installing another module.
+
+[1]: https://pypi.org/project/ping3/
+[2]: https://pypi.org/project/tcping/
+"""
 
 import os
 import platform
@@ -18,9 +29,20 @@ import sys
 
 def ping(host, timeout, stacktrace):
     """
-    Returns True if host (str) responds to a ping request.
+    ping a host with a timeout and return the result and output. If the "ping" command generates an error,
+    the output will include the stacktrace if "stacktrace" is True.
+
+    The timeout is the number of seconds for the ping command options, and number of seconds + 1 for Python to
+    time out the ping command. A timeout of 1 or 2 seconds is suggested.
+
     Remember that a host may not respond to a ping (ICMP) request even if the host name is valid.
-    It takes about
+
+    :param host: Hostname to ping
+    :param timeout: Timeout for the ping command.
+    :param stacktrace: If True, include the stacktrace if an error is encountered.
+    :return:
+        - success: True if the ping was successful. I.e. if the ping program exited successfully. False otherwise.
+        - output: Output of the ping program, including the optional stacktrace.
     """
 
     if host == "":
@@ -54,12 +76,7 @@ def ping(host, timeout, stacktrace):
         #    Wait interval seconds between sending each packet.
         param = ['-w', f"{timeout}", '-W', f"{timeout}", '-i', f"{timeout}", '-c', f"{count}"]
 
-    # Building the command. Ex: "ping -c 1 google.com"
     command = ['ping', *param, host]
-
-    # Debugging info if you need it
-    # print(f"platform: {platform.system()}")
-    # print(f"command: {command}")
     try:
 
         output = subprocess.check_output(
@@ -68,20 +85,19 @@ def ping(host, timeout, stacktrace):
             timeout=int(timeout)+1,
             universal_newlines=True,
         )
-        result = True
+        success = True
     except subprocess.CalledProcessError as err:
         if stacktrace:
             output = f"""Failed to execute ping.
-command: {command}
+command: {' '.join(command)}
 {traceback.format_exc()}
 {err}
 """
         else:
             output = f"""Failed to execute ping.
-command: {command}
 {err}
 """
-        result = False
+        success = False
     except subprocess.TimeoutExpired as err:
         if stacktrace:
             output = f"""Ping command timed out after '{timeout + 1}' seconds.
@@ -94,9 +110,9 @@ command: {' '.join(command)}
 command: {' '.join(command)}
 {err}
 """
-        result = False
+        success = False
 
-    return result, output
+    return success, output
 
 
 def main():
@@ -119,21 +135,20 @@ def main():
         return 2
     ping_timeout = int(ping_timeout)
 
-    result, output = ping(**{
+    success, output = ping(**{
         "host": ping_hostname,
         "timeout": ping_timeout,
         "stacktrace": ping_stacktrace,
     })
-    if result:
+
+    # In Tactical terms, a successful ping means the agent is online. The exit code is used to trigger an alert.
+    if success:
         print("Success!")
         print(output)
-        # In Tactical terms, a successful ping means the agent is online. The exit code is used to trigger an alert.
         # Exit with failure; send alert
         return 1
     else:
-        print("Failed!")
         print(output)
-        # In Tactical terms, a successful ping means the agent is online. The exit code is used to trigger an alert.
         # Exit with success; do not send alert
         return 0
 
