@@ -1655,5 +1655,39 @@
       "windows"
     ],
     "category": "TRMM (Win):Hardware"
+  },
+  {
+    "guid": "52f6873c-ea02-4126-89c9-f6c1471cdf6d",
+    "filename": "all_pc_online_check.py",
+    "submittedBy": "https://github.com/NiceGuyIT",
+    "name": "Network - Online check",
+    "description": "Check to be alerted when a PC comes online. Returns failure if the PC is online.",
+    "syntax": "[PING_HOSTNAME=<string>]\n[PING_TIMEOUT=<number>]\n[PING_STACKTRACE=<boolean>]",
+    "args": [],
+    "default_timeout": "10",
+    "shell": "python",
+    "supported_platforms": [
+      "windows",
+      "linux",
+      "darwin"
+    ],
+    "category": "TRMM (All):Network"
+  },
+  {
+    "guid": "8a08cee9-bdc8-4d7a-8389-a201bb8ac7f1",
+    "filename": "all_python_module_manager.py",
+    "submittedBy": "https://github.com/NiceGuyIT",
+    "name": "Python - Module Manager",
+    "description": "List/Install/Remove/Update modules in the Python distribution",
+    "syntax": "help\ninfo [--verbose|--no-verbose]\nlist [--format=<string>]\ninstall <string>...\nuninstall <string>...\nupgrade <string>...",
+    "args": [],
+    "default_timeout": "60",
+    "shell": "python",
+    "supported_platforms": [
+      "windows",
+      "linux",
+      "darwin"
+    ],
+    "category": "TRMM (All):3rd Party Software"
   }
 ]

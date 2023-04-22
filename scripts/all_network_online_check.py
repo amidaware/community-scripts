@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __license__ = "MIT"
 __authors__ = "NiceGuyIT"
 
@@ -11,6 +11,23 @@ RMM server.
 In Tactical RMM, a return code of 0 indicates success.
   - If the ping is successful, a return code of 1 used to indicate failure so an alert can be sent.
   - If the ping is not successful, a return code of 0 is used to indicate success and no alert is sent.
+
+Command line arguments:
+  There are no command line arguments. All parameters are passed using environmental variables.
+
+Environmental variables:
+  - PING_HOSTNAME: Hostname or IP to ping. Default: localhost
+    The hostname or IP to ping. If not set, "localhost" is used.
+
+  - PING_TIMEOUT: Timeout, in seconds. Default: 5
+    The timeout in seconds for the ping arguments. The ping command has various timeouts in various arguments on
+    different systems. PING_TIMEOUT is used for those arguments. An additional timeout of PING_TIMEOUT + 1 is used
+    for Python to time out the exec. The idea is that the ping timeout arguments will cause the exec to return before
+    Pythong kills the program.
+
+  - PING_STACKTRACE: Include the stack trace on error?
+    If true, the stacktrace is included in the output on failure. This may or may not be useful.
+    Note: In true Python sense, the value needs to be PascalCase: True
 
 Possible enhancements:
   Use ping3[1] or tcping[2] which do not require exec'ing an external program. The down side is they require
