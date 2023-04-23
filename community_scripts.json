@@ -167,12 +167,12 @@
   },
   {
     "guid": "3c46290b-85db-4cd2-93a2-943c8c93b3b1",
-    "filename": "Speedtest.py",
+    "filename": "all_network_speedtest.py",
     "submittedBy": "https://github.com/wh1te909",
-    "name": "Speed Test - Python",
+    "name": "Network - Speed Test",
     "description": "Runs a Speed Test using Python",
     "shell": "python",
-    "category": "TRMM (Win):Network",
+    "category": "TRMM (All):Network",
     "supported_platforms": [
       "windows",
       "linux",
