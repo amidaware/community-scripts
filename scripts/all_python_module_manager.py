@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __license__ = "MIT"
 __authors__ = "NiceGuyIT, silversword411"
 
@@ -12,7 +12,7 @@ Windows, and the first Python 3.x in the `$PATH on Linux and macOS. See the docs
 
 **Use at your own risk.** Nothing stops you from breaking your Python install.
 
-This script will install, uninstall, upgrade and list Python modules in the Python installation on the agent. The
+This script will list, install, uninstall, and upgrade Python modules in the Python installation on the agent. The
 Python location and version is provided by the "info" command.
 
 The minimum version of Python supported is 3.8. Older versions are not supported and may generate an error.
@@ -253,23 +253,28 @@ def main():
     help_parser.set_defaults(func=lambda _: parser.print_help())
 
     info_parser = subparsers.add_parser("info", help="Get the Python site (system) info")
-    info_parser.add_argument("--verbose", action="store_true")
-    info_parser.add_argument("--no-verbose", dest="verbose", action="store_false")
+    info_parser.add_argument("--verbose", action="store_true",
+                             help="Output more information about the system installation")
+    info_parser.add_argument("--no-verbose", dest="verbose", action="store_false",
+                             help="Output less information about the system installation (default)")
     info_parser.set_defaults(verbose=False)
 
     list_parser = subparsers.add_parser("list", help="List the installed modules")
-    list_parser.add_argument("--format", default="columns", choices=["columns", "freeze", "json"])
+    list_parser.add_argument("--format", default="columns", choices=["columns", "freeze", "json"],
+                             help="Same as python -m pip list --format option")
 
     install_parser = subparsers.add_parser("install", help="Install the specified modules")
-    install_parser.add_argument("modules", nargs="+")
+    install_parser.add_argument("modules", nargs="+",
+                                help="A (space separated) list of modules to install")
 
     uninstall_parser = subparsers.add_parser("uninstall", help="Uninstall the specified modules")
-    uninstall_parser.add_argument("modules", nargs="+")
+    uninstall_parser.add_argument("modules", nargs="+",
+                                  help="A (space separated) list of modules to uninstall")
 
     upgrade_parser = subparsers.add_parser("upgrade", help="Upgrade all installed modules")
-    upgrade_parser.add_argument("modules", nargs="+")
+    upgrade_parser.add_argument("modules", nargs="+",
+                                help="A (space separated) list of modules to upgrade")
 
-    # parser.add_argument_group("list", help="Command to run")
     args = parser.parse_args()
 
     # Change default log level to INFO
