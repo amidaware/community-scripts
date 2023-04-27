@@ -22,7 +22,7 @@
         b) -SecretKey {{client.DuoSecretKey}}
         c) -ApiHost {{client.DuoApiHost}}
 .NOTES
-   Version: 1.0
+   Version: 1.1
    Author: redanthrax
    Creation Date: 2022-04-12
 #>
@@ -116,22 +116,33 @@ function Win_DuoAuthLogon_Manage {
     )
 
     Begin {
-        if ($null -ne (Get-WmiObject -Class Win32_Product | Where-Object { $_.Name -Match "Duo Authentication" }) -and -Not($Uninstall)) {
+        $Apps = @()
+        $Apps += Get-ItemProperty "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
+        $Apps += Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
+        if ($null -ne ($Apps | Where-Object { $_.DisplayName -Match "Duo Authentication" }) -and -Not($Uninstall)) {
             Write-Output "Duo Authentication already installed."
             Exit 0
         }
 
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-        $random = ([char[]]([char]'a'..[char]'z') + 0..9 | sort { get-random })[0..12] -join ''
+        $random = ([char[]]([char]'a'..[char]'z') + 0..9 | Sort-Object { get-random })[0..12] -join ''
         if (-not(Test-Path "C:\packages$random")) { New-Item -ItemType Directory -Force -Path "C:\packages$random" | Out-Null }
     }
 
     Process {
         Try {
             if ($Uninstall) {
-                (Get-WmiObject -Class Win32_Product -Filter "Name = 'Duo Authentication for Windows Logon x64'").Uninstall()
-                Write-Output "Uninstalled Duo Authentication for Windows"
-                Exit 0
+                $uninstallString = ($Apps | Where-Object { $_.DisplayName -Match "Duo Authentication" }).UninstallString
+                if ($uninstallString) {
+                    $msiexec, $args = $uninstallString.Split(" ")
+                    Start-Process $msiexec -ArgumentList $args, "/qn" -Wait -NoNewWindow
+                    Write-Output "Uninstalled Duo Authentication for Windows"
+                    Exit 0
+                }
+                else {
+                    Write-Output "No uninstall string found."
+                    Exit 0
+                }
             }
 
             Write-Output "Starting installation."
@@ -159,7 +170,7 @@ function Win_DuoAuthLogon_Manage {
             $timedOut = $null
             $process | Wait-Process -Timeout 300 -ErrorAction SilentlyContinue -ErrorVariable timedOut
             if ($timedOut) {
-                $process | kill
+                $process | Stop-Process
                 Write-Output "Install timed out after 300 seconds."
                 Exit 1
             }
