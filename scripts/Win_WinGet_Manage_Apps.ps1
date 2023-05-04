@@ -34,7 +34,7 @@ cd $wingetloc
 $ErrorCount = 0
 
 if ($Mode -eq "show") {
-    .\winget.exe upgrade
+    .\winget.exe upgrade --accept-source-agreements
     Exit 0
 }
 
