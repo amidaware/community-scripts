@@ -1,0 +1,132 @@
+{
+  "title": "TRMM Community Scripts",
+  "description": "JSON schema for the Tactical RMM Community Scripts configuration file.",
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "https://raw.githubusercontent.com/amidaware/community-scripts/main/community_scripts.schema.json",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "submittedBy": {
+        "description": "Who submitted the script? Usually a URI, email or any string.",
+        "type": [
+          "string",
+          "uri",
+          "email"
+        ]
+      },
+      "args": {
+        "description": "The script arguments listed as an array.",
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "filename": {
+        "description": "The filename of the script.",
+        "type": "string"
+      },
+      "shell": {
+        "description": "The scripting platform, or type of script. One of cmd, powershell, python, shell.",
+        "type": "string",
+        "enum": [
+          "cmd",
+          "powershell",
+          "python",
+          "shell"
+        ]
+      },
+      "supported_platforms": {
+        "description": "List of platforms the script supports",
+        "type": "array",
+        "items": {
+          "enum": [
+            "windows",
+            "darwin",
+            "linux"
+          ]
+        }
+      },
+      "name": {
+        "description": "The name of the script that will be shown in TRMM",
+        "type": "string"
+      },
+      "guid": {
+        "description": "Unique ID for the script.",
+        "type": "uuid"
+      },
+      "description": {
+        "description": "Description of what the script does, or the purpose of the script.",
+        "type": "string"
+      },
+      "syntax": {
+        "description": "The syntax for the command line arguments accepted by the script.",
+        "type": "string"
+      },
+      "category": {
+        "description": "The category for the script. Choose from a list of existing categories or enter a new category.",
+        "type": "string",
+        "anyOf": [
+          {
+            "description": "A new category not yet used.",
+            "type": "string"
+          },
+          {
+            "description": "Choose from an existing category.",
+            "type": "string",
+            "enum": [
+              "TRMM (All):3rd Party Software",
+              "TRMM (All):Network",
+              "TRMM (Linux):Checks",
+              "TRMM (Win):3rd Party Software",
+              "TRMM (Win):3rd Party Software>Chocolatey",
+              "TRMM (Win):3rd Party Software>Monitoring",
+              "TRMM (Win):3rd Party Software>WinGet",
+              "TRMM (Win):Active Directory",
+              "TRMM (Win):Azure>AD",
+              "TRMM (Win):Azure>Backup",
+              "TRMM (Win):Browsers",
+              "TRMM (Win):Collectors",
+              "TRMM (Win):Hardware",
+              "TRMM (Win):Maintenance",
+              "TRMM (Win):Misc>Reference",
+              "TRMM (Win):Monitoring",
+              "TRMM (Win):Network",
+              "TRMM (Win):Office",
+              "TRMM (Win):Other",
+              "TRMM (Win):Power",
+              "TRMM (Win):Printing",
+              "TRMM (Win):Security",
+              "TRMM (Win):Security>Antivirus",
+              "TRMM (Win):Storage",
+              "TRMM (Win):TacticalRMM Related",
+              "TRMM (Win):Testing",
+              "TRMM (Win):Updates",
+              "TRMM (Win):User Management",
+              "TRMM (Win):Win11 Tweaks",
+              "TRMM (Win):Windows Features"
+            ]
+          }
+        ]
+      },
+      "default_timeout": {
+        "description": "Enter the default timeout for the script, in seconds.",
+        "default": 90,
+        "type": [
+          "number",
+          "string"
+        ]
+      }
+    },
+    "required": [
+      "guid",
+      "filename",
+      "submittedBy",
+      "name",
+      "description",
+      "shell",
+      "category",
+      "supported_platforms"
+    ]
+  }
+}
