@@ -30,6 +30,7 @@
     V1.0 Initial release 6/19/2021 rfost52
     V1.1 Parameterization; Error Checking with conditionals and exit codes
     V1.2 Variable declarations cleaned up; minor syntax corrections; Output to file added (@jeevis)
+    V1.3 Fixed error with string to secure-string convertion; Added information for escaping $ character (@jxd-decision)
 
     Reference Links: 
     www.google.com
@@ -41,7 +42,7 @@ param (
     [ValidateNotNullOrEmpty()]
     [string]$Domain,
 
-    [Parameter(Mandatory = $true, HelpMessage = "The password for the domain account.")]
+    [Parameter(Mandatory = $true, HelpMessage = "The password for the domain account. If the password contains a '$' you have to escape it with a single backtick '``'")]
     [ValidateNotNullOrEmpty()]
     [string]$Password,
 
@@ -72,8 +73,8 @@ if ([string]::IsNullOrEmpty($password)) {
 
 else {
     $username = "$domain\$UserAccount"
-    $password = ConvertTo-SecureString -string $password -asPlainText -Force
-    $credential = New-Object System.Management.Automation.PSCredential($username, $password)
+    $securePassword = ConvertTo-SecureString -string $password -asPlainText -Force
+    $credential = New-Object System.Management.Automation.PSCredential($username, $securePassword)
 }
 
 try {
