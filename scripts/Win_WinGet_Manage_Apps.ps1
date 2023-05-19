@@ -4,7 +4,7 @@
       .DESCRIPTION
       For installing packages using winget.
       .PARAMETER Mode
-      4 options: install, uninstall, search or upgrade.
+      6 options: install, uninstall, search, update, show or upgrade.
       .PARAMETER PackageName
       Use this to specify which software to install eg: PackageName google.chrome
       .EXAMPLE
@@ -13,6 +13,10 @@
       -Mode upgrade
       .EXAMPLE
       -Mode uninstall -PackageName google.chrome
+      .EXAMPLE
+      -Mode update -PackageName google.chrome
+      .EXAMPLE (to show updates available)
+      -Mode show
       .NOTES
       9/2021 v1 Initial release by @silversword411 and @bradhawkins 
       11/14/2021 v1.1 Fixing typos and logic flow
@@ -29,6 +33,11 @@ cd $wingetloc
 
 $ErrorCount = 0
 
+if ($Mode -eq "show") {
+    .\winget.exe upgrade --accept-source-agreements
+    Exit 0
+}
+
 if ($Mode -ne "upgrade" -and !$PackageName) {
     write-output "No package name provided, please include Example: `"-PackageName google.chrome`" `n"
     Exit 1
@@ -36,6 +45,11 @@ if ($Mode -ne "upgrade" -and !$PackageName) {
 
 if ($Mode -eq "upgrade") {
     .\winget.exe upgrade --all --accept-source-agreements
+    Exit 0
+}
+
+if ($Mode -eq "update") {
+    .\winget.exe upgrade $PackageName --accept-source-agreements
     Exit 0
 }
 
