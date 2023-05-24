@@ -1,42 +1,76 @@
-#Uses RunAsUser and BurntToast to display a popup message to the currently logged on user.
-#Accepts all arguments as the message text or can quote with 'your message here' if using special characters in the message.
-#Optional: C:\Program Files\TacticalAgent\BurntToastLogo.png will be displayed if the file exists. Image dimensions 478px (W) x 236px (H)
-#BurntToast Module Source and Examples: https://github.com/Windos/BurntToast
-#RunAsUser Module Source and Examples: https://github.com/KelvinTegelaar/RunAsUser
+<#
+.SYNOPSIS
+    Displays a popup message to the currently logged on user.
 
+.DESCRIPTION
+    This script uses the RunAsUser and BurntToast modules to display a popup message to the currently logged on user. 
+
+.PARAMETER
+    The message text is the arguments can be provided as arguments or quoted with 'your message here' if special characters are used.
+
+.EXAMPLE
+    Example usage:
+    Hello, this is a test message!
+
+.EXAMPLE
+    Another example usage with special characters:
+    'Hello, "this" is a test message!'
+
+.NOTES
+    C:\Program Files\TacticalAgent\BurntToastLogo.png will be displayed if the file exists. Image dimensions 478px (W) x 236px (H)
+    BurntToast Module Source and Examples: https://github.com/Windos/BurntToast
+    RunAsUser Module Source and Examples: https://github.com/KelvinTegelaar/RunAsUser
+    v1.0 2/10/2021 bradhawkins85 Initial release
+    v1.1 5/23/2023 silversword411 
+#>
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+#$ErrorActionPreference = 'silentlycontinue'
 
-if (Get-PackageProvider -Name NuGet) {
-    #Write-Host "NuGet Already Installed"
-} 
-else {
-    Write-Host "Installing NuGet"
-    Install-PackageProvider -Name NuGet -Force
-} 
+Function InstallRequirements {
+    # Check if NuGet is installed
+    if (!(Get-PackageProvider -Name NuGet -ListAvailable)) {
+        Write-Output "Nuget installing"
+        Install-PackageProvider -Name NuGet -Force
+    }
+    else {
+        Write-Output "Nuget already installed"
+    }
+    if (-not (Get-Module -Name BurntToast -ListAvailable)) {
+        Write-Output "BurntToast installing"
+        Install-Module -Name BurntToast -Force
+    }
+    else {
+        Write-Output "BurntToast already installed"
+    }
 
-if (Get-Module -ListAvailable -Name BurntToast) {
-    #Write-Host "BurntToast Already Installed"
-} 
-else {
-    Write-Host "Installing BurntToast"
-    Install-Module -Name BurntToast -Force
+    if (-not (Get-Module -Name RunAsUser -ListAvailable)) {
+        Write-Output "RunAsUser installing"
+        Install-Module -Name RunAsUser -Force
+    }
+    else {
+        Write-Output "RunAsUser already installed"
+    }
 }
- 
-if (Get-Module -ListAvailable -Name RunAsUser) {
-    #Write-Host "RunAsUser Already Installed"
-} 
-else {
-    Write-Host "Installing RunAsUser"
-    Install-Module -Name RunAsUser -Force
-}
+InstallRequirements
 
-# Used to pull variables in and use them inside the script block. Contains message to show user
-Set-Content -Path c:\windows\temp\message.txt -Value $args
+Function TRMMTempFolder {
+    # Make sure the temp folder exists
+    If (!(test-path $env:ProgramData\TacticalRMM\temp)) {
+        New-Item -ItemType Directory -Force -Path "$env:ProgramData\TacticalRMM\temp"
+    }
+    Else {
+        Write-Output "TRMM Temp folder exists"
+    }
+}
+TRMMTempFolder
+
+# Used to for message to show user and use inside the script block.
+Set-Content -Path $env:ProgramData\TacticalRMM\temp\toastmessage.txt -Value $args
 
 Invoke-AsCurrentUser -scriptblock {
  
-    $messagetext = Get-Content -Path c:\windows\temp\message.txt
+    $messagetext = Get-Content -Path $env:ProgramData\TacticalRMM\temp\toastmessage.txt
     $heroimage = New-BTImage -Source 'C:\Program Files\TacticalAgent\BurntToastLogo.png' -HeroImage
     $Text1 = New-BTText -Content  "Message from IT"
     $Text2 = New-BTText -Content "$messagetext"
@@ -57,4 +91,4 @@ Invoke-AsCurrentUser -scriptblock {
 }
 
 # Cleanup temp file for message variables
-Remove-Item -Path c:\windows\temp\message.txt
+Remove-Item -Path $env:ProgramData\TacticalRMM\temp\toastmessage.txt
