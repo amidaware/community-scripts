@@ -65,7 +65,7 @@ Function TRMMTempFolder {
 }
 TRMMTempFolder
 
-# Used to for message to show user and use inside the script block.
+# Used to store text to show user and use inside the script block.
 Set-Content -Path $env:ProgramData\TacticalRMM\temp\toastmessage.txt -Value $args
 
 Invoke-AsCurrentUser -scriptblock {
