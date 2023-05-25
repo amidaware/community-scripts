@@ -865,7 +865,7 @@
     "submittedBy": "https://github.com/bradhawkins85",
     "name": "Message Popup To User",
     "syntax": "<string>",
-    "description": "Displays a popup message to the currently logged on user",
+    "description": "Displays a popup notification message to the currently logged on user using BurntToast",
     "shell": "powershell",
     "supported_platforms": [
       "windows"

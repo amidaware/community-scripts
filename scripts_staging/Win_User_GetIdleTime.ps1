@@ -45,29 +45,18 @@ namespace PInvoke.Win32
 '@
 
 Function Get-IdleTime {
+    $idleTime = [PInvoke.Win32.UserInput]::IdleTime
+
     $Output = @{
-        'LastInput' = [PInvoke.Win32.UserInput]::LastInput;
-        'IdleTime'  = [PInvoke.Win32.UserInput]::IdleTime
+        'LastInput'         = [PInvoke.Win32.UserInput]::LastInput;
+        'IdleTime'          = $idleTime;
+        'IdleTimeSeconds'   = $idleTime.TotalSeconds;
+        'FormattedIdleTime' = '{0:D2}d:{1:D2}h:{2:D2}m' -f $idleTime.Days, $idleTime.Hours, $idleTime.Minutes, $idleTime.Seconds
     }
-    
-    #Store lastInput and idleTime in a property to return
+
+    # Store lastInput, idleTime, idleTimeSeconds, and formattedIdleTime in a property to return
     New-Object -TypeName PSObject -Property $Output
 }
 
- 
-$idle = Get-IdleTime
-$strIdle = ""
-
-if ($idle.IdleTime.Days -gt 0) {
-    $strIdle = "$($idle.IdleTime.Days)d " 
-}
-
-if ($idle.IdleTime.Hours -gt 0) {
-    $strIdle += "$($idle.IdleTime.Hours)h " 
-}
-
-if ($idle.IdleTime.Minutes -gt 0) {
-    $strIdle += "$($idle.IdleTime.Minutes)m" 
-}
-
-Write-Host "Idle $($strIdle)"
+$idleTimeInfo = Get-IdleTime
+Write-Output "$($idleTimeInfo.IdleTimeSeconds) seconds. $($idleTimeInfo.FormattedIdleTime)"
