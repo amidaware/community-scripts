@@ -8,13 +8,32 @@
 .PARAMETER single
     Specifies whether to remove old screenshots before taking a new one.
 
+.PARAMETER removeFolder
+    Specifies whether to remove the screenshots folder before taking a new screenshot.
+
 .EXAMPLE
     -single
     Captures a screenshot of the currently logged in user's screen and removes any existing screenshots.
 
-.NOTES
+.EXAMPLE
+    -removeFolder
+    Removes the screenshots folder
+
+    .NOTES
     Version: 1.0 The screenshots are saved in the TacticalRMM scripts/screenshots directory.
+    TODO: Get opinion on Set-ExecutionPolicy -ExecutionPolicy $curpsxpol file and should it be left behind?
 #>
+
+param (
+    [switch]$single,
+    [switch]$removeFolder
+)
+
+# Remove the screenshots folder
+if ($removeFolder) {
+    Remove-Item -Path "$env:programdata\TacticalRMM\scripts\screenshots\" -Recurse -Force
+    Exit 0
+}
 
 if (Get-PackageProvider -Name NuGet) {
     Write-Output "NuGet Already Installed"
