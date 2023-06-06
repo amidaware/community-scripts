@@ -16,11 +16,13 @@
         a) DuoIntegrationKey as type text
         b) DuoSecretKey as type text
         c) DuoApiHost as type text
+        d) DuoLatestVersion as type text
     3. In Tactical RMM, Right-click on each client and select Edit. Fill in the DuoIntegrationKey, DuoSecretKey, and DuoApiHost.
     4. Create the follow script arguments
         a) -IntegrationKey {{client.DuoIntegrationKey}}
         b) -SecretKey {{client.DuoSecretKey}}
         c) -ApiHost {{client.DuoApiHost}}
+        d) -LatestVersion {{client.DuoLatestVersion}}
 .NOTES
    Version: 1.1
    Author: redanthrax
@@ -36,6 +38,8 @@ Param(
 
     [Parameter(Mandatory)]
     [string]$ApiHost,
+
+    [string]$LatestVersion = "4.2.2.1755",
 
     [ValidateSet("1", "0")]
     $AutoPush = "1",
@@ -60,6 +64,50 @@ Param(
 
     [switch]$Uninstall
 )
+
+function Compare-SoftwareVersion {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Version1,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Version2
+    )
+
+    # Split the version strings into individual parts
+    $versionParts1 = $Version1 -split '\.'
+    $versionParts2 = $Version2 -split '\.'
+
+    # Get the minimum number of parts between the two versions
+    $minParts = [Math]::Min($versionParts1.Count, $versionParts2.Count)
+
+    # Compare the version parts
+    for ($i = 0; $i -lt $minParts; $i++) {
+        $part1 = [int]$versionParts1[$i]
+        $part2 = [int]$versionParts2[$i]
+
+        if ($part1 -gt $part2) {
+            return $true
+        }
+        elseif ($part1 -lt $part2) {
+            return $false
+        }
+    }
+
+    # If all parts are equal, check the length of the version strings
+    if ($versionParts1.Count -gt $versionParts2.Count) {
+        # Check the additional part in Version1
+        $additionalPart = $versionParts1[$minParts..($versionParts1.Count - 1)] -join '.'
+        return ![string]::IsNullOrEmpty($additionalPart)
+    }
+    elseif ($versionParts1.Count -lt $versionParts2.Count) {
+        # Check the additional part in Version2
+        $additionalPart = $versionParts2[$minParts..($versionParts2.Count - 1)] -join '.'
+        return [string]::IsNullOrEmpty($additionalPart)
+    }
+
+    return $true
+}
 
 function ConvertTo-StringData {
     [CmdletBinding()]
@@ -91,6 +139,8 @@ function Win_DuoAuthLogon_Manage {
         [Parameter(Mandatory)]
         [string]$ApiHost,
 
+        [string]$LatestVersion,
+
         [ValidateSet("1", "0")]
         $AutoPush = "1",
 
@@ -116,12 +166,19 @@ function Win_DuoAuthLogon_Manage {
     )
 
     Begin {
+        $Upgrade = $false
         $Apps = @()
         $Apps += Get-ItemProperty "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
         $Apps += Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
         if ($null -ne ($Apps | Where-Object { $_.DisplayName -Match "Duo Authentication" }) -and -Not($Uninstall)) {
-            Write-Output "Duo Authentication already installed."
-            Exit 0
+            $duo = $Apps | Where-Object { $_.DisplayName -Match "Duo Authentication" }
+            if (Compare-SoftwareVersion $duo.DisplayVersion $LatestVersion) {
+                Write-Output "Duo Authentication $($duo.DisplayVersion) already installed."
+                Exit 0
+            }
+            else {
+                $Upgrade = $true
+            }
         }
 
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -131,17 +188,19 @@ function Win_DuoAuthLogon_Manage {
 
     Process {
         Try {
-            if ($Uninstall) {
+            if ($Uninstall -or $Upgrade) {
                 $uninstallString = ($Apps | Where-Object { $_.DisplayName -Match "Duo Authentication" }).UninstallString
                 if ($uninstallString) {
                     $msiexec, $args = $uninstallString.Split(" ")
                     Start-Process $msiexec -ArgumentList $args, "/qn" -Wait -NoNewWindow
                     Write-Output "Uninstalled Duo Authentication for Windows"
-                    Exit 0
+                    if ($Uninstall) {
+                        return
+                    }
                 }
                 else {
                     Write-Output "No uninstall string found."
-                    Exit 0
+                    return
                 }
             }
 
@@ -179,6 +238,10 @@ function Win_DuoAuthLogon_Manage {
                 Write-Output "Install error code: $code."
                 Exit 1
             }
+
+            if ($Upgrade) {
+                Write-Output "Duo upgraded."
+            }
         }
         Catch {
             $exception = $_.Exception
@@ -192,7 +255,7 @@ function Win_DuoAuthLogon_Manage {
             Remove-Item -Path "C:\packages$random" -Recurse -Force
         }
 
-        Write-Output "Installation complete."
+        Write-Output "Management complete."
         Exit 0
     }
 }
@@ -205,6 +268,7 @@ $scriptArgs = @{
     IntegrationKey = $IntegrationKey
     SecretKey      = $SecretKey
     ApiHost        = $ApiHost
+    LatestVersion  = $LatestVersion
     AutoPush       = $AutoPush
     FailOpen       = $FailOpen
     RdpOnly        = $RdpOnly
