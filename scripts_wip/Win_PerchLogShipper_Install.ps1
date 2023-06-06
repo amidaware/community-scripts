@@ -35,6 +35,9 @@ function Win_PerchLogShipper_Install {
     )
 
     Begin {
+        $Apps = @()
+        $Apps += Get-ItemProperty "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
+        $Apps += Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
         if ($null -ne (Get-Service | Where-Object { $_.DisplayName -Match "perch" }) -and -Not($Uninstall)) {
             Write-Output "Perch already installed."
             Exit 0
@@ -42,15 +45,23 @@ function Win_PerchLogShipper_Install {
 
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         $random = ([char[]]([char]'a'..[char]'z') + 0..9 | sort { get-random })[0..12] -join ''
-        if (-not(Test-Path "C:\packages$random")) { New-Item -ItemType Directory -Force -Path "C:\packages$random" }
+        if (-not(Test-Path "C:\packages$random")) { New-Item -ItemType Directory -Force -Path "C:\packages$random" | Out-Null }
     }
 
     Process {
         Try {
             if ($Uninstall) {
-                cmd /c 'msiexec.exe /X{67341EFC-044D-465A-B770-D8B34B6AB2C5} /qn'
-                Write-Output "Perch log shipper uninstalled."
-                Exit 0
+                $uninstallString = ($Apps | Where-Object { $_.DisplayName -Match "Perch Log Shipper" }).UninstallString
+                if ($uninstallString) {
+                    $msiexec, $args = $uninstallString.Split(" ")
+                    Start-Process $msiexec -ArgumentList $args, "/qn" -Wait -NoNewWindow
+                    Write-Output "Uninstalled Perch Log Shipper"
+                    return
+                }
+                else {
+                    Write-Output "No uninstall string found."
+                    Exit 0
+                }
             }
 
             $source = "https://cdn.perchsecurity.com/downloads/perch-log-shipper-latest.exe"
