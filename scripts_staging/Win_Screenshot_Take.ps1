@@ -5,11 +5,11 @@
 .DESCRIPTION
     This script captures a screenshot of the currently logged in user's screen. Will not work on RDS with multiple sessions.
 
+.PARAMETER removeFolder
+    Removes the screenshots folder and quits.
+
 .PARAMETER single
     Specifies whether to remove old screenshots before taking a new one.
-
-.PARAMETER removeFolder
-    Specifies whether to remove the screenshots folder before taking a new screenshot.
 
 .EXAMPLE
     -single
@@ -64,8 +64,9 @@ If (!(test-path "$env:programdata\Tactical RMM\temp\curpsxpolicy.txt")) {
 }
 Set-ItemProperty -Path HKLM:\SOFTWARE\Microsoft\PowerShell\1\ShellIds\Microsoft.PowerShell -Name ExecutionPolicy -Value Unrestricted
 
-#Remove old screenshots before taking a new one
-Remove-Item "$env:programdata\TacticalRMM\scripts\screenshots\*.png"
+if ($Clean) {
+    Remove-Item "$env:programdata\TacticalRMM\scripts\screenshots\*.png"
+}
 
 Invoke-AsCurrentUser -scriptblock {
     $File = 'C:\TacticalRMM\temp\Screenshot1.bmp'
