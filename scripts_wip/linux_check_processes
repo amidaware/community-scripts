@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Checks if one or more processes are running.
+# The env variable PROCESSES must be passed in the script using format PROCESSES=process1 process2 process3
+
+
+if [ -z "$PROCESSES" ]; then
+    echo "Please specify processes in the environment variable PROCESSES using the format PROCESSES=process1 process2 process3"
+    exit 1
+fi
+
+# Loop over the list of processes and check if they are running
+for proc in $PROCESSES; do
+  if pgrep -x "$proc" >/dev/null; then
+    echo "$proc is running"
+  else
+    echo "$proc is not running"
+    exit 1
+  fi
+done
