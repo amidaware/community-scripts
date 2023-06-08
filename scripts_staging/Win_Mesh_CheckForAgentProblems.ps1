@@ -65,7 +65,7 @@ function CheckMemorySize {
 
     if ($Process.WorkingSetPrivate -gt $warnwhenovermemsize) {
         Write-Output "WARNING: $($WS_MB)MB: $($procname) has high mem usage"
-        Exit 1
+        $ErrorCount += 1
     }
     else {
         Write-Output "$($WS_MB)MB: $($procname) below expected mem usage "
