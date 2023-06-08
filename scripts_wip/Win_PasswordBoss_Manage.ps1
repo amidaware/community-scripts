@@ -25,9 +25,14 @@ function Win_PasswordBoss_Manage {
 
     Begin {
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        If (-not(Get-InstalledModule RunAsUser -ErrorAction SilentlyContinue)) {
+            Set-PSRepository PSGallery -InstallationPolicy Trusted
+            Install-PackageProvider -Name NuGet -Confirm:$false -Force
+            Install-Module RunAsUser -Confirm:$False -Force
+        }
+
         #Do script setup/checks for services/software and folder creation here
-        $random = ([char[]]([char]'a'..[char]'z') + 0..9 | Sort-Object { Get-Random })[0..12] -join ''
-        if (-not(Test-Path "C:\packages$random")) { New-Item -ItemType Directory -Force -Path "C:\packages$random" | Out-Null }
+        if (-not(Test-Path "$env:Temp\pbpackage")) { New-Item -ItemType Directory -Force -Path "$env:Temp\pbpackage" | Out-Null }
     }
 
     Process {
@@ -37,26 +42,46 @@ function Win_PasswordBoss_Manage {
                 #todo
             }
 
-            Write-Output "Starting installation..."
-            $source = "https://install.passwordboss.com/Password_Boss.exe"
-            $destination = "C:\packages$random\Password_Boss.exe"
-            Write-Output "Downloading installer..."
-            Invoke-WebRequest -Uri $source -OutFile $destination
-            Write-Output "Starting install process..."
-            $arguments = @("/b0", "/f", "/q2")
-            $process = Start-Process -NoNewWindow -FilePath $destination -ArgumentList $arguments -PassThru
-            $timedOut = $null
-            $process | Wait-Process -Timeout 300 -ErrorAction SilentlyContinue -ErrorVariable timedOut
-            if($timedOut) {
-                $process | Stop-Process
-                Write-Output "Installed timed out after 300 seconds."
-            }
-            elseif ($process.ExitCode -ne 0) {
-                Write-Output "Install error code: $($process.ExitCode)"
+            if ((Get-ItemPropertyValue -Path "HKLM:\Software\PasswordBoss" -Name "PreInstall" -ErrorAction SilentlyContinue) -eq 'True') {
+                Write-Output "PasswordBoss Preinstall already installed."
             }
             else {
-                Write-Output "Installation complete."
+                $baseUrl = "https://install.passwordboss.com"
+                $preinstall = "PBPreInstaller.exe"
+                $vc = "vcredist_2013x86.exe"
+                Write-Output "Running preinstall."
+                $destination = "$env:Temp\pbpackage\$preinstall"
+                Invoke-WebRequest -Uri "$baseUrl/$preinstall" -OutFile $destination
+                Start-Process $destination -Wait
+                Write-Output "Running VC Redist."
+                $destination = "$env:Temp\pbpackage\$vc"
+                Invoke-WebRequest -Uri "$baseUrl/$vc" -OutFile $destination
+                Start-Process -FilePath $destination -ArgumentList "/install", "/quiet", "/norestart", "/log", "C:\Windows\Logs\Software\VisualC++2013x32-Install.log" -Wait
             }
+
+            Write-Output "Starting user install."
+            $block = {
+                if (Test-Path -Path "$env:LocalAppData\PasswordBoss\PasswordBoss.exe" -PathType Leaf) {
+                    Write-Output "PasswordBoss already installed for user." 
+                }
+                else {
+                    Write-Output "Downloading PasswordBoss..."
+                    $baseUrl = "https://install.passwordboss.com"
+                    $exe = "Password_Boss.exe"
+                    $destination = "$env:Temp\pbpackage\$exe"
+                    if (-not(Test-Path "$env:Temp\pbpackage")) { New-Item -ItemType Directory -Force -Path "$env:Temp\pbpackage" | Out-Null }
+                    Invoke-WebRequest -Uri "$baseUrl/$exe" -OutFile $destination
+                    Write-Output "Installing PasswordBoss as User"
+                    Start-Process $destination -ArgumentList "/q2" -Wait
+                    Write-Output "Cleaning up."
+                    if (Test-Path "$env:Temp\pbpackage") {
+                        Remove-Item -Path "$env:Temp\pbpackage" -Recurse -Force
+                    }
+                }
+            }
+
+            Invoke-AsCurrentUser -ScriptBlock $block
+            Write-Output "User install complete."
         }
         Catch {
             $exception = $_.Exception
@@ -65,10 +90,8 @@ function Win_PasswordBoss_Manage {
     }
 
     End {
-        #Script cleanup and final checks here
-        #Check for last errors and exit
-        if (Test-Path "C:\packages$random") {
-            Remove-Item -Path "C:\packages$random" -Recurse -Force
+        if (Test-Path "$env:Temp\pbpackage") {
+            Remove-Item -Path "$env:Temp\pbpackage" -Recurse -Force
         }
 
         if ($error) {
