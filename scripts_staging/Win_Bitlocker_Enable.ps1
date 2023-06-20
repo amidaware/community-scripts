@@ -22,8 +22,8 @@ param (
     [string] $Drive = "c"
 )
 
-If (!(test-path $env:programdata\RMMScripts\)) {
-    New-Item -ItemType Directory -Force -Path $env:programdata\TRMMScripts\
+If (!(test-path $env:programdata\TacticalRMM\scripts\)) {
+    New-Item -ItemType Directory -Force -Path $env:programdata\TacticalRMM\scripts\
 }
 
 Enable-Bitlocker -MountPoint $Drive -UsedSpaceOnly -SkipHardwareTest -RecoveryPasswordProtector
@@ -32,4 +32,4 @@ manage-bde -protectors $Drive -get
 $bitlockerkey = manage-bde -protectors $Drive -get
 (
     Write-Output $bitlockerkey
-)>"$env:programdata\RMMScripts\bitlockerkey.txt"
+)>"$env:programdata\TacticalRMM\scripts\bitlockerkey.txt"

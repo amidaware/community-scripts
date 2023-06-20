@@ -23,51 +23,85 @@
 	even though it's a different folder. A reboot is necessary to restore access to "MeshAgent.exe" in the
 	TacticalRMM (and possibly other excluded locations?) folder.
 
+.Parameters <ApiKey>
+    Deprecated. DO NOT USE. This was added before the environment vars were introduced. Use the TRMM_API_KEY env
+    var.
+
+.EnvironmentalVariable <TRMM_API_KEY>
+	Generate a new API key by going to Settings > Global Settings | API KEYS.
+	Add it as an environmental variable in the form of TRMM_API_KEY=abcef123456
+
 .Outputs
 	All actions taken are output.
 	If an error condition is detected, a user friendly error message is output.
 	If an error wsa not encountered, a message stating Mesh Agent was installed is output.
 
+.Notes
+	v1 Author: 10/15/2022 NiceGuyIT
+	v1.1: 6/20/2022 Fixing not erroring when API key is not specified. NiceGuyIT and silversword411
 #>
 
 param (
-# Reinstall Mesh Agent
+	# Reinstall Mesh Agent
 	[switch]$Reinstall,
-# Use the system temp folder instead of Tactical's folder
+	# Use the system temp folder instead of Tactical's folder
 	[switch]$UseTemp,
-# TRMM API key
+	# TRMM API key
 	[string]$ApiKey
 )
 
 # Check for a valid API Key.
 # Command line parameter is deprecated in favor of environmental variables.
-if (!(Test-Path ApiKey) -and ($ApiKey.Length -gt 0)) {
+if (Test-Path ApiKey) -or ($ApiKey.Length -gt 0) {
 	Write-Output "Passing the API_KEY on the command line is insecure and no longer supported."
 	Write-Output ("ApiKey: '{0}'" -f $ApiKey)
 	$host.SetShouldExit(1)
 	Exit
 }
-if ((Test-Path ENV:TRMM_API_KEY) -and ($ENV:TRMM_API_KEY.Length -ne 32)) {
+if (!(Test-Path ENV:TRMM_API_KEY)) {
+	Write-Output ("TRMM_API_KEY ENV var is not specified." -f $ENV:TRMM_API_KEY)
+	$host.SetShouldExit(1)
+	Exit
+}
+if (!(Test-Path ENV:TRMM_API_KEY) -or ($ENV:TRMM_API_KEY.Length -ne 32)) {
 	Write-Output ("Invalid TRMM_API_KEY ('{0}'). Needs to be 32 characters." -f $ENV:TRMM_API_KEY)
 	$host.SetShouldExit(1)
 	Exit
 }
 
+# Get the current value
+# [Net.ServicePointManager]::SecurityProtocol
+
+# List all possible values
+# [enum]::GetValues('Net.SecurityProtocolType')
+
+function Test-TlsVersion($MinTlsVersion) {
+	try {
+		[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+		Write-Output "TLS 1.2 is supported on this system."
+	}
+	catch {
+		Write-Output "Error: TLS 1.2 is not supported on this system."
+		$host.SetShouldExit(1)
+		Exit
+	}
+}
+
 $TRMM = @{
-	Name = 'TacticalRMM'
-	AgentName = 'TacticalAgent'
+	Name       = 'TacticalRMM'
+	AgentName  = 'TacticalAgent'
 	RegApiName = 'ApiURL'
-	ApiKey = $ENV:TRMM_API_KEY
+	ApiKey     = $ENV:TRMM_API_KEY
 }
 $TRMM.RegApiPath = Join-Path -Path 'HKLM:\SOFTWARE\' -ChildPath $TRMM.Name -Resolve
 $TRMM.ApiDomain = Get-ItemPropertyValue -LiteralPath $TRMM.RegApiPath -Name $TRMM.RegApiName
 $TRMM.ApiUrl = 'https://{0}/api/v3/meshexe/' -f $TRMM.ApiDomain
 
 $Mesh = @{
-	Name = 'Mesh Agent'
+	Name        = 'Mesh Agent'
 	ServiceName = 'Mesh Agent'
-	ExeName = 'MeshAgent.exe'
-	ConfigName = 'MeshAgent.msh'
+	ExeName     = 'MeshAgent.exe'
+	ConfigName  = 'MeshAgent.msh'
 }
 # Always use Program Files because 32-bit agent will not be installed on 64-bit OS.
 $Mesh.InstallPath = Join-Path -Path $ENV:ProgramFiles -ChildPath $Mesh.Name
@@ -79,20 +113,22 @@ $Mesh.ConfigFile = Join-Path -Path $Mesh.InstallPath -ChildPath $Mesh.ConfigName
 if ($UseTemp) {
 	$Mesh.DownloadPath = $ENV:Temp
 	$Mesh.DownloadExe = Join-Path -Path $Mesh.DownloadPath -ChildPath $Mesh.ExeName
-} else {
+}
+else {
 	$Mesh.DownloadPath = Join-Path -Path $ENV:ProgramFiles -ChildPath $TRMM.AgentName
 	$Mesh.DownloadExe = Join-Path -Path $Mesh.DownloadPath -ChildPath $Mesh.ExeName
 }
 
 if ([Environment]::Is64BitOperatingSystem) {
 	$Arch = "amd64"
-} else {
+}
+else {
 	$Arch = "386"
 }
 
 $Body = @{
 	goarch = $Arch
-	plat = 'windows'
+	plat   = 'windows'
 }
 
 $Headers = @{
@@ -100,14 +136,14 @@ $Headers = @{
 }
 
 $RestParams = @{
-	Uri = $TRMM.ApiUrl
-	Headers = $Headers
-	ContentType = "application/x-www-form-urlencoded"
-	Method = "POST"
-	OutFile = $Mesh.DownloadExe
-	Body = $Body
+	Uri             = $TRMM.ApiUrl
+	Headers         = $Headers
+	ContentType     = "application/x-www-form-urlencoded"
+	Method          = "POST"
+	OutFile         = $Mesh.DownloadExe
+	Body            = $Body
 	UseBasicParsing = $True
-	PassThru = $True
+	PassThru        = $True
 }
 
 $MeshInstallArgs = @{
@@ -115,7 +151,7 @@ $MeshInstallArgs = @{
 }
 
 # Adjust TLS for Windows 7, 8.1
-if ([Environment]::OSVersion.Version -le (new-object 'Version' 7,0)) {
+if ([Environment]::OSVersion.Version -le (new-object 'Version' 7, 0)) {
 	Write-Output "Adjusting TLS version(s) for Windows prior to Win 10"
 	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls12
 }
@@ -125,7 +161,8 @@ function Get-CimService($Name) {
 	$Service = Get-CimInstance Win32_Service | Where-Object -Property Name -Match $Name
 	if (($Service | Measure-Object).Count -eq 1) {
 		return $Service
-	} else {
+	}
+ else {
 		return $False
 	}
 }
@@ -134,7 +171,8 @@ function Stop-CimService($Service) {
 	if ($Service | Where-Object { $_.State -Match "Running" }) {
 		$Service | Invoke-CimMethod -Name StopService
 		return Get-CimService $Service.Name
-	} else {
+	}
+ else {
 		return $False
 	}
 }
@@ -143,7 +181,8 @@ function Start-CimService($Service) {
 	if ($Service | Where-Object { $_.State -Match "Stopped" }) {
 		$Service | Invoke-CimMethod -Name StartService
 		return Get-CimService $Service.Name
-	} else {
+	}
+ else {
 		return $False
 	}
 }
@@ -182,7 +221,8 @@ function Test-Service($Name) {
 	if (($Service | Measure-Object -Property PathName -Character).Characters -eq 0) {
 		# Invalid/Zombie service
 		return $False
-	} else {
+	}
+ else {
 		# Service exists and is running.
 		return $True
 	}
@@ -201,14 +241,16 @@ function Test-File($Filename) {
 			if ((Get-Item -Path $NewName -ErrorAction SilentlyContinue).Length -gt 0) {
 				# New name does not exist. Rename failed.
 				return $False
-			} else {
+			}
+			else {
 				Write-Output "The old filename and new filename both exist. This should not happen."
 				Write-Output ("Old filename: '{0}'" -f $Filename)
 				Write-Output ("New filename: '{0}'" -f $NewName)
 				$host.SetShouldExit(1)
 				Exit
 			}
-		} else {
+		}
+		else {
 			# Renmae was successful. Rename the file back.
 			Rename-Item -Path $NewName -NewName $Filename
 			return $True
@@ -244,16 +286,17 @@ function Invoke-Process {
 		$Process.StartInfo = $PInfo
 		$Process.Start() | Out-Null
 		$Result = [pscustomobject]@{
-			Title = ($MyInvocation.MyCommand).Name
-			Command = $FilePath
+			Title     = ($MyInvocation.MyCommand).Name
+			Command   = $FilePath
 			Arguments = $ArgumentList
-			StdOut = $Process.StandardOutput.ReadToEnd()
-			StdErr = $Process.StandardError.ReadToEnd()
-			ExitCode = $Process.ExitCode
+			StdOut    = $Process.StandardOutput.ReadToEnd()
+			StdErr    = $Process.StandardError.ReadToEnd()
+			ExitCode  = $Process.ExitCode
 		}
 		$Process.WaitForExit()
 		return $Result
-	} catch {
+	}
+ catch {
 		Write-Output ("Failed to run '{0}'" -f $FilePath)
 		Write-Output ("===== Stacktrace =====")
 		Write-Output ($error[0].Exception.ToString())
@@ -289,7 +332,8 @@ if ($Mesh.Service -and !($Mesh.Service | Where-Object { $_.State -Match "Running
 		Write-Output ("Mesh executable: '{0}'" -f $Filename)
 		$host.SetShouldExit(1)
 		Exit
-	} else {
+	}
+ else {
 		# Executable is accessible. Since the service is not running, delete the file so Mesh can be (re)installed.
 		Remove-Item -Path $Mesh.InstallExe
 		if ((Get-Item -Path $Mesh.InstallExe -ErrorAction SilentlyContinue).Length -gt 0) {
@@ -328,7 +372,8 @@ if ($Reinstall) {
 			Exit
 		}
 		Write-Output ("The '{0}' service has been removed." -f $Mesh.ServiceName)
-	} else {
+	}
+ else {
 		Write-Output ("The '{0}' service does not exist." -f $Mesh.ServiceName)
 	}
 
@@ -339,14 +384,16 @@ if ($Reinstall) {
 		Write-Output ("A reboot is required to restore functionality and the file will be removed.")
 		$host.SetShouldExit(1)
 		Exit
-	} else {
+	}
+ else {
 		Remove-Item -Path $Mesh.InstallExe
 		if ((Get-Item -Path $Mesh.InstallExe -ErrorAction SilentlyContinue).Length -gt 0) {
 			Write-Output "Failed to remove file. It could be locked by another process or may not have permission."
 			Write-Output ("Mesh executable: '{0}'" -f $Mesh.InstallExe)
 			$host.SetShouldExit(1)
 			Exit
-		} else {
+		}
+		else {
 			Write-Output ("The '{0}' install file has been deleted." -f $Mesh.InstallExe)
 		}
 	}
@@ -371,7 +418,7 @@ if (!(Test-File $Mesh.DownloadExe)) {
 }
 
 # Check if the file exists.
-if (Test-Path $Mesh.DownloadExe){
+if (Test-Path $Mesh.DownloadExe) {
 	Write-Output ("Removing existing download file: '{0}'." -f $Mesh.DownloadExe)
 	Remove-Item -Path $Mesh.DownloadExe
 	if ((Get-Item -Path $Mesh.DownloadExe -ErrorAction SilentlyContinue).Length -gt 0) {
@@ -379,7 +426,8 @@ if (Test-Path $Mesh.DownloadExe){
 		Write-Output ("Download file: '{0}'" -f $Mesh.DownloadExe)
 		$host.SetShouldExit(1)
 		Exit
-	} else {
+	}
+ else {
 		Write-Output ("Removed download file '{0}'." -f $Mesh.DownloadExe)
 	}
 }
@@ -414,7 +462,8 @@ try {
 		$host.SetShouldExit(1)
 		Exit
 	}
-} catch [System.UnauthorizedAccessException] {
+}
+catch [System.UnauthorizedAccessException] {
 	Write-Output ("Failed to save the file '{0}': {1}" -f $Mesh.ExeName, $error[0].ToString())
 	if (!($UseTemp)) {
 		Write-Output ("This can happen if Bitdefender quarantined '{0}' even though the" -f $Mesh.InstallExe)
@@ -429,7 +478,8 @@ try {
 	Get-ChildItem $Mesh.DownloadPath
 	$host.SetShouldExit(1)
 	Exit
-} catch {
+}
+catch {
 	Write-Output ("Caught exception while downloading '{0}' from API: {1}" -f $Mesh.ExeName, $error[0].ToString())
 	Write-Output ("===== Stacktrace =====")
 	Write-Output ($error[0].Exception.ToString())
@@ -490,7 +540,8 @@ if ($Mesh.Service -and !($Mesh.Service | Where-Object { $_.State -Match "Running
 
 if ($Reinstall) {
 	Write-Output ("'{0}' has been reinstalled." -f $Mesh.Name)
-} else {
+}
+else {
 	Write-Output ("'{0}' has been installed." -f $Mesh.Name)
 }
 $host.SetShouldExit(0)

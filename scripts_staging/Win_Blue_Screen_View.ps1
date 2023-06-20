@@ -5,7 +5,7 @@ If (!(test-path "c:\temp")) {
 }
 
 If (!(test-path $env:programdata\RMMScripts\)) {
-    New-Item -ItemType Directory -Force -Path $env:programdata\TRMMScripts\
+    New-Item -ItemType Directory -Force -Path $env:programdata\TacticalRMM\scripts\
 }
 
 If (!(test-path 'C:\Program Files\TacticalAgent\bluescreenview.exe')) {
@@ -19,12 +19,12 @@ If (!(test-path 'C:\Program Files\TacticalAgent\bluescreenview.exe')) {
 
 
     Remove-Item -LiteralPath "c:\temp\bluescreenview.zip" -Force -Recurse
-    & 'C:\Program Files\TacticalAgent\bluescreenview.exe' /stext "$env:programdata\TRMMScripts\crashes.txt"
-    get-content "$env:programdata\TRMMScripts\crashes.txt"
+    & 'C:\Program Files\TacticalAgent\bluescreenview.exe' /stext "$env:programdata\TacticalRMM\scripts\crashes.txt"
+    get-content "$env:programdata\TacticalRMM\scripts\crashes.txt"
 }
 
 else {
-    & 'C:\Program Files\TacticalAgent\bluescreenview.exe' /stext "$env:programdata\TRMMScripts\crashes.txt"
-    get-content "$env:programdata\TRMMScripts\crashes.txt"
+    & 'C:\Program Files\TacticalAgent\bluescreenview.exe' /stext "$env:programdata\TacticalRMM\scripts\crashes.txt"
+    get-content "$env:programdata\TacticalRMM\scripts\crashes.txt"
 }
 
