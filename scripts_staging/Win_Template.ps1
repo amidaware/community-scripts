@@ -46,15 +46,15 @@ function Test-TlsVersion($MinTlsVersion) {
     # Test if TLS 1.2 is supported
     try {
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::$MinTlsVersion
-        Write-Host ("Test-TlsVersion(): TLS version ""{0}"" is supported" -f $MinTlsVersion)
+        Write-Output ("Test-TlsVersion(): TLS version ""{0}"" is supported" -f $MinTlsVersion)
         return $True
     }
     catch {
-        Write-Host ("Test-TlsVersion(): TLS version ""{0}"" is not supported" -f $MinTlsVersion)
+        Write-Output ("Test-TlsVersion(): TLS version ""{0}"" is not supported" -f $MinTlsVersion)
         return $False
     }
 }
-
+Test-TlsVersion
 
 Function InstallRunAsUserRequirements {
     # Install Requirements for RunAsUser
@@ -91,4 +91,4 @@ function Set-RegistryValue ($registryPath, $name, $value) {
 }
 # $RegistryPath = "HKLM:\SOFTWARE\Policies\Microsoft\Edge"
 # Set-RegistryValue -registryPath $RegistryPath -name "PersonalizationReportingEnabled" -value 0
-
+Set-RegistryValue
