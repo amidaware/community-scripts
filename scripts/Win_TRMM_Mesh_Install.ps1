@@ -52,7 +52,7 @@ param (
 
 # Check for a valid API Key.
 # Command line parameter is deprecated in favor of environmental variables.
-if (Test-Path ApiKey) -or ($ApiKey.Length -gt 0) {
+if ((Test-Path ApiKey) -or ($ApiKey.Length -gt 0)) {
 	Write-Output "Passing the API_KEY on the command line is insecure and no longer supported."
 	Write-Output ("ApiKey: '{0}'" -f $ApiKey)
 	$host.SetShouldExit(1)
