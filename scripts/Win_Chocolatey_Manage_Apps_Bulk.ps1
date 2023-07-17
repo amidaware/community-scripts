@@ -14,6 +14,8 @@
       .EXAMPLE
       -Mode upgrade -Hosts 50
       .EXAMPLE
+      -Mode upgrade -Hosts 50 -PackageName chocolatey
+      .EXAMPLE
       -Mode uninstall -PackageName googlechrome
       .NOTES
       9/2021 v1 Initial release by @silversword411 and @bradhawkins 
@@ -49,7 +51,12 @@ else {
 if ($Mode -eq "upgrade") {
     # Write-Output "Starting Upgrade"
     Start-Sleep -Seconds $rnd; 
-    choco upgrade -y all
+    if (!$PackageName) {
+        choco upgrade -y all
+    }
+    else {
+        choco upgrade $PackageName -y
+    }
     # Write-Output "Running upgrade"
     Exit 0
 }
