@@ -191,7 +191,9 @@ function Test-PowerShellVersion([string]$MinPsVersion = '2.0') {
         return $False
     }
 }
-Test-PowerShellVersion '8.0'
+if (Test-PowerShellVersion '8.0') {
+    Write-Verbose ('Test-PowerShellVersion(): PowerShell version "{0}" supported' -f "8.0")
+}
 
 
 <# ================================================================================ #>
@@ -205,9 +207,10 @@ function Test-IsAdmin() {
         return $true
     }
     return $false
+
 }
 if (Test-IsAdmin) {
-    Write-Verbose ('Test-IsAdmin(): Is an administrator')
+    Write-Verbose ('Test-IsAdmin(): Script is running as an administrator')
 }
 
 
@@ -224,7 +227,17 @@ function Test-IsInteractiveShell {
     return $false
 }
 if (Test-IsInteractiveShell) {
-    Write-Verbose ('Test-IsInteractiveShell(): Is an interactive shell')
+    Write-Verbose ('Test-IsInteractiveShell(): Script is running in an interactive shell')
+}
+
+
+<# ================================================================================ #>
+function Test-Is64Bit {
+    # Test-Is64Bit tests if the system is 64-bit operating system.
+    return [bool][Environment]::Is64BitOperatingSystem
+}
+if (Test-Is64Bit) {
+    Write-Verbose ('Test-Bit(): Script is running in a 64-bit operating system')
 }
 
 
@@ -246,11 +259,13 @@ Function InstallRunAsUserRequirements {
         Write-Output "RunAsUser already installed"
     }
 }
-#InstallRunAsUserRequirements
-
-#Invoke-AsCurrentUser -scriptblock {
-    # RunAsUser
-#}
+If ("RunAsUser" -Match "true") {
+    # Put this inside an always false conditional so that the template can run without changing the environment.
+    InstallRunAsUserRequirements
+    Invoke-AsCurrentUser -scriptblock {
+        # RunAsUser
+    }
+}
 
 
 function Set-RegistryValue ($registryPath, $name, $value) {
@@ -262,6 +277,9 @@ function Set-RegistryValue ($registryPath, $name, $value) {
     # Set the value
     Set-ItemProperty -Path $registryPath -Name $name -Value $value
 }
-# $RegistryPath = "HKLM:\SOFTWARE\Policies\Microsoft\Edge"
-# Set-RegistryValue -registryPath $RegistryPath -name "PersonalizationReportingEnabled" -value 0
-#Set-RegistryValue
+If ("SetRegistryValue" -Match "true") {
+    # Put this inside an always false conditional so that the template can run without changing the environment.
+    # $RegistryPath = "HKLM:\SOFTWARE\Policies\Microsoft\Edge"
+    # Set-RegistryValue -registryPath $RegistryPath -name "PersonalizationReportingEnabled" -value 0
+    #Set-RegistryValue
+}
