@@ -33,3 +33,18 @@ pip install -r requirements.txt
 ```
 pytest
 ```
+
+## Develop using Docker
+
+Download and install [Task][] into your path (or current directory). Run `task --list` to list available tasks. Run `task <task-name> --summary` to generate a summary of the commands Task will run. Run `task dev-python` to develop Python scripts in Docker. Run `task dev-powershell` to develop PowerShell scripts in Docker.
+
+```text
+$ task --list
+task: Available tasks for this project:
+* dev-powershell:                   Use Docker compose for development of PowerShell scripts
+* dev-python:                       Build and run Python in Docker to develop Python scripts
+* dev-python-build:                 Build the Docker image to develop Python scripts
+* dev-python-compose-run:           Use Docker compose for development of Python scripts
+```
+
+[Task]: https://github.com/go-task/task/releases

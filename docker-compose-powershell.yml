@@ -1,0 +1,15 @@
+---
+version: '3.7'
+
+services:
+
+  powershell:
+    image: mcr.microsoft.com/powershell
+    environment:
+      - POWERSHELL_TELEMETRY_OPTOUT=1
+    stdin_open: true    # docker run -i
+    tty: true           # docker run -t
+    working_dir: /community-scripts
+    volumes:
+      # Mount the repo in Docker
+      - ${PWD}:/community-scripts
