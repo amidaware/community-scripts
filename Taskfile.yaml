@@ -63,7 +63,7 @@ tasks:
           docker compose \
             --project-name '{{.PROJECT_NAME}}' \
             --file '{{.COMPOSE_FILE}}' \
-            run --interactive '{{.SERVICE_NAME}}'
+            run --interactive --rm '{{.SERVICE_NAME}}'
 
   dev-python-build:
     desc: Build the Docker image to develop Python scripts
@@ -121,4 +121,4 @@ tasks:
           docker compose \
             --project-name '{{.PROJECT_NAME}}' \
             --file '{{.COMPOSE_FILE}}' \
-            run --interactive '{{.SERVICE_NAME}}'
+            run --interactive --rm '{{.SERVICE_NAME}}'
