@@ -12,4 +12,5 @@ services:
     working_dir: /community-scripts
     volumes:
       # Mount the repo in Docker
-      - ${PWD}:/community-scripts
+      # Note: ${PWD} is not available on Windows
+      - .:/community-scripts
