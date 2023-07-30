@@ -4,7 +4,7 @@ version: '3.7'
 services:
 
   powershell:
-    image: mcr.microsoft.com/powershell
+    image: "mcr.microsoft.com/powershell${MACOS_ARM64}"
     environment:
       - POWERSHELL_TELEMETRY_OPTOUT=1
     stdin_open: true    # docker run -i

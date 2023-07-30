@@ -61,7 +61,7 @@ tasks:
     cmds:
       - cmd: |
           docker compose \
-            --project-name "{{.PROJECT_NAME}}" \
+            --project-name '{{.PROJECT_NAME}}' \
             --file '{{.COMPOSE_FILE}}' \
             run --interactive '{{.SERVICE_NAME}}'
 
@@ -82,14 +82,30 @@ tasks:
     cmds:
       - cmd: |
           docker build \
-            --tag "{{.CONTAINER_NAME}}" \
-            --file "{{.DOCKERFILE}}" \
+            --tag '{{.CONTAINER_NAME}}' \
+            --file '{{.DOCKERFILE}}' \
             .
 
   dev-powershell:
     desc: Use Docker compose for development of PowerShell scripts
     summary: |
       Use Docker compose to start a PowerShell image for development of PowerShell scripts
+    env:
+      # ARM64 on macOS is supported by running the ARM64 image for Linux.
+      # Part of the problem is that ARM in QEMU is not supported.
+      # See https://github.com/PowerShell/PowerShell-Docker/wiki/Known-Issues#arm-and-qemu-not-supported
+      # In the GitHub issues, arm32v7-ubuntu-bionic was mentioned but all ARM32 images are End of Life.
+      # The ARM64 image is mariner-2.0-arm64.
+      # This environment variable is passed to the docker-compose-powershell.yml file to specify the image tag.
+      MACOS_ARM64:
+        sh: |
+          {{ if eq OS "darwin" }}
+            if [[ "$(uname -m)" == "arm64" ]]; then
+              echo ":mariner-2.0-arm64"
+            fi
+          {{ else }}
+            echo ""
+          {{ end }}
     vars:
       COMPOSE_FILE: '{{.COMPOSE_FILE | default "docker-compose-powershell.yml"}}'
       SERVICE_NAME: '{{.SERVICE_NAME | default "powershell"}}'
@@ -103,6 +119,6 @@ tasks:
     cmds:
       - cmd: |
           docker compose \
-            --project-name "{{.PROJECT_NAME}}" \
+            --project-name '{{.PROJECT_NAME}}' \
             --file '{{.COMPOSE_FILE}}' \
             run --interactive '{{.SERVICE_NAME}}'
