@@ -38,6 +38,8 @@ pytest
 
 Download and install [Task][] into your path (or current directory). Run `task --list` to list available tasks. Run `task <task-name> --summary` to generate a summary of the commands Task will run. Run `task dev-python` to develop Python scripts in Docker. Run `task dev-powershell` to develop PowerShell scripts in Docker.
 
+> Note: The `--interactive` flag was introduced in [Docker compose version v2.3.0][].
+
 ```text
 $ task --list
 task: Available tasks for this project:
@@ -48,3 +50,5 @@ task: Available tasks for this project:
 ```
 
 [Task]: https://github.com/go-task/task/releases
+
+[Docker version v2.3.0]: https://github.com/docker/compose/releases/tag/v2.3.0
