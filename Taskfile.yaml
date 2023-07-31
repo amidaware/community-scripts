@@ -1,0 +1,124 @@
+---
+version: 3
+
+tasks:
+
+  donothing: 'true'
+
+  list:
+    cmds:
+      - cmd: 'task --list'
+
+  dev-python:
+    desc: Build and run Python in Docker to develop Python scripts
+    summary: |
+      Build a Python image and run it to develop in Python using Docker.
+    vars:
+      DOCKERFILE: 'Dockerfile-python'
+      COMPOSE_FILE: 'docker-compose-python.yml'
+      CONTAINER_NAME: 'python/3.8'
+      PROJECT_NAME: 'community-scripts-python'
+      SERVICE_NAME: 'python'
+    preconditions:
+      - sh: docker version
+        msg: |
+          'docker build' is required to run build the docker image.
+          Please install 'docker' or Docker Desktop and try again.
+          See: https://docs.docker.com/desktop/
+          Note: This may use 'docker buildx' in the future.
+      - sh: docker compose --version
+        msg: |
+          'docker compose' (version 2, a.k.a. plugin) is required to run the docker compose file.
+          Please install 'docker compose' and try again.
+          See: https://docs.docker.com/compose/install/
+    cmds:
+      - task: dev-python-build
+        vars:
+          DOCKERFILE: '{{.DOCKERFILE}}'
+          CONTAINER_NAME: '{{.CONTAINER_NAME}}'
+      - task: dev-python-compose-run
+        vars:
+          COMPOSE_FILE: '{{.COMPOSE_FILE}}'
+          CONTAINER_NAME: '{{.CONTAINER_NAME}}'
+          PROJECT_NAME: '{{.PROJECT_NAME}}'
+          SERVICE_NAME: '{{.SERVICE_NAME}}'
+
+  dev-python-compose-run:
+    desc: Use Docker compose for development of Python scripts
+    summary: |
+      Use Docker compose to start a Python image for development of Python scripts
+    vars:
+      COMPOSE_FILE: '{{.COMPOSE_FILE | default "docker-compose-python.yml"}}'
+      CONTAINER_NAME: '{{.CONTAINER_NAME | default "python/3.8"}}'
+      SERVICE_NAME: '{{.SERVICE_NAME | default "python"}}'
+      PROJECT_NAME: '{{.PROJECT_NAME | default "community-scripts-python"}}'
+    preconditions:
+      - sh: docker compose --version
+        msg: |
+          'docker compose' (version 2, a.k.a. plugin) is required to run the docker compose file.
+          Please install 'docker compose' and try again.
+          See: https://docs.docker.com/compose/install/
+    cmds:
+      - cmd: |
+          docker compose \
+            --project-name '{{.PROJECT_NAME}}' \
+            --file '{{.COMPOSE_FILE}}' \
+            run --interactive --rm '{{.SERVICE_NAME}}'
+
+  dev-python-build:
+    desc: Build the Docker image to develop Python scripts
+    summary: |
+      Build a Python image to support development of Python scripts.
+    vars:
+      DOCKERFILE: '{{.DOCKERFILE | default "Dockerfile-python"}}'
+      CONTAINER_NAME: '{{.CONTAINER_NAME | default "python/3.8"}}'
+    preconditions:
+      - sh: docker version
+        msg: |
+          'docker build' is required to run build the docker image.
+          Please install 'docker' or Docker Desktop and try again.
+          See: https://docs.docker.com/desktop/
+          Note: This may use 'docker buildx' in the future.
+    cmds:
+      - cmd: |
+          docker build \
+            --tag '{{.CONTAINER_NAME}}' \
+            --file '{{.DOCKERFILE}}' \
+            .
+
+  dev-powershell:
+    desc: Use Docker compose for development of PowerShell scripts
+    summary: |
+      Use Docker compose to start a PowerShell image for development of PowerShell scripts
+    env:
+      # ARM64 on macOS is supported by running the ARM64 image for Linux.
+      # Part of the problem is that ARM in QEMU is not supported.
+      # See https://github.com/PowerShell/PowerShell-Docker/wiki/Known-Issues#arm-and-qemu-not-supported
+      # In the GitHub issues, arm32v7-ubuntu-bionic was mentioned but all ARM32 images are End of Life.
+      # The ARM64 image is mariner-2.0-arm64.
+      # This environment variable is passed to the docker-compose-powershell.yml file to specify the image tag.
+      MACOS_ARM64:
+        sh: |
+          {{ if eq OS "darwin" }}
+            if [[ "$(uname -m)" == "arm64" ]]; then
+              echo ":mariner-2.0-arm64"
+            fi
+          {{ else }}
+            echo ""
+          {{ end }}
+    vars:
+      COMPOSE_FILE: '{{.COMPOSE_FILE | default "docker-compose-powershell.yml"}}'
+      SERVICE_NAME: '{{.SERVICE_NAME | default "powershell"}}'
+      PROJECT_NAME: '{{.PROJECT_NAME | default "community-scripts-powershell"}}'
+    preconditions:
+      - sh: docker compose --version
+        msg: |
+          'docker compose' (version 2, a.k.a. plugin) is required to run the docker compose file.
+          Please install 'docker compose' and try again.
+          See: https://docs.docker.com/compose/install/
+    cmds:
+      - cmd: |
+          docker compose \
+            --project-name '{{.PROJECT_NAME}}' \
+            --file '{{.COMPOSE_FILE}}' \
+            run --interactive --rm '{{.SERVICE_NAME}}'
