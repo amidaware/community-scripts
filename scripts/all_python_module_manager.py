@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __license__ = "MIT"
 __authors__ = "NiceGuyIT, silversword411"
 
@@ -41,6 +41,17 @@ format, run:
     python python_module_manager.py list --format columns
     python python_module_manager.py list --format freeze
     python python_module_manager.py list --format json
+
+--------
+
+** Check if the Python modules are installed
+
+    python python_module_manager.py check module1 module2
+
+This will check if the Python modules are installed. Use this as a "check" in TRMM to check for necessary modules.
+For example, to check if the "dataclasses" (core) and "requests" (non-core) modules are installed, run:
+
+    python python_module_manager.py check dataclassses requests
 
 --------
 
@@ -108,6 +119,7 @@ options:
                         set log level
 """
 import argparse
+import importlib.util
 import logging
 import subprocess
 import sys
@@ -147,6 +159,44 @@ def pip_install_modules(modules, logger=logging.getLogger(), upgrade=False):
             logger.error(f"Failed to install the required modules: {required_modules}")
         logger.error(traceback.format_exc())
         logger.error(err)
+        exit(1)
+
+def check_modules(modules, logger=logging.getLogger()):
+    """
+
+    :param modules: list of modules to check if they are installed
+    :type modules: list
+    :param logger: Logging instance
+    :type logger: logging.Logger
+    :return:
+    :rtype:
+    """
+    """
+    Install or upgrade the specified Python modules using 'pip install'.
+    :param modules: set of modules to install/upgrade
+    :param logger: logging instance of the root logger
+    :return: None
+    """
+    if not modules:
+        return
+    required_modules = set(modules)
+    logger.debug(f"Checking modules: {required_modules}")
+    ok = True
+    try:
+        for module in modules:
+            # Check if the library exists
+            if (spec := importlib.util.find_spec(module)) is not None:
+                print(f'Module {module!r} exists in sys.modules')
+            else:
+                print(f'Module {module!r} was not found in sys.modules')
+                ok = False
+    except:
+        logger.error(f'Failed to check if the required modules are installed. required_modules: {required_modules}')
+        logger.error(traceback.format_exc())
+        exit(1)
+
+    if not ok:
+        print(f'One or more modules were not found. Exiting with failure code.')
         exit(1)
 
 def pip_uninstall_modules(modules, logger=logging.getLogger()):
@@ -263,6 +313,10 @@ def main():
     list_parser.add_argument("--format", default="columns", choices=["columns", "freeze", "json"],
                              help="Same as python -m pip list --format option")
 
+    check_parser = subparsers.add_parser("check", help="Check if the specified modules are installed")
+    check_parser.add_argument("modules", nargs="+",
+                                help="A (space separated) list of modules to check")
+
     install_parser = subparsers.add_parser("install", help="Install the specified modules")
     install_parser.add_argument("modules", nargs="+",
                                 help="A (space separated) list of modules to install")
@@ -313,6 +367,15 @@ def main():
         )
         logger.debug(f"Installed modules (format: {args.format}):")
         print(module_list)
+
+    elif args.command == "check":
+        logger.debug(f"Checking modules: {args.modules}")
+        check_modules(
+            **{
+                "modules": args.modules,
+                "logger": top_logger,
+            }
+        )
 
     elif args.command == "install":
         logger.debug(f"Installing modules: {args.modules}")
