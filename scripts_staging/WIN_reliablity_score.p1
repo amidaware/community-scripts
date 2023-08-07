@@ -1,0 +1,27 @@
+<#
+      .SYNOPSIS
+      This will gather the average Windows Reliabilty Score
+      .DESCRIPTION
+      Gather and then check average Windows Reliabilty Score
+      .PARAMETER Unreliable
+      .EXAMPLE
+      -Unreliable 5
+  #>
+
+param (
+    [string] $Unreliable = "5"
+)
+
+
+$wrs = (Get-Ciminstance Win32_ReliabilityStabilityMetrics | Measure-Object -Average -Maximum  -Minimum -Property systemStabilityIndex).Average
+$compname = $env:computername
+
+
+if ($wrs -lt $Unreliable) {
+    write-output "$compname is unreliable and at $wrs below $Unreliable."
+    Exit 1
+}
+else {
+    write-output "Windows Reliability is fine $wrs."
+    Exit 0
+}
