@@ -1,0 +1,27 @@
+# https://hub.docker.com/_/python
+# https://stackoverflow.com/questions/48561981/activate-python-virtualenv-in-dockerfile
+
+# First stage is the builder or compiler
+FROM python:3.8-slim as compiler
+ENV PYTHONUNBUFFERED 1
+
+WORKDIR /app
+
+RUN python -m venv /opt/venv
+# Enable venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+COPY ./requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir --upgrade --requirement requirements.txt
+
+# First stage is the runner
+FROM python:3.8-slim as runner
+WORKDIR /app
+COPY --from=compiler /opt/venv /opt/venv
+
+# Enable venv
+ENV PATH="/opt/venv/bin:$PATH"
+COPY . /app/
+# This is used instead of 'entrypoint' in docker-compose.yml.
+# Note: The stackoverflow answers state virtualenv is not needed most of the time.
+CMD ["/bin/bash" ]

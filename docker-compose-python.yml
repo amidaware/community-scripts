@@ -1,0 +1,16 @@
+---
+version: '3.7'
+
+services:
+
+  python:
+    image: python/3.8
+    stdin_open: true    # docker run -i
+    tty: true           # docker run -t
+    # Dockerfile CMD runs bash. This is here for future reference.
+    # entrypoint: /bin/bash
+    working_dir: /community-scripts
+    volumes:
+      # Mount the repo in Docker
+      # Note: ${PWD} is not available on Windows
+      - .:/community-scripts
