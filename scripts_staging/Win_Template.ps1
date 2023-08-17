@@ -32,7 +32,7 @@ param (
     [string]$LogLevel
 )
 
-<# ================================================================================ #>
+<# =======================  Advanced Debug Logging=============================== #>
 function Set-LogLevel() {
     <#
 	.SYNOPSIS
@@ -149,6 +149,21 @@ if ($LogLevel) {
     Write-Verbose '--------------------------------------------------'
 }
 
+
+<# ========================  Simple Debug Logging  ================================ #>
+
+param (
+    [switch]$debug
+)
+
+# For setting debug output level. -debug switch will set $debug to true
+if ($debug) {
+    $DebugPreference = "Continue"
+}
+else {
+    $DebugPreference = "SilentlyContinue"
+    $ErrorActionPreference = 'silentlycontinue'
+}
 
 <# ================================================================================ #>
 function Test-TlsVersion([string]$MinTlsVersion = "Tls12") {
