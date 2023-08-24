@@ -10,3 +10,4 @@ if (-not (Test-Path $registryPath)) {
 
 # Add the new DWORD value
 Set-ItemProperty -Path $registryPath -Name $valueName -Value $valueData -Type DWord
+#Credits to SpaceJamV3
