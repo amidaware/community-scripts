@@ -457,18 +457,6 @@
     "category": "TRMM (Win):Collectors"
   },
   {
-    "guid": "3e9881a1-5860-4a4e-9e34-e2a091381da6",
-    "filename": "Win_RustDesk_GetID.ps1",
-    "submittedBy": "https://github.com/dinger1986/",
-    "name": "RustDesk - Get RustDeskID for client",
-    "description": "Returns RustDeskID for client - Use with Custom Fields for later use.",
-    "shell": "powershell",
-    "supported_platforms": [
-      "windows"
-    ],
-    "category": "TRMM (Win):Collectors"
-  },
-  {
     "guid": "95a2ee6f-b89b-4551-856e-3081b041caa7",
     "filename": "Win_Power_Profile_Reset_High_Performance_to_Defaults.ps1",
     "submittedBy": "https://github.com/azulskyknight",
