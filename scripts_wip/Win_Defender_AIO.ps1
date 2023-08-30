@@ -1,7 +1,7 @@
 
 
 
-# List Defender Status
+# Get Current Defender Status
 
 Get-MpComputerStatus
 
