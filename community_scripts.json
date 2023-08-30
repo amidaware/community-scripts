@@ -461,7 +461,7 @@
     "filename": "Win_RustDesk_GetID.ps1",
     "submittedBy": "https://github.com/dinger1986/",
     "name": "RustDesk - Get RustDeskID for client",
-    "description": "Returns RustDeskID for client - Use with Custom Fields for later use.",
+    "description": "Script doesn't work and won't be updated please obtain up to date scripts from https://docs.tacticalrmm.com/3rdparty_rustdesk/",
     "shell": "powershell",
     "supported_platforms": [
       "windows"
