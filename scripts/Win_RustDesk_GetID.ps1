@@ -1,26 +1,7 @@
-# Get RustDesk ID
-
-
+# No Longer working please use from https://docs.tacticalrmm.com/3rdparty_rustdesk/
 $ErrorActionPreference = 'silentlycontinue'
 
-If (!("C:\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config\RustDesk.toml")) {
-    $username = ((Get-WMIObject -ClassName Win32_ComputerSystem).Username).Split('\')[1]
-    $rustid = (Get-content C:\Users\$username\AppData\Roaming\RustDesk\config\RustDesk.toml | Where-Object { $_.Contains("id") })
-    $rustid = $rustid.Split("'")[1]
-
-    $rustpword = (Get-content C:\Users\$username\AppData\Roaming\RustDesk\config\RustDesk.toml | Where-Object { $_.Contains("password") })
-    $rustpword = $rustpword.Split("'")[1]
-    Write-output "Config file found in user folder"
-    Write-output "$rustid"
-    Write-output "$rustpword"
-}
-else {
-    $rustid = (Get-content C:\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config\RustDesk.toml | Where-Object { $_.Contains("id") })
-    $rustid = $rustid.Split("'")[1]
-
-    $rustpword = (Get-content C:\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\config\RustDesk.toml | Where-Object { $_.Contains("password") })
-    $rustpword = $rustpword.Split("'")[1]
-    Write-output "Config file found in windows service folder"
-    Write-output "$rustid"
-    Write-output "$rustpword"
-}
+Write-output ".............................................................................................................................."
+Write-output "Script doesn't work and won't be updated please obtain up to date scripts from https://docs.tacticalrmm.com/3rdparty_rustdesk/"
+Write-output ".............................................................................................................................."
+exit 20
