@@ -458,15 +458,15 @@
   },
   {
     "guid": "3e9881a1-5860-4a4e-9e34-e2a091381da6",
-    "filename": "Win_RustDesk_GetID.ps1",
+    "filename": "zzDEPRECATED_Win_RustDesk_GetID.ps1",
     "submittedBy": "https://github.com/dinger1986/",
     "name": "RustDesk - Get RustDeskID for client",
-    "description": "Returns RustDeskID for client - Use with Custom Fields for later use.",
+    "description": "Script doesn't work and won't be updated please obtain up to date scripts from https://docs.tacticalrmm.com/3rdparty_rustdesk/",
     "shell": "powershell",
     "supported_platforms": [
       "windows"
     ],
-    "category": "TRMM (Win):Collectors"
+    "category": "DEPRECATED"
   },
   {
     "guid": "95a2ee6f-b89b-4551-856e-3081b041caa7",
