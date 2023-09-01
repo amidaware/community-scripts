@@ -1,47 +1,89 @@
 
 
+param (
+    [switch]$debug,
+    [switch]$listExclusions,
+    [switch]$warnIfExclusions,
+    [switch]$updateSignatures,
+    [switch]$startQuickScan,
+    [switch]$startFullScan,
+    [switch]$startWDOScan,
+    [switch]$removeThreat
+)
 
-# Get Current Defender Status
+# For setting debug output level. -debug switch will set $debug to true
+if ($debug) {
+    $DebugPreference = "Continue"
+}
+else {
+    $DebugPreference = "SilentlyContinue"
+    $ErrorActionPreference = 'silentlycontinue'
+}
 
-Get-MpComputerStatus
+$exitCode = 0  # Initialize the exit code variable
 
-# TODO Filtered list of Defender status, warn on problems
-# TODO Return Defender Exclusions
+if ($debug) {
+    Write-Debug "Debugging: All Defender Options"
+    Get-MpPreference | Format-List -Property *
+}
 
-# List Preferences
+if ($listExclusions) {
+    Write-Debug "Defender Exclusions"
+    Get-MpPreference | Select Exc* | Format-List -Property *
+}
 
-Get-MpPreference
+if ($warnIfExclusions) {
+    Write-Debug "Defender Exclusions"
+    $exclusions = Get-MpPreference | Select Exc* | Format-List -Property *
 
-# List Exclusions
-# TODO: return errors when there are exclusions
+    if ($exclusions -ne $null) {
+        Write-Output "WARNING: Defender exclusions are configured."
+        $exitCode = 1
+    }
+    else {
+        Write-Output "No Defender exclusions found."
+    }
+}
 
-Get-MpPreference | Select Exc* | Format-List -
+function defenderStatus() {
+    # List Defender Status
+    $defenderStatus = Get-MpPreference
 
-# Scan Downloads
+    if ($defenderStatus -eq $false) {
+        Write-Output "WARNING: Windows Defender is not enabled."
+        $exitCode = 1
+    }
+    else {
+        Write-Output "Windows Defender is enabled."
+    }
+}
+defenderStatus
 
-Start-MpScan -ScanType CustomScan -ScanPath "C:\Users\user\Downloads"
+if ($updateSignatures) {
+    Write-Output "Updating Signatures"
+    Update-MpSignature
+}
 
-# Update signatures
+if ($startQuickScan) {
+    Write-Output "Starting Quick Scan"
+    Start-MpScan -ScanType QuickScan
+}
 
-Update-MpSignature
+if ($startFullScan) {
+    Write-Output "Starting Full Scan"
+    Start-MpScan -ScanType FullScan
+}
 
-# Quick Scan
+if ($startWDOScan) {
+    Write-Output "Starting Windows Defender Offline Scan"
+    Start-MpWDOScan
+}
 
-Start-MpScan -ScanType QuickScan
+if ($removeThreat) {
+    Write-Output "Removing Threats"
+    Remove-MpThreat
+}
 
-# Full Scan
+# Exit with the final exit code
+exit $exitCode
 
-Start-MpScan -ScanType FullScan
-
-# Offline Virus scan - Computer will reboot
-
-Start-MpWDOScan
-
-# Auto-clean all detected Threats
-
-Remove-MpThreat
-
-# TODO 
-# TODO 
-# TODO 
-# TODO 
