@@ -1,3 +1,5 @@
+#Uses MDM features of windows to perform a Windows Reset clearing all data
+
 $namespaceName = "root\cimv2\mdm\dmmap"
 $className = "MDM_RemoteWipe"
 $methodName = "doWipeMethod"
