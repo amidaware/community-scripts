@@ -8,9 +8,10 @@
       .PARAMETER Hosts
       Use this to specify the number of computer(s) you're running the command on. This will dynamically introduce waits to try and minimize the chance of hitting rate limits (20/min) on the chocolatey.org site: Hosts 20
       .PARAMETER PackageName
-      Use this to specify which software to install eg: PackageName googlechrome
+      Use this to specify which software('s) to install eg: PackageName googlechrome. You can use multiple value with semicolon separated. 
       .EXAMPLE
       -Hosts 20 -PackageName googlechrome
+      -Hosts 30 -PackageName googlechrome,vlc
       .EXAMPLE
       -Mode upgrade -Hosts 50
       .EXAMPLE
@@ -24,7 +25,7 @@
 
 param (
     [Int] $Hosts = "0",
-    [string] $PackageName,
+    [string[]] $PackageName,
     [string] $Mode = "install"
 )
 
@@ -55,7 +56,10 @@ if ($Mode -eq "upgrade") {
         choco upgrade -y all
     }
     else {
-        choco upgrade $PackageName -y
+        foreach ($package in $PackageName)
+        {
+            choco upgrade $package -y
+        }
     }
     # Write-Output "Running upgrade"
     Exit 0
