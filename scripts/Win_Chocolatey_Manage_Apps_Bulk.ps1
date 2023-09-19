@@ -8,7 +8,7 @@
       .PARAMETER Hosts
       Use this to specify the number of computer(s) you're running the command on. This will dynamically introduce waits to try and minimize the chance of hitting rate limits (20/min) on the chocolatey.org site: Hosts 20
       .PARAMETER PackageName
-      Use this to specify which software('s) to install eg: PackageName googlechrome. You can use multiple value with semicolon separated. 
+      Use this to specify which software('s) to install eg: PackageName googlechrome. You can use multiple value with comma separated. 
       .EXAMPLE
       -Hosts 20 -PackageName googlechrome
       -Hosts 30 -PackageName googlechrome,vlc
