@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Get accurate disk usage measurements on a Mac
+# https://github.com/scriptingosx/diskspace
+# https://scriptingosx.com/2021/11/monterey-python-and-free-disk-space/
+
+# Download package and install
+curl -k -L -o /tmp/diskspace-1.pkg "https://github.com/scriptingosx/diskspace/releases/download/v1/diskspace-1.pkg"
+sudo installer -pkg /tmp/diskspace-1.pkg -target /
+
+# Run to test
+/usr/local/bin/diskspace -H
