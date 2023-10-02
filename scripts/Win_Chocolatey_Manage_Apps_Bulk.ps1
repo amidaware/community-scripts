@@ -58,7 +58,7 @@ if ($Mode -eq "upgrade") {
     else {
         foreach ($package in $PackageName)
         {
-            choco upgrade $package -y
+            C:\programdata\chocolatey\choco.exe upgrade $package -y
         }
     }
     # Write-Output "Running upgrade"
@@ -66,6 +66,9 @@ if ($Mode -eq "upgrade") {
 }
 
 # write-output "Running install/uninstall mode"
-Start-Sleep -Seconds $rnd; 
-choco $Mode $PackageName -y
+Start-Sleep -Seconds $rnd;
+foreach ($package in $PackageName)
+        {
+            C:\programdata\chocolatey\choco.exe $Mode $package -y
+        }
 Exit 0
