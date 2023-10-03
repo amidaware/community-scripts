@@ -59,6 +59,7 @@ if ($Mode -eq "upgrade") {
         foreach ($package in $PackageName)
         {
             C:\programdata\chocolatey\choco.exe upgrade $package -y
+            Start-Sleep -Seconds $rnd; 
         }
     }
     # Write-Output "Running upgrade"
@@ -70,5 +71,6 @@ Start-Sleep -Seconds $rnd;
 foreach ($package in $PackageName)
         {
             C:\programdata\chocolatey\choco.exe $Mode $package -y
+            Start-Sleep -Seconds $rnd; 
         }
 Exit 0
