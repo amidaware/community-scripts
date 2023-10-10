@@ -299,7 +299,7 @@
     "name": "Bitlocker - Get Recovery Keys",
     "description": "Retrieves a Bitlocker Recovery Keys",
     "shell": "powershell",
-     "syntax": "[-KeyOnly]",
+    "syntax": "[-KeyOnly]",
     "supported_platforms": [
       "windows"
     ],
@@ -751,6 +751,7 @@
     "name": "Test Network Speed",
     "description": "This will download and run iperf to check network speeds, you need one machine on the network as a server and another as a client",
     "syntax": "[-mode <string>]\n[-IP <string>]",
+    "default_timeout": "600",
     "shell": "powershell",
     "supported_platforms": [
       "windows"
@@ -1468,6 +1469,19 @@
     "default_timeout": "90"
   },
   {
+    "guid": "49f63733-090b-486b-8ce5-c9bea4917d07",
+    "filename": "Win_RunAsUser_Example2.ps1",
+    "submittedBy": "https://github.com/silversword411",
+    "name": "EXAMPLE RunAsUser Template2",
+    "description": "Reference Script: Will need manual tweaking, for getting logged in username for RunAsUser scripts",
+    "shell": "powershell",
+    "category": "TRMM (Win):Misc>Reference",
+    "supported_platforms": [
+      "windows"
+    ],
+    "default_timeout": "90"
+  },
+  {
     "guid": "453c6d22-84b7-4767-8b5f-b825f233cf55",
     "filename": "Win_AD_Join_Computer.ps1",
     "submittedBy": "https://github.com/rfost52",
@@ -1635,7 +1649,9 @@
       "-profile \"@Smart scan\""
     ],
     "default_timeout": "7200",
-    "supported_platforms": ["windows"],
+    "supported_platforms": [
+      "windows"
+    ],
     "shell": "powershell",
     "category": "TRMM (Win):3rd Party Software"
   },
