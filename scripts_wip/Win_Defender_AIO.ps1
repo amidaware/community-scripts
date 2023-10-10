@@ -1,5 +1,3 @@
-
-
 param (
     [switch]$debug,
     [switch]$listExclusions,
@@ -8,7 +6,9 @@ param (
     [switch]$startQuickScan,
     [switch]$startFullScan,
     [switch]$startWDOScan,
-    [switch]$removeThreat
+    [switch]$removeThreat,
+    [switch]$customScan,
+    [string]$customScanPath
 )
 
 # For setting debug output level. -debug switch will set $debug to true
@@ -79,6 +79,16 @@ if ($startWDOScan) {
     Start-MpWDOScan
 }
 
+if ($customScan) {
+    if ($customScanPath -ne $null) {
+        Write-Output "Path required when using customScan switch"
+        Exit 1
+    }
+    else {
+        Start-MpScan -ScanType CustomScan -ScanPath $customScanPath
+    }
+}
+
 if ($removeThreat) {
     Write-Output "Removing Threats"
     Remove-MpThreat
@@ -86,4 +96,3 @@ if ($removeThreat) {
 
 # Exit with the final exit code
 exit $exitCode
-
