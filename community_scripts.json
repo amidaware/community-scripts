@@ -877,7 +877,7 @@
     "filename": "Win_Antivirus_Verify.ps1",
     "submittedBy": "https://github.com/beejayzed",
     "name": "Antivirus - Verify Status",
-    "syntax": "[-antivirusName <string>]",
+    "syntax": "[-antivirusName <string>] [-customfield]",
     "description": "Verify and display status for all installed Antiviruses",
     "shell": "powershell",
     "supported_platforms": [
