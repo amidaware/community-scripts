@@ -58,10 +58,11 @@ param($antivirusName = "*", [switch]$customField)
 function Add-ProductStates {
     [CmdletBinding()]
     param (
+       # This parameter can be passed from pipeline and can contain and array of collections that contain State or productstate members
         [Parameter(ValueFromPipeline)]
         [Microsoft.Management.Infrastructure.CimInstance[]]
         $Products,
-        
+        # Product State contains a value (DWORD) that contains multiple bitflags and we use the productState flag (0000F000)
         [Parameter(Position = 0, ValueFromPipelineByPropertyName, ValueFromPipeline, HelpMessage = "The value (DWORD) containing the bitflags.")]
         [Alias("STATE")]
         [UInt32]$ProductState
