@@ -11,20 +11,26 @@
     .EXAMPLE
     -antivirusName "AntivirusNameHere"
 
+    .PARAMETER [customField]
+    If this switch is provided, the script will only output the name of the antivirus.
+
+    .EXAMPLE
+    -customField
+
     .NOTES
     Version 1.0 4/7/2021 silversword
     https://mcpforlife.com/2020/04/14/how-to-resolve-this-state-value-of-av-providers/
     https://github.com/wortell/PSHelpers/blob/main/src/Public/Add-ProductStates.ps1
-    Call with optional paramater "-antivirusName AntivirusNameHere" in order to check for a specific antivirus
+    Call with optional parameter "-antivirusName AntivirusNameHere" in order to check for a specific antivirus
     antivirusName must match the "displayName" exactly
     If no antivirusName parameter is specified, the tool returns success if there is any active up to date antivirus on the system
+	Version 1.1 10/15/2023 dinger1986
+	Added in -customfield to write AV name to a customfield
 
     OS Build must be greater than 14393 to support this script. If it's not it returns exit code 2
 #>
 
-
-param($antivirusName = "*")
-
+param($antivirusName = "*", [switch]$customField)
 
 [Flags()] enum ProductState {
     Off = 0x0000
@@ -52,11 +58,10 @@ param($antivirusName = "*")
 function Add-ProductStates {
     [CmdletBinding()]
     param (
-        # This parameter can be passed from pipeline and can contain and array of collections that contain State or productstate members
         [Parameter(ValueFromPipeline)]
         [Microsoft.Management.Infrastructure.CimInstance[]]
         $Products,
-        # Product State contains a value (DWORD) that contains multiple bitflags and we use the productState flag (0000F000)
+        
         [Parameter(Position = 0, ValueFromPipelineByPropertyName, ValueFromPipeline, HelpMessage = "The value (DWORD) containing the bitflags.")]
         [Alias("STATE")]
         [UInt32]$ProductState
@@ -112,7 +117,6 @@ if ([environment]::OSVersion.Version.Build -le 14393) {
     exit 2
 }
 
-
 $return = Get-CimInstance -Namespace root/SecurityCenter2 -className AntivirusProduct | 
 Where-Object { 
          ($_.displayName -like $antivirusName) -and
@@ -122,8 +126,14 @@ Where-Object {
 
 Write-Host "Antivirus selection: $antivirusName"
 if ($return) {
-    Write-Host "Antivirus active and up to date"      
-    $return
+    if ($customField) {
+        # Only output the name of the first antivirus
+        $return[0].displayName
+        exit 0
+    } else {
+        Write-Host "Antivirus active and up to date"      
+        $return
+    }
 }
 else { 
     Write-Host "Antivirus issue!"
