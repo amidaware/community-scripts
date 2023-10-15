@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-    This is an example script for doing stuff in userland
+    This is a template example script for doing stuff in userland
 
 .DESCRIPTION
-    Fully functional example for RunAsUser, including getting return data and exit 1 from Userland
+    Fully functional example for RunAsUser run from SYSTEM, including getting return data and exit 1 from Userland
 
 .NOTES
     Change Log
