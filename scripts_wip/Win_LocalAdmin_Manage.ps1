@@ -65,8 +65,10 @@ function Win_LocalAdmin_Manage {
                     Write-Output "Removing all other admins from Administrator Group."
                     foreach ($adminMember in $adminMembers) {
                         if (-Not($adminMember -Match $LocalAdminUser) -and -Not([string]::IsNullOrWhiteSpace($adminMember))) {
-                            Add-LocalGroupMember -Group "Users" -Member $adminMember
-                            Remove-LocalGroupMember -Group Administrators -Member $adminMember
+                            if(Get-LocalUser | Where-Object { $_.Name -eq $adminMember }) {
+                                Add-LocalGroupMember -Group "Users" -Member $adminMember
+                                Remove-LocalGroupMember -Group Administrators -Member $adminMember
+                            }
                         }
                     }
 
