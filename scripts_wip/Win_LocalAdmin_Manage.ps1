@@ -4,7 +4,8 @@
 .DESCRIPTION
    This script will check the local administrators group for a list of users in the group.
    It will try and select the user called "Administrator". The script will also make sure
-   the account is enabled.
+   the account is enabled. Once the admin account exists it will remove all others from the local
+   administrators group.
 .EXAMPLE
     Win_LocalAdmin_Manage -LocalAdminUser CompanyAdmin -LocalPassword Password123
 .EXAMPLE
@@ -23,6 +24,7 @@
    Version: 1.0
    Author: redanthrax
    Creation Date: 2022-05-04
+   Updated: 2023-10-24
 #>
 
 [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSAvoidUsingPlainTextForPassword", "RMM Only Has Cleartext")]
@@ -52,18 +54,21 @@ function Win_LocalAdmin_Manage {
 
     Begin {
         $userPrincipal = $null
-     }
+    }
 
     Process {
         Try {
             $adminMembers = ([ADSI]"WinNT://localhost/Administrators,group").Members() | Foreach-Object { ([ADSI]$_).Path.Substring(8).split("/")[1] }
-            if($adminMembers | Where-Object { $_ -Match $LocalAdminUser }) {
+            if ($adminMembers | Where-Object { $_ -Match $LocalAdminUser }) {
                 Write-Output "$LocalAdminUser exists."
-                if($Enforce) {
-                    Write-Output "Disabling all other admins."
-                    foreach($adminMember in $adminMembers) {
-                        if(-Not($adminMember -Match $LocalAdminUser) -and -Not([string]::IsNullOrWhiteSpace($adminMember))) {
-                            Disable-LocalUser -Name $adminMember
+                if ($Enforce) {
+                    Write-Output "Removing all other admins from Administrator Group."
+                    foreach ($adminMember in $adminMembers) {
+                        if (-Not($adminMember -Match $LocalAdminUser) -and -Not([string]::IsNullOrWhiteSpace($adminMember))) {
+                            if(Get-LocalUser | Where-Object { $_.Name -eq $adminMember }) {
+                                Add-LocalGroupMember -Group "Users" -Member $adminMember
+                                Remove-LocalGroupMember -Group Administrators -Member $adminMember
+                            }
                         }
                     }
 
@@ -77,12 +82,7 @@ function Win_LocalAdmin_Manage {
             }
 
             $adminSID = (Get-WmiObject -Class Win32_UserAccount -Filter "SID like '%-500'").SID
-            if($null -ne $adminSID) {
-                Write-Output "Disabling all admins."
-                foreach($adminMember in $adminMembers) {
-                    Disable-LocalUser -Name $adminMember
-                }
-
+            if ($null -ne $adminSID) {
                 Write-Output "Found administrator user."
                 $userObject = Get-LocalUser -SID $adminSID
                 Write-Output "Renaming local admin account to $LocalAdminUser."
