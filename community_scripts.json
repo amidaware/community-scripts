@@ -904,7 +904,7 @@
     "submittedBy": "https://github.com/silversword411",
     "name": "Chocolatey - Install, Uninstall and Upgrade Software",
     "description": "This script installs, uninstalls and updates software using Chocolatey with logic to slow tasks to minimize hitting community limits. Mode install/uninstall/upgrade Hosts x",
-    "syntax": "-$PackageName <string>\n[-Hosts <string>]\n[-mode {(install) | upgrade | uninstall}]",
+    "syntax": "-PackageName <string>\n[-Hosts <string>]\n[-mode {(install) | upgrade | uninstall}]",
     "shell": "powershell",
     "category": "TRMM (Win):3rd Party Software>Chocolatey",
     "supported_platforms": [
@@ -918,7 +918,7 @@
     "submittedBy": "https://github.com/dinger1986",
     "name": "Winget - Install, Uninstall and Upgrade Software",
     "description": "This script installs, uninstalls and updates software using winget. Mode install/uninstall/upgrade/search",
-    "syntax": "-$PackageName <string>]\n[-mode {install | search | upgrade | uninstall }]",
+    "syntax": "-PackageName <string>]\n[-mode {install | search | upgrade | uninstall }]",
     "shell": "powershell",
     "category": "TRMM (Win):3rd Party Software>WinGet",
     "supported_platforms": [
