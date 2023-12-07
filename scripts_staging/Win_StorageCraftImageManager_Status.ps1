@@ -131,6 +131,11 @@ $NowTime = [DateTime]::Now
 $AlertLevel = 0 #0 = Pass, 1 = Informational, 2 = Warning, 3 = Error
 $AlertText = ''
 
+#Create c:\ProgramData\TacticalRMM\temp\ if it does't exist.
+if (-not(test-path "c:\ProgramData\TacticalRMM\temp\")){
+    mkdir "c:\ProgramData\TacticalRMM\temp\"
+}
+
 ####-------------------------------###
 #          Database Checks           #
 ####-------------------------------###
@@ -973,7 +978,12 @@ $conn.Close()
 Start-Sleep -Seconds 1
 
 #Delete the Database Copy
-Del "c:\ProgramData\TacticalRMM\temp\Imagemanager.mdb"
+try{
+    Del "c:\ProgramData\TacticalRMM\temp\Imagemanager.mdb"
+}
+catch{
+    Write-Output "Couldn't delete DB."
+}
 
 #Report back to the RMM
 if ($AlertLevel -gt 0) {
