@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-   Monitor Image Manager
+   Monitor Image Manager Status
 
 .DESCRIPTION
    Checks to see of scheduled Image Manager jobs are completing or failing. 
