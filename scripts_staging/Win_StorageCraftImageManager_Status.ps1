@@ -35,7 +35,7 @@
    #No Parameters, defaults apply
 
 .NOTES
-   v1.3 11/30/2023 ConvexSERV
+   v1.4 12/8/2023 ConvexSERV
    Requires Access 2010 Runtime. Script will attempt to download/install
 #>
 
@@ -140,9 +140,19 @@ if (-not(test-path "c:\ProgramData\TacticalRMM\temp\")){
 #          Database Checks           #
 ####-------------------------------###
 
-#Image Manager will have the DB open exclusively. Copy the DB to Temp.
+#Image Manager will have the DB open exclusively (At the MS Access Level, not the FileSystem Level). Copy the DB to Temp.
 $IMDBPath = "c:\ProgramData\TacticalRMM\temp\Imagemanager.mdb"
-copy "C:\Program Files (x86)\StorageCraft\ImageManager\ImageManager.mdb" "c:\ProgramData\TacticalRMM\temp\Imagemanager.mdb"
+try {
+    copy "C:\Program Files (x86)\StorageCraft\ImageManager\ImageManager.mdb" "c:\ProgramData\TacticalRMM\temp\Imagemanager.mdb"
+}
+catch
+{
+    $AlertText = "Alert - Failed to make a copy of the ImageManager Database. Please check if ImageManager is actually installed, and if another process has a lock on the .mdb file (Source or Dest)"
+    Write-Host $AlertText
+    $AlertLevel = 3
+    $Host.SetShouldExit($AlertLevel)
+    Exit
+}
 
 #Attempt to create an OLDDB Connection. Connection will fail if the Access RunTime is not installed
 try{
@@ -153,7 +163,7 @@ catch
 { 
     Write-Host "Info - Access Runtime Not Installed. Will attempt to download and install..."
     try{
-        Invoke-WebRequest -Uri "https://download.microsoft.com/download/2/4/3/24375141-E08D-4803-AB0E-10F2E3A07AAA/AccessDatabaseEngine_X64.exe" -UseBasicParsing -OutFile "C:\Windows\Temp\AccessDatabaseEngine_X64.exe"
+        Invoke-WebRequest -Uri "https://download.microsoft.com/download/2/4/3/24375141-E08D-4803-AB0E-10F2E3A07AAA/AccessDatabaseEngine_X64.exe" -UseBasicParsing -OutFile "c:\ProgramData\TacticalRMM\temp\AccessDatabaseEngine_X64.exe"
     }
     catch {
         $AlertText = "Alert - MS Access Runtime Download Failed."
@@ -984,7 +994,6 @@ try{
 catch{
     Write-Output "Couldn't delete DB."
 }
-
 #Report back to the RMM
 if ($AlertLevel -gt 0) {
     Write-Output $AlertText
