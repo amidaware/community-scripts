@@ -58,6 +58,7 @@ if ($Mode -ne "upgrade" -and $Mode -ne "list" -and -not $PackageName) {
 # Calculate random delay based on the number of hosts
 $randDelay = if ($Hosts -gt 0) { Get-Random -Minimum 1 -Maximum (($Hosts + 1) * 6) } else { 1 }
 
+Write-Output "Sleeping $randDelay seconds"
 Start-Sleep -Seconds $randDelay
 
 switch ($Mode) {
