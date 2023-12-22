@@ -15,13 +15,13 @@
     Use this to specify which software('s) to install eg: PackageName googlechrome. You can use multiple values using comma separated.
 
     .EXAMPLE
-    .\script.ps1 -Hosts 20 -PackageName googlechrome
+    -Hosts 20 -PackageName googlechrome
 
     .EXAMPLE
-    .\script.ps1 -Mode upgrade -Hosts 50 -PackageName chocolatey
+    -Mode upgrade -Hosts 50 -PackageName chocolatey
 
     .EXAMPLE
-    .\script.ps1 -Mode list
+    -Mode list
 
     .NOTES
     9/2021 v1 Initial release by @silversword411 and @bradhawkins 
@@ -30,13 +30,13 @@
 #>
 
 param (
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false)]
     [int] $Hosts = 0,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false)]
     [string[]] $PackageName,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false)]
     [ValidateSet("install", "uninstall", "upgrade", "list")]
     [string] $Mode = "install"
 )
@@ -81,7 +81,8 @@ switch ($Mode) {
             foreach ($package in $PackageName) {
                 & $chocoExePath upgrade $package -y
             }
-        } else {
+        }
+        else {
             & $chocoExePath upgrade all -y
         }
     }
