@@ -481,4 +481,5 @@ if (0 -eq $outObject.returncode) {
 }
 else {
     "Not Windows 11 Ready"
+    Write-Output $outObject.returnReason
 }
