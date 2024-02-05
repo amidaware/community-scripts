@@ -1,3 +1,5 @@
 rem List apps installed by Chocolatey
 
-choco list --local-only
+set "chocoExePath=%PROGRAMDATA%\chocolatey\choco.exe"
+
+"%chocoExePath%" list

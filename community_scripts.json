@@ -902,9 +902,9 @@
     "guid": "6c78eb04-57ae-43b0-98ed-cbd3ef9e2f80",
     "filename": "Win_Chocolatey_Manage_Apps_Bulk.ps1",
     "submittedBy": "https://github.com/silversword411",
-    "name": "Chocolatey - Install, Uninstall and Upgrade Software",
+    "name": "Chocolatey - Install, Uninstall, List and Upgrade Software",
     "description": "This script installs, uninstalls and updates software using Chocolatey with logic to slow tasks to minimize hitting community limits. Mode install/uninstall/upgrade Hosts x",
-    "syntax": "-PackageName <string>\n[-Hosts <string>]\n[-mode {(install) | upgrade | uninstall}]",
+    "syntax": "-PackageName <string>\n[-Hosts <string>]\n[-mode {(install) | upgrade | uninstall | list}]",
     "shell": "powershell",
     "category": "TRMM (Win):3rd Party Software>Chocolatey",
     "supported_platforms": [
