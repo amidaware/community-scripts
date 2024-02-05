@@ -1,5 +1,5 @@
 rem List apps installed by Chocolatey
 
-$chocoExePath = "$env:PROGRAMDATA\chocolatey\choco.exe"
+set "chocoExePath=%PROGRAMDATA%\chocolatey\choco.exe"
 
-$chocoExePath list
+"%chocoExePath%" list
