@@ -38,7 +38,7 @@ if ($Mode -eq "show") {
     Exit 0
 }
 
-if ($Mode -ne "upgrade" -and !$PackageName) {
+if ($Mode -ne "update" -and !$PackageName) {
     write-output "No package name provided, please include Example: `"-PackageName google.chrome`" `n"
     Exit 1
 }
