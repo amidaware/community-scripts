@@ -3,7 +3,7 @@
     Spyware killer script
 
 .DESCRIPTION
-    Death to all spyware! This scans for Wavebrowser and Onelaunch
+    Death to all spyware! This scans for Wavebrowser, Onelaunch, and Webcompanion
 
 .PARAMETER Days
     The number of days to look back for installers in the Downloads folder. Default is 1000.
@@ -29,6 +29,8 @@
     Added Onelaunch
     v1.2 7/2023 silversword411
     Refining, adding debug output, adding autodelete switch, reformatting outlook for easier reading
+    v1.3 2/2024 silversword411
+    Adding Webcompanion and Write-Debug
 #>
 
 param(
@@ -69,17 +71,17 @@ else {
 }
 
 function Wavebrowser-Scan {
-    Write-Output ""
-    Write-Output "################### Scanning for Wavebrowser ##################"
+    Write-Debug ""
+    Write-Debug "################### Scanning for Wavebrowser ##################"
     $targetProgDir = "c:\users\$currentuser\Wavesor Software\"
     $targetDir = "c:\users\$currentuser\Downloads\"
     Write-Debug "targetDir is $targetDir"
     $pattern = "wave br*.exe"
 
     # Look for Wavebrowser installer in downloads folder
-    Write-Output "##########"
+    Write-Debug "##########"
     If (!(get-ChildItem $targetDir | Where-Object { ($_.name -like $pattern) -and ($_.CreationTime -gt (Get-Date).AddDays(-$Days)) })) {
-        Write-Output "No Wavebrowser installers in the downloads folder in the last $Days days"
+        Write-Debug "No Wavebrowser installers in the downloads folder in the last $Days days"
     }
     else {
         Write-Output "WARNING-WARNING-WARNING - WaveBrowser installer found in downloads folder!"
@@ -96,9 +98,9 @@ function Wavebrowser-Scan {
     }
 
     # Look for installed Wavebrowser
-    Write-Output "##########"
+    Write-Debug "##########"
     If (!(get-ChildItem $targetProgDir)) {
-        Write-Output "No installed Wavebrowser"
+        Write-Debug "No installed Wavebrowser"
     }
     else {
         Write-Output "WARNING - WaveBrowser was installed in c:\users\$currentuser\Wavesor Software\"
@@ -111,17 +113,17 @@ function Wavebrowser-Scan {
 Wavebrowser-Scan
 
 function Onelaunch-Scan {
-    Write-Output ""
-    Write-Output "################### Scanning for Onelaunch ##################"
+    Write-Debug ""
+    Write-Debug "################### Scanning for Onelaunch ##################"
     $targetProgDir = "c:\users\$currentuser\appdata\local\Onelaunch"
     $targetDir = "c:\users\$currentuser\Downloads\"
     Write-Debug "targetDir is $targetDir"
     $pattern = "onelaunch*.exe"
 
     # Look for Onelaunch installer in downloads folder
-    Write-Output "##########"
+    Write-Debug "##########"
     If (!(get-ChildItem $targetDir | Where-Object { ($_.name -like $pattern) -and ($_.CreationTime -gt (Get-Date).AddDays(-$Days)) })) {
-        Write-Output "No Onelaunch installers in the downloads folder in the last $Days days"
+        Write-Debug "No Onelaunch installers in the downloads folder in the last $Days days"
     }
     else {
         Write-Output "WARNING-WARNING-WARNING - Onelaunch installer found in downloads folder!"
@@ -138,21 +140,64 @@ function Onelaunch-Scan {
     }
 
     # Look for installed Onelaunch
-    Write-Output "##########"
+    Write-Debug "##########"
     If (!(get-ChildItem $targetProgDir)) {
-        Write-Output "No installed Onelaunch"
+        Write-Debug "No installed Onelaunch"
     }
     else {
-        Write-Output "WARNING - OneLaunch was installed in c:\users\$currentuser\appdata\local\Onelaunch"
-        $dirdate = (Get-Item "c:\users\$currentuser\appdata\local\Onelaunc").CreationTime
-        Write-Output "DirDate is $($dirdate)"
+        Write-Debug "WARNING - OneLaunch was installed in c:\users\$currentuser\appdata\local\Onelaunch"
+        $dirdate = (Get-Item "c:\users\$currentuser\appdata\local\Onelaunch").CreationTime
+        Write-Debug "DirDate is $($dirdate)"
         $script:ErrorCount += 1
         Write-Debug "ErrorCount increased. Total is $ErrorCount"
     }
 }
 Onelaunch-Scan
 
-Write-Output ""
+
+function WebCompanion-Scan {
+    Write-Debug ""
+    Write-Debug "################### Scanning for Onelaunch ##################"
+    $targetProgDir = "c:\users\$currentuser\appdata\local\Onelaunch"
+    $targetDir = "c:\users\$currentuser\Downloads\"
+    Write-Debug "targetDir is $targetDir"
+    $pattern = "*Webcompanion.exe"
+
+    # Look for WebCompanion installer in downloads folder
+    Write-Debug "##########"
+    If (!(get-ChildItem $targetDir | Where-Object { ($_.name -like $pattern) -and ($_.CreationTime -gt (Get-Date).AddDays(-$Days)) })) {
+        Write-Debug "No WebCompanion installers in the downloads folder in the last $Days days"
+    }
+    else {
+        Write-Output "WARNING-WARNING-WARNING - WebCompanion installer found in downloads folder!"
+        Get-ChildItem $targetDir | Where-Object { ($_.name -like $pattern) -and ($_.CreationTime -gt (Get-Date).AddDays(-$Days)) } | ForEach-Object {
+            if ($AutoDelete) {
+                $_ | Remove-Item -Confirm:$false
+            }
+            else {
+                Write-Output $_
+            }
+        }
+        $script:ErrorCount += 1
+        Write-Debug "ErrorCount increased. Total is $ErrorCount"
+    }
+
+    # Look for installed WebCompanion
+    Write-Debug "##########"
+    If (!(get-ChildItem $targetProgDir)) {
+        Write-Debug "No installed WebCompanion"
+    }
+    else {
+        Write-Output "WARNING - WebCompanion was installed in c:\users\$currentuser\appdata\local\Onelaunch"
+        $dirdate = (Get-Item "c:\users\$currentuser\appdata\local\Onelaunch").CreationTime
+        Write-Output "DirDate is $($dirdate)"
+        $script:ErrorCount += 1
+        Write-Debug "ErrorCount increased. Total is $ErrorCount"
+    }
+}
+WebCompanion-Scan
+
+Write-Debug ""
 Write-Debug "Finished Tests"
 
 if ($ErrorCount -gt 0) {
