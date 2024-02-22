@@ -9,7 +9,7 @@
     5 modes: 'install' (default), 'uninstall', 'upgrade', 'upgrade-only-installed' or 'list'.
     Mode 'install' installs the software specified by "PackageName"
     Mode 'uninstall' removes the software specified by "PackageName"
-    Mode 'upgrade' checks for newer version and upgrades the package(s). If package is not existing on system it gets installed (default behaviour of chocolatey). You can specify multiple one or more packages seperated by comma. If no PackageName is given all installed packages are being updated
+    Mode 'upgrade' checks for newer version and upgrades the package(s). If package is not existing on system it gets installed (default behaviour of chocolatey). If no PackageName is given all installed packages are being updated.
     Mode 'upgrade-only-installed' checks for newer version of the package(s) and upgrades it. It will _not_ install new software (by adding --failonnotinstalled to the choco-command).
     Mode 'list' lists packages which are installed by chocolatey on the target
 
