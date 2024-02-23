@@ -318,19 +318,6 @@ param(
          Write-Host "[DONE]" -ForegroundColor Green -BackgroundColor Black
     }
 
-    ## Starts cleanmgr.exe
-    Function Start-CleanMGR {
-        Try{
-            Write-Host "Windows Disk Cleanup is running.                                                                  " -NoNewline -ForegroundColor Green
-            Start-Process -FilePath Cleanmgr -ArgumentList '/sagerun:1' -Wait -Verbose
-            Write-Host "[DONE]" -ForegroundColor Green -BackgroundColor Black
-        }
-        Catch [System.Exception]{
-            Write-host "cleanmgr is not installed! To use this portion of the script you must install the following windows features:" -ForegroundColor Red -NoNewline
-            Write-host "[ERROR]" -ForegroundColor Red -BackgroundColor black
-        }
-    } Start-CleanMGR
-
     ## gathers disk usage after running the cleanup cmdlets.
     $After = Get-WmiObject Win32_LogicalDisk | Where-Object { $_.DriveType -eq "3" } | Select-Object SystemName,
     @{ Name = "Drive" ; Expression = { ( $_.DeviceID ) } },
@@ -361,32 +348,6 @@ Before: $Before"
 
     ## Sends the disk usage after running the cleanup script to the console for ticketing purposes.
     Write-Verbose "After: $After"
-
-    ## Prompt to scan for large ISO, VHD, VHDX files.
-    Function PromptforScan {
-        param(
-            $ScanPath,
-            $title = (Write-Host "Search for large files" -ForegroundColor Green),
-            $message = (Write-Host "Would you like to scan $ScanPath for ISOs or VHD(X) files?" -ForegroundColor Green)
-        )
-        $yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes", "Scans $ScanPath for large files."
-        $no = New-Object System.Management.Automation.Host.ChoiceDescription "&No", "Skips scanning $ScanPath for large files."
-        $options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
-        $prompt = $host.ui.PromptForChoice($title, $message, $options, 0)
-        switch ($prompt) {
-            0 {
-                Write-Host "Scanning $ScanPath for any large .ISO and or .VHD\.VHDX files per the Administrators request." -ForegroundColor Green
-                Write-Verbose ( Get-ChildItem -Path $ScanPath -Include *.iso, *.vhd, *.vhdx -Recurse -ErrorAction SilentlyContinue | 
-                        Sort-Object Length -Descending | Select-Object Name, Directory,
-                    @{Name = "Size (GB)"; Expression = { "{0:N2}" -f ($_.Length / 1GB) }} | Format-Table | 
-                        Out-String -verbose )
-            }
-            1 {
-                Write-Host "The Administrator chose to not scan $ScanPath for large files." -ForegroundColor DarkYellow -Verbose
-            }
-        }
-    }
-    PromptforScan -ScanPath C:\  # end of function
 
     ## Completed Successfully!
     Write-Host (Stop-Transcript) -ForegroundColor Green
