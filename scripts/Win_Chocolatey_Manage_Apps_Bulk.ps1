@@ -26,7 +26,8 @@
     .NOTES
     9/2021 v1 Initial release by @silversword411 and @bradhawkins 
     11/14/2021 v1.1 Fixing typos and logic flow
-    12/8/2023 v1.3 Adding list, making choco full path
+    12/8/2023 v1.3 silversword411 Adding list, making choco full path
+    3/5/2024 v1.4 silversword411 Adding --no-progress to minimize output
 #>
 
 param (
@@ -65,7 +66,7 @@ switch ($Mode) {
     "install" {
         if ($PackageName) {
             foreach ($package in $PackageName) {
-                & $chocoExePath install $package -y
+                & $chocoExePath install $package -y --no-progress
             }
         }
     }
@@ -79,11 +80,11 @@ switch ($Mode) {
     "upgrade" {
         if ($PackageName) {
             foreach ($package in $PackageName) {
-                & $chocoExePath upgrade $package -y
+                & $chocoExePath upgrade $package -y --no-progress
             }
         }
         else {
-            & $chocoExePath upgrade all -y
+            & $chocoExePath upgrade all -y --no-progress
         }
     }
     "list" {
