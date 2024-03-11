@@ -2,7 +2,9 @@
 
 #Update script to run for most common linux distros
 
-if [[ `which yum` ]]; then
+if [[ `which dnf` ]]; then
+   dnf -y update
+elif [[ `which yum` ]]; then
    yum -y update
 elif [[ `which apt` ]]; then
    apt-get -y update
