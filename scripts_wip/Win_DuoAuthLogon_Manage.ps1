@@ -172,6 +172,10 @@ function Win_DuoAuthLogon_Manage {
         $Apps += Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
         if ($null -ne ($Apps | Where-Object { $_.DisplayName -Match "Duo Authentication" }) -and -Not($Uninstall)) {
             $duo = $Apps | Where-Object { $_.DisplayName -Match "Duo Authentication" }
+            if ($duo.GetType().Name -eq "Object[]") {
+                $duo = $duo[0]
+            }
+
             if (Compare-SoftwareVersion $duo.DisplayVersion $LatestVersion) {
                 Write-Output "Duo Authentication $($duo.DisplayVersion) already installed."
                 Exit 0
@@ -188,7 +192,7 @@ function Win_DuoAuthLogon_Manage {
 
     Process {
         Try {
-            if ($Uninstall -or $Upgrade) {
+            if ($Uninstall) {
                 $uninstallString = ($Apps | Where-Object { $_.DisplayName -Match "Duo Authentication" }).UninstallString
                 if ($uninstallString) {
                     $msiexec, $args = $uninstallString.Split(" ")
@@ -202,6 +206,10 @@ function Win_DuoAuthLogon_Manage {
                     Write-Output "No uninstall string found."
                     return
                 }
+            }
+
+            if ($Upgrade) {
+                Write-Output "Attempting upgrade of Duo."
             }
 
             Write-Output "Starting installation."
