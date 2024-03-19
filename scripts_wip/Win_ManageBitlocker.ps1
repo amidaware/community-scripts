@@ -138,6 +138,13 @@ function Win_ManageBitlocker {
                                 else {
                                     Write-Output "Volume already encrypted or in process"
                                 }
+
+                                #Check for recovery password, add if missing
+                                $recoveryPassword = $vol.KeyProtector | Where-Object { $_.KeyProtectorType -eq "RecoveryPassword" }
+                                if (-Not($recoveryPassword)) {
+                                    Write-Output "Adding recovery password"
+                                    $vol | Add-BitLockerKeyProtector -RecoveryPasswordProtector -InformationAction SilentlyContinue | Out-Null
+                                }
                             }
                         }
                     }
