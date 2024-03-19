@@ -139,9 +139,10 @@ function Win_ManageBitlocker {
                                     Write-Output "Volume already encrypted or in process"
                                 }
 
-                                #Check for recovery password, add if missing
+                                #Check for recovery password, add if missing and we have Tpm
+                                $tpmProtector = $vol.KeyProtector | Where-Object { $_.KeyProtectorType -eq "Tpm" }
                                 $recoveryPassword = $vol.KeyProtector | Where-Object { $_.KeyProtectorType -eq "RecoveryPassword" }
-                                if (-Not($recoveryPassword)) {
+                                if (-Not($recoveryPassword) -and $tpmProtector) {
                                     Write-Output "Adding recovery password"
                                     $vol | Add-BitLockerKeyProtector -RecoveryPasswordProtector -InformationAction SilentlyContinue | Out-Null
                                 }
