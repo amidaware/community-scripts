@@ -27,7 +27,8 @@ Param(
     [AllowEmptyCollection()]
     [string[]]$Info,
 
-    [Parameter(HelpMessage = "Operation: Encrypt, Decrypt, Suspend, Resume, Backup, HealBitlocker")]
+    [Parameter(HelpMessage = "Operation: Encrypt, Decrypt, Suspend, Resume,
+        Backup, HealBitlocker, HealKeyBackup")]
     [AllowNull()]
     [AllowEmptyCollection()]
     [string[]]$Operation
@@ -44,7 +45,8 @@ function Win_ManageBitlocker {
         [AllowEmptyCollection()]
         [string[]]$Info,
 
-        [Parameter(HelpMessage = "Operation: Encrypt, Decrypt, Suspend, Resume, Backup, HealBitlocker")]
+        [Parameter(HelpMessage = "Operation: Encrypt, Decrypt, Suspend, Resume,
+            Backup, HealBitlocker, HealKeyBackup")]
         [AllowNull()]
         [AllowEmptyCollection()]
         [string[]]$Operation
@@ -280,8 +282,42 @@ function Win_ManageBitlocker {
                     "HealTpm" {
                         Write-Output "TODO"
                     }
+                    "HealKeyBackup" {
+                        #check for procs, use jobs to suppress errors
+                        $dism = Start-Job -ScriptBlock {
+                            Get-Process dism -ErrorAction SilentlyContinue
+                        }
+
+                        $sfc = Start-Job -ScriptBlock {
+                            Get-Process sfc -ErrorAction SilentlyContinue
+                        }
+
+                        Wait-Job $dism, $sfc | Out-Null
+                        $dismResult = Receive-Job $dism
+                        $sfcResult = Receive-Job $sfc
+                        if($dismResult -or $sfcResult) {
+                            Write-Output "DISM or SFC still running, assume heal in progress"
+                            Remove-Job $dism, $sfc
+                            break
+                        }
+                        else {
+                            $registryPath = "HKLM:\SYSTEM\CurrentControlSet\Control\MiniNT"
+                            if (Test-Path $registryPath) {
+                                Remove-Item $registryPath -Recurse
+                            }
+
+                            Start-Process powershell.exe -ArgumentList `
+                                "-WindowStyle Hidden -Command & {
+                                    DISM.exe /Online /Cleanup-image /Restorehealth
+                                    sfc /scannow
+                                }"
+                            Write-Output "Started background job to heal key backup."
+                        }
+                    }
                 }
             }
+
+            Write-Output "Bitlocker Management Complete"
         }
         Catch {
             Write-Error $_.Exception
