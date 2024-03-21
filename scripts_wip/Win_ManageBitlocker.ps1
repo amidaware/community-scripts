@@ -316,8 +316,6 @@ function Win_ManageBitlocker {
                     }
                 }
             }
-
-            Write-Output "Bitlocker Management Complete"
         }
         Catch {
             Write-Error $_.Exception
