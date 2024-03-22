@@ -27,16 +27,14 @@
    Version: 1.1
    Author: redanthrax
    Creation Date: 2022-04-12
+   Update Date: 2024-03-22
 #>
 
 Param(
-    [Parameter(Mandatory)]
     [string]$IntegrationKey,
 
-    [Parameter(Mandatory)]
     [string]$SecretKey,
 
-    [Parameter(Mandatory)]
     [string]$ApiHost,
 
     [string]$LatestVersion = "4.2.2.1755",
@@ -128,15 +126,15 @@ function ConvertTo-StringData {
 }
 
 function Win_DuoAuthLogon_Manage {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'InstallSet')]
     Param(
-        [Parameter(Mandatory)]
+        [Parameter(Mandatory = $true, ParameterSetName = 'InstallSet')]
         [string]$IntegrationKey,
 
-        [Parameter(Mandatory)]
+        [Parameter(Mandatory = $true, ParameterSetName = 'InstallSet')]
         [string]$SecretKey,
 
-        [Parameter(Mandatory)]
+        [Parameter(Mandatory = $true, ParameterSetName = 'InstallSet')]
         [string]$ApiHost,
 
         [string]$LatestVersion,
@@ -162,6 +160,7 @@ function Win_DuoAuthLogon_Manage {
         [ValidateSet("2", "1", "0")]
         $UsernameFormat = "1",
 
+        [Parameter(Mandatory = $true, ParameterSetName = 'UninstallSet')]
         [switch]$Uninstall
     )
 
@@ -185,6 +184,11 @@ function Win_DuoAuthLogon_Manage {
             }
         }
 
+        if ($Uninstall -and $null -eq ($Apps | Where-Object { $_.DisplayName -Match "Duo Authentication" })) {
+            Write-Output "Duo Authentication already uninstalled"
+            Exit 0
+        }
+
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         $random = ([char[]]([char]'a'..[char]'z') + 0..9 | Sort-Object { get-random })[0..12] -join ''
         if (-not(Test-Path "C:\packages$random")) { New-Item -ItemType Directory -Force -Path "C:\packages$random" | Out-Null }
@@ -193,19 +197,66 @@ function Win_DuoAuthLogon_Manage {
     Process {
         Try {
             if ($Uninstall) {
+                Write-Output "Uninstalling Duo Authentication for Windows"
                 $uninstallString = ($Apps | Where-Object { $_.DisplayName -Match "Duo Authentication" }).UninstallString
                 if ($uninstallString) {
-                    $msiexec, $args = $uninstallString.Split(" ")
-                    Start-Process $msiexec -ArgumentList $args, "/qn" -Wait -NoNewWindow
-                    Write-Output "Uninstalled Duo Authentication for Windows"
-                    if ($Uninstall) {
-                        return
+                    if ($uninstallString.GetType().Name -eq "Object[]") {
+                        foreach ($unst in $uninstallString) {
+                            $m = [regex]::Match($unst, '')
+                            if ($unst -like "*`"*") {
+                                $m = [regex]::Match($unst, '^"([^"]+)"\s*(.*)')
+                            }
+                            else {
+                                $m = [regex]::Match($unst, '^(.*?)\s(.*)$')
+                            }
+
+                            $path = $m.Groups[1].Value
+                            $arguments = $m.Groups[2].Value
+                            if ($path.ToLower() -like "*msiexec*") {
+                                Start-Process $path -ArgumentList $arguments, "/quiet", "/qn", "/noreboot" -Wait -NoNewWindow
+                            }
+                            else {
+                                Start-Process $path -ArgumentList $arguments, "/x", "/s", "/v/qn" -Wait -NoNewWindow
+                            }
+                        }
                     }
+                    else {
+                        $m = [regex]::Match($uninstallString, '^"([^"]+)"\s*(.*)')
+                        $path = $m.Groups[1].Value
+                        $arguments = $m.Groups[2].Value
+                        if ($path.ToLower() -like "*msiexec*") {
+                            Start-Process $path -ArgumentList $arguments, "/quiet", "/qn", "/noreboot" -Wait -NoNewWindow
+                        }
+                        else {
+                            Start-Process $path -ArgumentList $arguments, "/x", "/s", "/v/qn" -Wait -NoNewWindow
+                        }
+                    }
+
+                    Write-Output "Uninstalled Duo Authentication for Windows"
                 }
                 else {
-                    Write-Output "No uninstall string found."
-                    return
+                    Write-Output "App uninstall via exe."
+                    $destination = "C:\packages$random\duo-win-login-latest.exe"
+                    Invoke-WebRequest -Uri "https://dl.duosecurity.com/duo-win-login-latest.exe" -OutFile $destination
+                    $myargs = "/x", "/s", "/v/qn"
+                    Start-Process "$destination" -ArgumentList $myargs
+                    Start-Sleep -Seconds 5
+                    Write-Output "Uninstalled Duo Authentication for Windows"
                 }
+
+                Write-Output "Validating Duo uninstall complete"
+
+                $Apps = @()
+                $Apps += Get-ItemProperty "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
+                $Apps += Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
+                if ($null -ne ($Apps | Where-Object { $_.DisplayName -Match "Duo Authentication" })) {
+                    Write-Error "Duo detected, uninstall failed"
+                }
+                else {
+                    Write-Output "Duo not detected, uninstall complete"
+                }
+
+                return
             }
 
             if ($Upgrade) {
@@ -263,6 +314,10 @@ function Win_DuoAuthLogon_Manage {
             Remove-Item -Path "C:\packages$random" -Recurse -Force
         }
 
+        if ($error) {
+            Exit 1
+        }
+
         Write-Output "Management complete."
         Exit 0
     }
@@ -272,19 +327,27 @@ if (-not(Get-Command 'Win_DuoAuthLogon_Manage' -errorAction SilentlyContinue)) {
     . $MyInvocation.MyCommand.Path
 }
  
-$scriptArgs = @{
-    IntegrationKey = $IntegrationKey
-    SecretKey      = $SecretKey
-    ApiHost        = $ApiHost
-    LatestVersion  = $LatestVersion
-    AutoPush       = $AutoPush
-    FailOpen       = $FailOpen
-    RdpOnly        = $RdpOnly
-    Smartcard      = $Smartcard
-    WrapSmartcard  = $WrapSmartcard
-    EnableOffline  = $EnableOffline
-    UsernameFormat = $UsernameFormat
-    Uninstall      = $Uninstall
+$scriptArgs = @{}
+
+if ($IntegrationKey) {
+    $scriptArgs = @{
+        IntegrationKey = $IntegrationKey
+        SecretKey      = $SecretKey
+        ApiHost        = $ApiHost
+        LatestVersion  = $LatestVersion
+        AutoPush       = $AutoPush
+        FailOpen       = $FailOpen
+        RdpOnly        = $RdpOnly
+        Smartcard      = $Smartcard
+        WrapSmartcard  = $WrapSmartcard
+        EnableOffline  = $EnableOffline
+        UsernameFormat = $UsernameFormat
+    }
+}
+if ($Uninstall) {
+    $scriptArgs = @{
+        Uninstall = $Uninstall
+    }
 }
  
 Win_DuoAuthLogon_Manage @scriptArgs
