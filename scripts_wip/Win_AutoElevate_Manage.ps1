@@ -8,7 +8,7 @@
 .EXAMPLE
     Win_AutoElevate_Manage -LicenseKey "abcdefg" -CompanyName "MyCompany" -LocationName "Main" -AgentMode live
 .EXAMPLE
-    Win_AutoElevate_Manage -LicenseKey "abcdefg" -CompanyName "MyCompany" -LocationName "Main" -AgentMode live -Uninstall
+    Win_AutoElevate_Manage -Uninstall
 .EXAMPLE
     Win_AutoElevate_Manage -LicenseKey "abcdefg" -CompanyName "MyCompany" -CompanyInitials "MC" -LocationName "Main" -AgentMode live
 .INSTRUCTIONS
@@ -28,22 +28,19 @@
 .NOTES
    Version: 1.0
    Author: redanthrax
-   Creation Date: 2022-04-12
+   Creation Date: 2023-04-12
+   Updated Date: 2024-03-22
 #>
 
 Param(
-    [Parameter(Mandatory)]
     [string]$LicenseKey,
 
-    [Parameter(Mandatory)]
     [string]$CompanyName,
     
     [string]$CompanyInitials,
     
-    [Parameter(Mandatory)]
     [string]$LocationName,
     
-    [Parameter(Mandatory)]
     [ValidateSet("live", "policy", "audit", "technician")]
     $AgentMode,
 
@@ -51,45 +48,65 @@ Param(
 )
 
 function Win_AutoElevate_Manage {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'InstallSet')]
     Param(
-        [Parameter(Mandatory)]
+        [Parameter(Mandatory=$true, ParameterSetName='InstallSet')]
         [string]$LicenseKey,
 
-        [Parameter(Mandatory)]
+        [Parameter(Mandatory=$true, ParameterSetName='InstallSet')]
         [string]$CompanyName,
         
         [string]$CompanyInitials,
         
-        [Parameter(Mandatory)]
+        [Parameter(Mandatory=$true, ParameterSetName='InstallSet')]
         [string]$LocationName,
         
-        [Parameter(Mandatory)]
+        [Parameter(Mandatory=$true, ParameterSetName='InstallSet')]
         [ValidateSet("live", "policy", "audit", "technician")]
         $AgentMode,
 
+        [Parameter(Mandatory=$true, ParameterSetName='UninstallSet')]
         [switch]$Uninstall
     )
 
     Begin {
+        $Apps = @()
+        $Apps += Get-ItemProperty "HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
+        $Apps += Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
         if ($null -ne (Get-Service | Where-Object { $_.DisplayName -Match "AutoElevate" }) -and -Not($Uninstall)) {
             Write-Output "AutoElevate already installed."
             Exit 0
         }
 
+        if($Uninstall -and $null -eq (Get-Service | Where-Object { $_.DisplayName -Match "AutoElevate" })) {
+            Write-Output "AutoElevate already uninstalled."
+            Exit 0
+        }
+
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         $random = ([char[]]([char]'a'..[char]'z') + 0..9 | sort { get-random })[0..12] -join ''
-        if (-not(Test-Path "C:\packages$random")) { New-Item -ItemType Directory -Force -Path "C:\packages$random" }
+        if (-not(Test-Path "C:\packages$random")) { New-Item -ItemType Directory -Force -Path "C:\packages$random" | Out-Null }
     }
 
     Process {
         Try {
             if ($Uninstall) {
-                (Get-WmiObject -Class Win32_Product -Filter "Name = 'AutoElevate'").Uninstall()
-                Write-Output "Uninstalled AutoElevate"
-                Exit 0
+                Write-Output "Uninstalling AutoElevate"
+                $uninstallString = ($Apps | Where-Object { $_.DisplayName -Match "AutoElevate" }).UninstallString
+                if ($uninstallString) {
+                    $unst = $uninstallString -Split " "
+                    $unst[1] = $unst[1] -Replace '/I', '/X'
+                    Start-Process $unst[0] -ArgumentList $unst[1], "/quiet", "/qn", "/noreboot" -Wait -NoNewWindow
+                    Write-Output "Uninstalled AutoElevate"
+                    return
+                }
+                else {
+                    Write-Error "Could not find uninstall string"
+                    return
+                }
             }
 
+            Write-Output "Installing AutoElevate"
             $source = "https://autoelevate-installers.s3.us-east-2.amazonaws.com/current/AESetup.msi"
             $destination = "C:\packages$random\AESetup.msi"
             Invoke-WebRequest -Uri $source -OutFile $destination
@@ -102,25 +119,28 @@ function Win_AutoElevate_Manage {
             $process | Wait-Process -Timeout 300 -ErrorAction SilentlyContinue -ErrorVariable timedOut
             if ($timedOut) {
                 $process | kill
-                Write-Output "Install timed out after 300 seconds."
-                Exit 1
+                Write-Error "Install timed out after 300 seconds."
             }
             elseif ($process.ExitCode -ne 0) {
                 $code = $process.ExitCode
-                Write-Output "Install error code: $code."
-                Exit 1
+                Write-Error "Install error code: $code."
             }
+
+            Write-Output "AutoElevate installation complete"
         }
         Catch {
             $exception = $_.Exception
-            Write-Output "Error: $exception"
-            Exit 1
+            Write-Error "Error: $exception"
         }
     }
 
     End {
         if (Test-Path "C:\packages$random") {
             Remove-Item -Path "C:\packages$random" -Recurse -Force
+        }
+
+        if($error) {
+            Exit 1
         }
 
         Exit 0
@@ -131,13 +151,20 @@ if (-not(Get-Command 'Win_AutoElevate_Manage' -errorAction SilentlyContinue)) {
     . $MyInvocation.MyCommand.Path
 }
  
-$scriptArgs = @{
-    LicenseKey      = $LicenseKey
-    CompanyName     = $CompanyName
-    CompanyInitials = $CompanyInitials
-    LocationName    = $LocationName
-    AgentMode       = $AgentMode
-    Uninstall       = $Uninstall
+$scriptArgs = @{ }
+if($Uninstall) {
+    $scriptArgs = @{
+        Uninstall = $Uninstall
+    }
+}
+else {
+    $scriptArgs = @{
+        LicenseKey      = $LicenseKey
+        CompanyName     = $CompanyName
+        CompanyInitials = $CompanyInitials
+        LocationName    = $LocationName
+        AgentMode       = $AgentMode
+    }
 }
  
 Win_AutoElevate_Manage @scriptArgs
