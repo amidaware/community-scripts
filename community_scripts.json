@@ -1064,11 +1064,11 @@
       "-serviceName {{client.ScreenConnectService}}",
       "-url {{client.ScreenConnectInstaller}}",
       "-clientname {{client.name}}",
-      "-sitename {{site.name}}",
-      "-action {(install) | uninstall | start | stop}"
+      "-sitename {{site.name}}"
     ],
-    "default_timeout": "90",
+    "default_timeout": "120",
     "shell": "powershell",
+    "syntax": "-serviceName <string>\n-url <string>\n-clientname <string>\n-sitename <string>\n-action {(install) | uninstall | start | stop}",
     "supported_platforms": [
       "windows"
     ],
