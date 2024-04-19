@@ -34,44 +34,44 @@
 $ErrorActionPreference = 'silentlycontinue'
 
 # Name of the service to check
-$serviceName = 'Duplicati'  # change this to the actual service name you want to check
+$serviceName = 'Duplicati'  # Update this to your specific service name if different
 
 # Check if the service exists
 $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
 if (-not $service) {
     Write-Output "The service $serviceName does not exist on this system."
-    $host.SetShouldExit(0)  # Exit code 0 for "service not found"
+    $host.SetShouldExit(0)  # Using exit code 0 for "service not found"
     return
 }
 
 # Define the time spans for the last 24 hours and the last 5 days
 $Last24Hours = (Get-Date) - (New-TimeSpan -Days 1)
-$Last5Days = (Get-Date) - (New-TimeSpan -Days 5)
+$Last10Days = (Get-Date) - (New-TimeSpan -Days 10)
 
-# Fetch events from the last 5 days and last 24 hours
-$eventsLast5Days = Get-WinEvent -FilterHashtable @{LogName = 'Application'; ID = 200; StartTime = $Last5Days} -ErrorAction SilentlyContinue | Sort-Object TimeCreated
-$eventsLast24Hours = Get-WinEvent -FilterHashtable @{LogName = 'Application'; ID = 200; StartTime = $Last24Hours} -ErrorAction SilentlyContinue | Sort-Object TimeCreated
+# Fetch error events from the last 24 hours
+$errorEvents = Get-WinEvent -FilterHashtable @{LogName = 'Application'; ID = 202; StartTime = $Last24Hours} -ErrorAction SilentlyContinue | Sort-Object TimeCreated
 
-# Check for any successful backup in the last 5 days
-if ($eventsLast5Days) {
-    $lastSuccessfulBackup = $eventsLast5Days | Select-Object -Last 1
-    $lastBackupTime = $lastSuccessfulBackup.TimeCreated
-    Write-Output "Last successful Duplicati Backup in the last 5 days was at $lastBackupTime"
-    Get-WinEvent -FilterHashtable @{LogName = 'Application'; ID = '205', '200', '201' }
-    
-    # Check if there was a successful backup in the last 24 hours
-    if ($eventsLast24Hours) {
-        Write-Output "There has been a successful backup in the last 24 hours."
-        Get-WinEvent -FilterHashtable @{LogName = 'Application'; ID = '205', '201', '202'; StartTime = $eventsLast24Hours }
-        $host.SetShouldExit(0)  # Exit code 0 for success
-    } else {
-        Write-Output "No successful backup in the last 24 hours."
-        Get-WinEvent -FilterHashtable @{LogName = 'Application'; ID = '205', '200', '201' }
-        $host.SetShouldExit(1)  # Exit code 1 for error
+# Check for any errors in the last 24 hours first
+if ($errorEvents) {
+    Write-Output "Error(s) found in Duplicati Backup within the last 24 hours."
+    foreach ($event in $errorEvents) {
+        Write-Output "Error at $($event.TimeCreated): $($event.Message)"
+        Get-WinEvent -FilterHashtable @{LogName = 'Application'; ID = '202', '200', '201' }
     }
-} else {
-    Write-Output "No successful Duplicati Backup found in the last 5 days."
-    Get-WinEvent -FilterHashtable @{LogName = 'Application'; ID = '205', '200', '201' }
     $host.SetShouldExit(1)  # Exit code 1 for error
+    return
 }
 
+# If no errors, check for successful backup events in the last 5 days
+$successEvents = Get-WinEvent -FilterHashtable @{LogName = 'Application'; ID = '200', '201'; StartTime = $Last10Days} -ErrorAction SilentlyContinue | Sort-Object TimeCreated
+
+if ($successEvents) {
+    $lastSuccessfulEvent = $successEvents | Select-Object -Last 1
+    Write-Output "Last successful Duplicati Backup was at $($lastSuccessfulEvent.TimeCreated)"
+    Get-WinEvent -FilterHashtable @{LogName = 'Application'; ID = '202', '200', '201' }
+    $host.SetShouldExit(0)  # Exit code 0 for success
+} else {
+    Write-Output "No successful Duplicati Backup found in the last 10 days."
+    Get-WinEvent -FilterHashtable @{LogName = 'Application'; ID = '202', '200', '201' }
+    $host.SetShouldExit(1)  # Exit code 1 for error
+}
