@@ -7,10 +7,10 @@
     for the circumstance when you receive an odd error when trying to get the bitlocker
     volume "Get-CimInstance : Invalid property"
 .EXAMPLE 
-    .\Win_ManageBitlocker.ps1 -Info Keys
-    .\Win_ManageBitlocker.ps1 -Info Tpm,TpmHealth
-    .\Win_ManageBitlocker.ps1 -Operation Encrypt,Backup
-    .\Win_ManageBitlocker.ps1 -Operation HealBitlocker
+    .\Win_Bitlocker_AIO.ps1 -Info Keys
+    .\Win_Bitlocker_AIO.ps1 -Info Tpm,TpmHealth
+    .\Win_Bitlocker_AIO.ps1 -Operation Encrypt,Backup
+    .\Win_Bitlocker_AIO.ps1 -Operation HealBitlocker
 .INSTRUCTIONS
 .NOTES
     Version: 1.0
@@ -34,7 +34,7 @@ Param(
     [string[]]$Operation
 )
 
-function Win_ManageBitlocker {
+function Win_Bitlocker_AIO {
     [CmdletBinding()]
     Param(
         [Parameter(HelpMessage = "Output volumes in Json format")]
@@ -332,7 +332,7 @@ function Win_ManageBitlocker {
     }
 }
 
-if (-Not(Get-Command 'Win_ManageBitlocker' -ErrorAction SilentlyContinue)) {
+if (-Not(Get-Command 'Win_Bitlocker_AIO' -ErrorAction SilentlyContinue)) {
     . $MyInvocation.MyCommand.Path
 }
 
@@ -342,4 +342,4 @@ $scriptArgs = @{
     Operation = $Operation
 }
 
-Win_ManageBitlocker @scriptArgs
+Win_Bitlocker_AIO @scriptArgs
