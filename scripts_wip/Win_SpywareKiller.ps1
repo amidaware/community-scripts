@@ -29,7 +29,7 @@
     Added Onelaunch
     v1.2 7/2023 silversword411
     Refining, adding debug output, adding autodelete switch, reformatting outlook for easier reading
-    v1.3 2/2024 silversword411
+    v1.3 and v1.42 /2024 silversword411
     Adding Webcompanion and Write-Debug
 #>
 
