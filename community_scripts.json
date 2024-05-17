@@ -1029,7 +1029,7 @@
     "default_timeout": 30
   },
   {
-    "guid": "5d905886-9eb1-4129-8b81-a013f842eb24",
+    "guid": "5bc815a0-d349-416f-8c3d-ac499d4da2e8",
     "filename": "Win_Reboot.ps1",
     "submittedBy": "https://github.com/silversword411",
     "name": "Reboot/Restart Computer",
