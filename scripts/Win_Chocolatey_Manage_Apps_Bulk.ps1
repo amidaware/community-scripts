@@ -51,7 +51,7 @@ param (
     [string] $Mode = "install"
 )
 
-$chocoExePath = "$env:PROGRAMDATA\chocolatey\choco.exe"
+$chocoExePath = "$env:ChocolateyInstall\choco.exe"
 
 if (-not (Test-Path $chocoExePath)) {
     Write-Output "Chocolatey is not installed."
