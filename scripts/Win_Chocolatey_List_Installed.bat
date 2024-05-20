@@ -1,5 +1,2 @@
-rem List apps installed by Chocolatey
-
-set "chocoExePath=%PROGRAMDATA%\chocolatey\choco.exe"
-
-"%chocoExePath%" list
+rem List packages installed by Chocolatey
+%ChocolateyInstall%\choco.exe list
