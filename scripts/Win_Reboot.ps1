@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Restarts the computer with an optional wait time (in seconds) before restarting.
+    Reboots/Restarts the computer with an optional wait time before restarting. Max wait 24hrs
 
 .DESCRIPTION
     This script restarts the computer forcefully.
@@ -21,7 +21,8 @@ param(
 )
 
 if ($Wait) {
-    Restart-Computer -Force -Delay $Wait
+    Sleep $Wait
+    Restart-Computer -Force
 }
 else {
     Restart-Computer -Force

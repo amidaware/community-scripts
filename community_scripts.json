@@ -1040,7 +1040,7 @@
     "supported_platforms": [
       "windows"
     ],
-    "default_timeout": 30
+    "default_timeout": 86400
   },
   {
     "guid": "f396dae2-c768-45c5-bd6c-176e56ed3614",
