@@ -13,7 +13,7 @@
     Waits for 60 seconds and then restarts the computer.
 
 .NOTES
-    v1.0 5/17/2024 Created by silversword411
+    v1.0 5/17/2024 Created by silversword411 and dinger1986
 #>
 
 param(
@@ -21,8 +21,7 @@ param(
 )
 
 if ($Wait) {
-    Sleep $Wait
-    Restart-Computer -Force
+    shutdown -r -t $Wait
 }
 else {
     Restart-Computer -Force
