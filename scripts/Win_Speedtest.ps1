@@ -7,7 +7,6 @@ $minuploadspeed = 4
 
 # File to download you can find download links for other files here https://speedtest.flonix.net
 $downloadurls = @(
-    "https://files.xlawgaming.com/10mb.bin",
     "https://raw.githubusercontent.com/jamesward/play-load-tests/master/public/10mb.txt"
 )
 
