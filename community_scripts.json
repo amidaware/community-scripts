@@ -1029,6 +1029,20 @@
     "default_timeout": 30
   },
   {
+    "guid": "5bc815a0-d349-416f-8c3d-ac499d4da2e8",
+    "filename": "Win_Reboot.ps1",
+    "submittedBy": "https://github.com/silversword411",
+    "name": "Reboot/Restart Computer",
+    "description": "Reboots/Restarts the computer with an optional wait time before restarting.",
+    "syntax": "[-wait <Int>]",
+    "shell": "powershell",
+    "category": "TRMM (Win):Other",
+    "supported_platforms": [
+      "windows"
+    ],
+    "default_timeout": 86400
+  },
+  {
     "guid": "f396dae2-c768-45c5-bd6c-176e56ed3614",
     "filename": "Win_Power_RestartorShutdown.ps1",
     "submittedBy": "https://github.com/tremor021",
