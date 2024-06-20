@@ -1,0 +1,1 @@
+"C:\Program Files\UrBackup\Uninstall.exe" /S
