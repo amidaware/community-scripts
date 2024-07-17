@@ -28,7 +28,7 @@ If (!(Test-Path "c:\ProgramData\TacticalRMM\temp\")) {
 
 Write-Output "Hello from Systemland"
 
-Invoke-AsCurrentUser -CaptureOutput -ScriptBlock {
+Invoke-AsCurrentUser -ScriptBlock {
     # Put all Userland code here
     $exit1Path = "c:\ProgramData\TacticalRMM\temp\exit1.txt"
 
@@ -41,7 +41,7 @@ Invoke-AsCurrentUser -CaptureOutput -ScriptBlock {
         # Writing exit1.txt for Userland Exit 1 passing to Systemland for returning to Tactical
         Write-Output "Exit 1" | Out-File -append -FilePath $exit1Path
     }
-}
+} -CaptureOutput
 
 # Checking for Userland Exit 1
 If (Test-Path -Path "c:\ProgramData\TacticalRMM\temp\exit1.txt" -PathType Leaf) {
