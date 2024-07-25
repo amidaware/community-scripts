@@ -10,9 +10,10 @@
 .INSTRUCTIONS
    Add this as a script check to your Windows Server that has IIS installed.
 .NOTES
-   Version: 1.0
+   Version: 1.1
    Author: ebdavison (nalantha on discord)
    Creation Date: 2022-08-08
+   Updated: 2024-07-25 styx-tdo
 #>
 
 param
@@ -60,13 +61,21 @@ $CertState = foreach ($bind in $bindingslist) {
     
     if ($certFileWH.NotAfter) {
         if ($certFileWH.NotAfter -lt $Days) { 
-            "$($bindsite) = $($certfileWH.FriendlyName) / $($certfileWH.thumbprint) will expire on $($certfileWH.NotAfter)" 
+	    if (certfileWH.FriendlyName) {
+                "$($bindsite) = $($certfileWH.FriendlyName) / $($certfileWH.thumbprint) will expire on $($certfileWH.NotAfter)" 
+	    }else{
+                "$($bindsite) = $($certfileWH.Subject) / $($certfileWH.thumbprint) will expire on $($certfileWH.NotAfter)" 
+            }
         }
     }
 
     if ($certFileMY.NotAfter) {
         if ($certFileMY.NotAfter -lt $Days) { 
-            "$($bindsite) = $($certfileMY.FriendlyName) / $($certfileMY.thumbprint) will expire on $($certfileWMY.NotAfter)" 
+	    if (certfileMY.FriendlyName) {
+                "$($bindsite) = $($certfileMY.FriendlyName) / $($certfileMY.thumbprint) will expire on $($certfileMY.NotAfter)" 
+	    }else{
+                "$($bindsite) = $($certfileMY.Subject) / $($certfileMY.thumbprint) will expire on $($certfileMY.NotAfter)" 
+            }
         }
     }
 }
