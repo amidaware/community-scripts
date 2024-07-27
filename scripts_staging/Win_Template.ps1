@@ -233,7 +233,7 @@ if (Test-IsAdmin) {
 function Test-IsInteractiveShell {
     # https://stackoverflow.com/questions/9738535/powershell-test-for-noninteractive-mode
     # Test each Arg for match of abbreviated '-NonInteractive' command.
-    $NonInteractive = [Environment]::GetCommandLineArgs() | Where-Object{ $_ -like '-NonI*' }
+    $NonInteractive = [Environment]::GetCommandLineArgs() | Where-Object { $_ -like '-NonI*' }
 
     if ([Environment]::UserInteractive -and -not$NonInteractive) {
         # We are in an interactive shell.
@@ -298,3 +298,18 @@ If ("SetRegistryValue" -Match "true") {
     # Set-RegistryValue -registryPath $RegistryPath -name "PersonalizationReportingEnabled" -value 0
     #Set-RegistryValue
 }
+
+<# ================================================================================ #>
+Function Foldercreate {
+    param (
+        [Parameter(Mandatory = $false)]
+        [String[]]$Paths
+    )
+    
+    foreach ($Path in $Paths) {
+        if (!(Test-Path $Path)) {
+            New-Item -ItemType Directory -Force -Path $Path
+        }
+    }
+}
+Foldercreate -Paths "$env:ProgramData\TacticalRMM\temp", "C:\Temp"
