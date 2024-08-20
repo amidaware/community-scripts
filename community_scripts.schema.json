@@ -22,6 +22,17 @@
           "type": "string"
         }
       },
+      "env": {
+        "description": "The script environmental variables listed as an array.",
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "run_as_user": {
+        "description": "Run this script as the active user as opposed to System (Windows only)",
+        "type": "boolean"
+      },
       "filename": {
         "description": "The filename of the script.",
         "type": "string"
