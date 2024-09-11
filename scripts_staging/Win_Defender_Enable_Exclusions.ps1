@@ -1,0 +1,112 @@
+# If you run the Defender Enable script it will enabled Controlled Folders. This is a starter list to minimize user pain saving files from programs giving errors
+# Updated 9/11/2024
+
+## Exclusions for Controlled Folder Access
+#Microsoft Office
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files (x86)\Microsoft Office\Office15\EXCEL.EXE"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files (x86)\Microsoft Office\Office15\outlook.EXE"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files (x86)\Microsoft Office\Office15\powerpoint.EXE"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files (x86)\Microsoft Office\Office15\winword.EXE"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files (x86)\Microsoft Office\root\Office16\EXCEL.EXE"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files (x86)\Microsoft Office\root\Office16\outlook.EXE"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files (x86)\Microsoft Office\root\Office16\powerpoint.EXE"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files (x86)\Microsoft Office\root\Office16\winword.EXE"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Microsoft Office 15\root\office15\excel.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Microsoft Office 15\root\office15\outlook.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Microsoft Office 15\root\office15\powerpnt.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Microsoft Office 15\root\office15\powerpoint.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Microsoft Office 15\root\office15\winword.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Microsoft Office\root\Office15\EXCEL.EXE"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Microsoft Office\root\Office15\outlook.EXE"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Microsoft Office\root\Office15\powerpoint.EXE"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Microsoft Office\root\Office15\winword.EXE"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Microsoft Office\root\Office16\OUTLOOK.EXE"
+
+#Autodesk
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Autodesk\AutoCAD 2016\acad.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Autodesk\AutoCAD 2020\acad.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Autodesk\AutoCAD 2021\acad.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Autodesk\AutoCAD 2022\acad.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Autodesk\AutoCAD LT 2015\acadlt.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Autodesk\AutoCAD LT 2016\acadlt.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Autodesk\AutoCAD LT 2017\acadlt.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Autodesk\AutoCAD LT 2018\acadlt.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Autodesk\AutoCAD LT 2019\acadlt.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Autodesk\AutoCAD LT 2020\acadlt.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Autodesk\AutoCAD LT 2022\acadlt.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Autodesk\DWG TrueView 2021 - English\dwgviewr.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Autodesk\Revit 2019\Revit.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Autodesk\Revit 2020\Revit.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Autodesk\Revit 2022\Revit.exe"
+
+#Adobe
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files (x86)\Adobe\Acrobat DC\Acrobat\Acrobat.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files (x86)\Adobe\Acrobat Reader DC\Reader\AcroRd32.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files (x86)\Adobe\Reader 11.0\Reader\AcroRd32.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Adobe\Acrobat DC\Acrobat\Acrobat.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Adobe\Adobe Photoshop 2021\Photoshop.exe"
+
+#Others
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\ABRI\ILR2\UKSCL\ilr2.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\PROGRA~1\Nitro\PRO11~1\NitroPDF"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Bullzip\PDF Printer\gui.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\CCleaner\CCleaner64.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\LimitState\RING4.0\bin\ring64.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Nitro\Pro 11\NitroPDF.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\PeaZip\peazip.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\ShareX\ShareX.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\TacticalAgent\meshagent.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\TacticalAgent\tacticalrmm.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\WindowsApps\Microsoft.Office.Desktop.Excel_16051.14326.20348.0_x86__8wekyb3d8bbwe\Office16\excel.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Windows\SysWOW64\icacls.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Windows\System32\RuntimeBroker.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Windows\System32\SearchProtocolHost.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files (x86)\CADS\VelVenti\Cads.VelVenti.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files (x86)\CyberLink\PowerDVD12\Kernel\DMS\CLMSServerPDVD12.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files (x86)\Draycir\Credit Hound\Credit Hound.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files (x86)\Draycir\Spindle Document Distribution\PDF to Spindle\PDFtoSpindle.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files (x86)\DYMO\DYMO Label Software\DLS.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files (x86)\EvolutionM Client\client\wowclient.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files (x86)\Sage\Accounts\SBDDesktop.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files (x86)\Steelcalc .NET\uninstallSteelcalc.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files (x86)\Tekla\Structural\Fastrak\PFR.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files (x86)\Tekla\Structural\Fastrak\tcd.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files (x86)\Tekla\Structural\Tedds\Tedds.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files (x86)\Thesaurus Software\BrightPay UK 2021-22\brightpay.exe"
+Add-MpPreference -ControlledFolderAccessAllowedApplications "C:\Program Files\Bullzip\PDF Printer\gui.exe"
+
+##Exclusions for Processes
+#Microsoft
+Add-MpPreference -ExclusionPath  "C:\Program Files (x86)\Microsoft Office\Office16\POWERPNT.EXE"
+Add-MpPreference -ExclusionPath  "C:\Program Files (x86)\Microsoft Office\root\Office16\EXCEL.EXE"
+Add-MpPreference -ExclusionPath  "C:\Program Files (x86)\Microsoft Office\root\Office16\OUTLOOK.EXE"
+Add-MpPreference -ExclusionPath  "C:\Program Files (x86)\Microsoft Office\root\Office16\WINWORD.EXE"
+Add-MpPreference -ExclusionPath  "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+Add-MpPreference -ExclusionPath  "C:\Program Files\Microsoft Office 15\root\office15\MSPUB.EXE"
+Add-MpPreference -ExclusionPath  "C:\Program Files\Microsoft Office\root\Office16\MSPUB.EXE"
+Add-MpPreference -ExclusionPath  "C:\Program Files\Microsoft Office\root\Office16\OUTLOOK.EXE"
+
+#Adobe
+Add-MpPreference -ExclusionPath  "C:\Program Files (x86)\Adobe\Acrobat DC\Acrobat\Acrobat.exe"
+Add-MpPreference -ExclusionPath  "C:\Program Files (x86)\Common Files\Adobe\Adobe Desktop Common\ADS\Adobe Desktop Service.exe"
+Add-MpPreference -ExclusionPath  "C:\Program Files (x86)\Common Files\Adobe\AdobeGCClient\AGCInvokerUtility.exe"
+Add-MpPreference -ExclusionPath  "C:\Program Files (x86)\Common Files\Adobe\AdobeGCClient\AGSService.exe"
+Add-MpPreference -ExclusionPath  "C:\Program Files (x86)\Common Files\Adobe\AdobeGCClient\AdobeGCClient.exe"
+Add-MpPreference -ExclusionPath  "C:\Program Files\Common Files\Adobe\Creative Cloud Libraries\libs\node.exe"
+
+#Autodesk
+Add-MpPreference -ExclusionPath  "C:\Program Files\Autodesk\AutoCAD 2023\acad.exe"
+
+#Others
+Add-MpPreference -ExclusionPath  "C:\ABRI\ILR2\UKSCL\ilr2.exe"
+Add-MpPreference -ExclusionPath  "C:\Program Files (x86)\CADS\VelVenti\Cads.VelVenti.exe"
+Add-MpPreference -ExclusionPath  "C:\Program Files (x86)\Intuit\QuickBooks 2013\AutoBackupEXE.exe"
+Add-MpPreference -ExclusionPath  "C:\Program Files (x86)\Nullifire Product Calculator\Nullifire.exe"
+Add-MpPreference -ExclusionPath  "C:\Program Files\LimitState\RING4.0\bin\ring64.exe"
+Add-MpPreference -ExclusionPath  "C:\Program Files\PDF Architect 6\architect.exe"
+Add-MpPreference -ExclusionPath  "C:\Program Files\PeaZip\peazip.exe"
+Add-MpPreference -ExclusionPath  "C:\Program Files\PeaZip\peazip.exe\%userprofile%\Documents"
+Add-MpPreference -ExclusionPath  "C:\Program Files\RStudio\bin\rsession-utf8.exe"
+Add-MpPreference -ExclusionPath  "C:\Program Files\Rclone\rclone.exe"
+
+Write-Output "Program Exclusions added to defender"
