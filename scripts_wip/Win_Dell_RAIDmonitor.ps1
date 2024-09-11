@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Check Dell RAID status using OpenManage command-line interface (OMSA).
+    Check Dell PERC RAID status using OpenManage command-line interface (OMSA).
 
 .DESCRIPTION
     This script checks the RAID status of Dell systems using OMSA. It scans for issues in both virtual and physical disks on all controllers and outputs the results. If the `-debug` switch is provided, detailed disk information is also displayed.
