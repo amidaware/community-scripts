@@ -1719,5 +1719,20 @@
       "darwin"
     ],
     "category": "TRMM (All):3rd Party Software"
+  },
+    {
+    "guid": "63f00f35-f5b1-40d4-abed-08de5b099895",
+    "filename": "Sunny_Delete_Users.ps11",
+    "submittedBy": "https://github.com/sunnypatell",
+    "name": "Comprehensive User Deletion Tool",
+    "description": "Tool includes SID, current logged in user, disk space, Last Logged on, Presaves Essential OS related User Profiles",
+    "syntax": "N/A ALL ASCII GUI",
+    "args": [],
+    "default_timeout": "288000",
+    "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
+    "category": "TRMM (Win):Storage"
   }
 ]
