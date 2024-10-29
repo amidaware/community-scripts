@@ -12,7 +12,8 @@
     Mode 'upgrade' checks for newer version and upgrades the package(s). If package is not existing on system it gets installed (default behaviour of chocolatey). If no PackageName is given all installed packages are being updated.
     Mode 'upgrade-only-installed' checks for newer version of the package(s) and upgrades it. It will _not_ install new software (by adding --failonnotinstalled to the choco-command).
     Mode 'list' lists packages which are installed by chocolatey on the target
-
+    Mode 'list-upgradeable' lists packages which are installed by chocolatey on the target but have updates available
+    
     .PARAMETER Hosts
     Use this to specify the number of computer(s) you're running the command on. This will dynamically introduce waits to try and minimize the chance of hitting rate limits (20/min) on the chocolatey.org site: Hosts 20
 
@@ -37,6 +38,7 @@
     12/8/2023 v1.3 Adding list, making choco full path
     2/22/2024 v1.4 Adding 'upgrade-only-installed' as mode by @derfladi
     3/5/2024 v1.5 silversword411 Adding --no-progress to minimize output
+    5/21/2024 v1.6 silversword411 Adding list-upgradeable
 #>
 
 param (
@@ -47,28 +49,28 @@ param (
     [string[]] $PackageName,
 
     [Parameter(Mandatory = $false)]
-    [ValidateSet("install", "uninstall", "upgrade", "upgrade-only-installed", "list")]
+    [ValidateSet("install", "uninstall", "upgrade", "upgrade-only-installed", "list", "list-upgradeable")]
     [string] $Mode = "install"
 )
 
 $chocoExePath = "$env:PROGRAMDATA\chocolatey\choco.exe"
 
 if (-not (Test-Path $chocoExePath)) {
-    Write-Output "Chocolatey is not installed."
+    Write-Host "Chocolatey is not installed."
     Exit 1
 }
 
 $ErrorCount = 0
 
-if ($Mode -ne "upgrade" -and $Mode -ne "upgrade-only-installed" -and $Mode -ne "list" -and -not $PackageName) {
-    Write-Output "Error: No package name provided. Please specify a package name, e.g., `-PackageName googlechrome`."
+if ($Mode -ne "upgrade" -and $Mode -ne "upgrade-only-installed" -and $Mode -ne "list" -and $Mode -ne "list-upgradeable" -and -not $PackageName) {
+    Write-Host "Error: No package name provided. Please specify a package name, e.g., `-PackageName googlechrome`."
     Exit 1
 }
 
 # Calculate random delay based on the number of hosts
 $randDelay = if ($Hosts -gt 0) { Get-Random -Minimum 1 -Maximum (($Hosts + 1) * 6) } else { 1 }
 
-Write-Output "Sleeping $randDelay seconds"
+Write-Host "Sleeping $randDelay seconds"
 Start-Sleep -Seconds $randDelay
 
 switch ($Mode) {
@@ -76,6 +78,7 @@ switch ($Mode) {
         if ($PackageName) {
             foreach ($package in $PackageName) {
                 & $chocoExePath install $package -y --no-progress
+                if ($LASTEXITCODE -ne 0) { $ErrorCount++ }
             }
         }
     }
@@ -83,6 +86,7 @@ switch ($Mode) {
         if ($PackageName) {
             foreach ($package in $PackageName) {
                 & $chocoExePath uninstall $package -y
+                if ($LASTEXITCODE -ne 0) { $ErrorCount++ }
             }
         }
     }
@@ -90,6 +94,7 @@ switch ($Mode) {
         if ($PackageName) {
             foreach ($package in $PackageName) {
                 & $chocoExePath upgrade $package -y --no-progress
+                if ($LASTEXITCODE -ne 0) { $ErrorCount++ }
             }
         }
         else {
@@ -100,6 +105,7 @@ switch ($Mode) {
         if ($PackageName) {
             foreach ($package in $PackageName) {
                 & $chocoExePath upgrade $package --failonnotinstalled -y
+                if ($LASTEXITCODE -ne 0) { $ErrorCount++ }
             }
         }
         else {
@@ -109,6 +115,13 @@ switch ($Mode) {
     "list" {
         & $chocoExePath list
     }
+    "list-upgradeable" {
+        & $chocoExePath outdated
+    }
+}
+
+if ($ErrorCount -gt 0) {
+    Write-Host "$ErrorCount errors occurred during the operation."
 }
 
 Exit 0
