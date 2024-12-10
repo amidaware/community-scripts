@@ -6,5 +6,4 @@
 #this is another com
 "this is another line"
 
-#net4all
-#1.1.1.1
+#this is not a password
