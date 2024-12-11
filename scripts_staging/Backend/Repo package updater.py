@@ -29,6 +29,9 @@ import time
 .NOTE
     Author: SAN
 
+.TODO
+    Move packages to env
+
 """
 
 # List of package names to download
