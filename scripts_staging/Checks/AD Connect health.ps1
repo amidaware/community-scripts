@@ -18,7 +18,7 @@
 
 .CHANGELOG
     04.09.2024 SAN Problems corrections
-    11.12.24 SAN moved hours to env and 
+    11.12.24 SAN moved hours to env
 #>
 
 
