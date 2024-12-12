@@ -11,7 +11,7 @@
 
 .NOTES
     Author: SAN
-    Date: ???
+    Date: 14.11.24
     #public
 
 .CHANGELOG
@@ -19,6 +19,8 @@
 
 .TODO
     Convert the script to use the PowerShell module as the future of vbs is uncertain.
+    see code bellow for prototype
+
 #>
 
 
