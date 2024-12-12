@@ -19,6 +19,7 @@
     move var to env
 
 .CHANGELOG
+    12.12.24 SAN Changed outputs
 
 #>
 
@@ -39,7 +40,7 @@ if ($uptimeDays -gt $MaxTime) {
     Write-Output "The computer has an uptime greater than $MaxTime days."
     exit 1
 } else {
-    Write-Output "Uptime OK"
+    Write-Output "OK: Uptime is not above max"
     #Write-Output "The computer has an uptime of $formattedUptime."
     #Write-Output "The computer has an uptime lower than $MaxTime days."
     exit 0
