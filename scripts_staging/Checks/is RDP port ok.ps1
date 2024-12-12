@@ -11,6 +11,10 @@
     Author: SAN
     Date: 26.09.2024
     #public
+
+.CHANGELOG
+    12.12.24 SAN Changed outputs
+
 #>
 
 $port = 3389
@@ -20,9 +24,9 @@ $address = "localhost"
 if (Get-Command Test-NetConnection -ErrorAction SilentlyContinue) {
     $tcpConnection = Test-NetConnection -ComputerName $address -Port $port
     if ($tcpConnection.TcpTestSucceeded) {
-        Write-Output "Port $port is open."
+        Write-Output "RDP is open."
     } else {
-        Write-Output "Port $port is not open."
+        Write-Output "Port $port is not open RDP will not work."
         exit 1
     }
 } else {
@@ -30,10 +34,10 @@ if (Get-Command Test-NetConnection -ErrorAction SilentlyContinue) {
     try {
         $tcpClient = New-Object System.Net.Sockets.TcpClient
         $tcpClient.Connect($address, $port)
-        Write-Output "Port $port is open."
+        Write-Output "RDP is open but TNC does not work."
         $tcpClient.Close()
     } catch {
-        Write-Output "Port $port is not open."
+        Write-Output "Port $port is not open and TNC does not work."
         exit 1
     }
 }
