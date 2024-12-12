@@ -12,7 +12,7 @@
     #public
 
 .CHANGELOG
-
+    12.12.24 SAN Changed outputs
 
 #>
 
@@ -21,9 +21,9 @@ $regPath = "HKLM:\SYSTEM\CurrentControlSet\Control\SafeBoot\Option"
 $safeModeKeyExists = Test-Path $regPath
 
 if ($safeModeKeyExists) {
-    Write-Host "System is booted in Safe Mode."
+    Write-Host "KO: System is booted in Safe Mode."
     exit 1 
 } else {
-    Write-Host "System is not booted in Safe Mode."
+    Write-Host "OK: System is not booted in Safe Mode."
     exit 0  
 }
