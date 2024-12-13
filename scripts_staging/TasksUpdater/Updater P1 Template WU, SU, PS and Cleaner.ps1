@@ -32,9 +32,11 @@
 
 .CHANGELOG
     04.09.24 SAN Refactored to determine device categories and odd/even status for scheduling purposes.
-
+    13.12.24 SAN Removed useless check
 .TODO
     add debug flag to env
+    rename env CurrentSchedules to env CurrentTemplate and CurrentSchedules to ExistingTemplate
+
 
 #>
 
@@ -42,10 +44,10 @@
 $Debug = $false
 
 # Check if CurrentSchedules contains "skip" or forcechange is not "true"
-if ($Env:CurrentSchedules -match "skip" -or $Env:forcechange -ne "true") {
+if ($Env:forcechange -ne "true") {
     # Check environment variable
     if ($Env:CurrentSchedules -ne $null -and $Env:CurrentSchedules -notmatch "Collected") {
-        # Split the variable into lines, filter out lines containing "CurrentSchedules", and join them back into a single string
+        # Split the variable into lines, filter out lines containing "CurrentSchedules", and join them back into a single string to fix any empty space that could be found 
         $filteredLines = $Env:CurrentSchedules -split "`n" | Where-Object { $_ -notmatch "CurrentSchedules" }
         
         # Join the lines and trim any extra spaces and line breaks
@@ -124,6 +126,8 @@ function Get-DigitSum($inputString) {
 
 # Calculate the sum of digits in the hostname
 $digitSum = Get-DigitSum $hostname
+
+if ($Debug) { Write-Output "Device sum of digits: $digitSum"  }
 
 # Determine if the device is odd or even
 if ($digitSum % 2 -eq 0) {
@@ -247,6 +251,9 @@ $lastDigit = [int]$secondDigit
 
 # Get the scheduled time based on the last digit
 $scheduledTime = Get-ScheduledTime $lastDigit
+
+# Output the time attributed
+if ($Debug) { Write-Output "Time: $scheduledTime" }
 
 $dateTime = [datetime]$scheduledTime
 
