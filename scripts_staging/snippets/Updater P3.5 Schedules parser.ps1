@@ -65,7 +65,7 @@ function Get-CheckSchedule {
             if ($Debug -eq 1) {
                 Write-Host "Debug: Skip pattern detected. Exiting function."
             }
-            Write-Host "Exit due to skip detected"
+            Write-Host "$PartName lines contains skip exiting as per requirement"
             exit 0
         }
 
