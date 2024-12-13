@@ -32,7 +32,7 @@
 
 .CHANGELOG
     04.09.24 SAN Refactored to determine device categories and odd/even status for scheduling purposes.
-    13.12.24 SAN Removed useless check
+
 .TODO
     add debug flag to env
     rename env CurrentSchedules to env CurrentTemplate and CurrentSchedules to ExistingTemplate
@@ -43,23 +43,29 @@
 
 $Debug = $false
 
-# Check if CurrentSchedules contains "skip" or forcechange is not "true"
-if ($Env:forcechange -ne "true") {
-    # Check environment variable
+# Check if forcechange is not "true" or if CurrentSchedules contains "skip" or "lock"
+# lock and skip check is to avoid unforcene changes dues to an onboarding task overwriting important client information when a variable has been customised manualy
+if ($Env:forcechange -ne "true" -or $Env:CurrentSchedules -match "skip|lock") {
+    # Check if CurrentSchedules exists and does not contain "Collected"
+    # "collected" is part of our default value for the field so it should be ignored when found and generate a new set of values.
+
     if ($Env:CurrentSchedules -ne $null -and $Env:CurrentSchedules -notmatch "Collected") {
-        # Split the variable into lines, filter out lines containing "CurrentSchedules", and join them back into a single string to fix any empty space that could be found 
+        # Cleanup of the variable in case empty lines have been added.
+
+        # Split CurrentSchedules into lines, filter out lines containing "CurrentSchedules"
         $filteredLines = $Env:CurrentSchedules -split "`n" | Where-Object { $_ -notmatch "CurrentSchedules" }
         
-        # Join the lines and trim any extra spaces and line breaks
-        $cleanedOutput = ($filteredLines -join "`n").Trim()
-        
-        # Remove any remaining consecutive line breaks (more than one in a row)
-        $cleanedOutput = $cleanedOutput -replace "(\r?\n){2,}", "`n"
-        
+        # Join the lines, trim extra spaces, and remove consecutive line breaks
+        $cleanedOutput = ($filteredLines -join "`n").Trim() -replace "(\r?\n){2,}", "`n"
+    
+        # Output the cleaned string
         Write-Host $cleanedOutput
-        exit
+        
+        # Exit the script
+        exit 0
     }
 }
+
 
 
 
@@ -143,70 +149,70 @@ Write-Output "$deviceCategory $oddEven"
 
 switch -Regex ($deviceCategory + $oddEven) {
     "DCEven" {
-        $windowsUpdateDay = "3rd Tuesday"       # Week 3
-        $softwareUpdateDay = "1st Tuesday"      # Week 1
-        $tempFileCleanupDay = "4th Tuesday"     # Week 4
-        $powershellUpdateDay = "2nd Tuesday"    # Week 2
+        $windowsUpdateDay = "3rd Tuesday"
+        $softwareUpdateDay = "1st Tuesday"
+        $tempFileCleanupDay = "4th Tuesday"
+        $powershellUpdateDay = "2nd Tuesday"
     }
     "DCOdd" {
-        $windowsUpdateDay = "2nd Tuesday"       # Week 2
-        $softwareUpdateDay = "4th Tuesday"      # Week 4
-        $tempFileCleanupDay = "3rd Tuesday"     # Week 3
-        $powershellUpdateDay = "1st Tuesday"    # Week 1
+        $windowsUpdateDay = "2nd Tuesday"
+        $softwareUpdateDay = "4th Tuesday"
+        $tempFileCleanupDay = "3rd Tuesday"
+        $powershellUpdateDay = "1st Tuesday"
     }
     "DBEven" {
-        $windowsUpdateDay = "1st Wednesday"     # Week 1
-        $softwareUpdateDay = "3rd Wednesday"    # Week 3
-        $tempFileCleanupDay = "4th Wednesday"   # Week 4
-        $powershellUpdateDay = "2nd Wednesday"  # Week 2
+        $windowsUpdateDay = "1st Wednesday"
+        $softwareUpdateDay = "3rd Wednesday"
+        $tempFileCleanupDay = "4th Wednesday"
+        $powershellUpdateDay = "2nd Wednesday"
     }
     "DBOdd" {
-        $windowsUpdateDay = "2nd Wednesday"     # Week 2
-        $softwareUpdateDay = "4th Wednesday"    # Week 4
-        $tempFileCleanupDay = "1st Wednesday"   # Week 1
-        $powershellUpdateDay = "3rd Wednesday"  # Week 3
+        $windowsUpdateDay = "2nd Wednesday"
+        $softwareUpdateDay = "4th Wednesday"
+        $tempFileCleanupDay = "1st Wednesday"
+        $powershellUpdateDay = "3rd Wednesday"
     }
     "APPEven" {
-        $windowsUpdateDay = "3rd Thursday"      # Week 3
-        $softwareUpdateDay = "1st Thursday"     # Week 1
-        $tempFileCleanupDay = "4th Thursday"    # Week 4
-        $powershellUpdateDay = "2nd Thursday"   # Week 2
+        $windowsUpdateDay = "3rd Thursday"
+        $softwareUpdateDay = "1st Thursday"
+        $tempFileCleanupDay = "4th Thursday"
+        $powershellUpdateDay = "2nd Thursday"
     }
     "APPOdd" {
-        $windowsUpdateDay = "2nd Thursday"      # Week 2
-        $softwareUpdateDay = "4th Thursday"     # Week 4
-        $tempFileCleanupDay = "1st Thursday"    # Week 1
-        $powershellUpdateDay = "3rd Thursday"   # Week 3
+        $windowsUpdateDay = "2nd Thursday"
+        $softwareUpdateDay = "4th Thursday"
+        $tempFileCleanupDay = "1st Thursday"
+        $powershellUpdateDay = "3rd Thursday"
     }
     "RDSEven" {
-        $windowsUpdateDay = "4th Tuesday"       # Week 4
-        $softwareUpdateDay = "1st Tuesday"      # Week 1
-        $tempFileCleanupDay = "2nd Tuesday"     # Week 2
-        $powershellUpdateDay = "3rd Tuesday"    # Week 3
+        $windowsUpdateDay = "4th Tuesday"
+        $softwareUpdateDay = "1st Tuesday"
+        $tempFileCleanupDay = "2nd Tuesday"
+        $powershellUpdateDay = "3rd Tuesday"
     }
     "RDSOdd" {
-        $windowsUpdateDay = "3rd Tuesday"       # Week 3
-        $softwareUpdateDay = "2nd Tuesday"      # Week 2
-        $tempFileCleanupDay = "4th Tuesday"     # Week 4
-        $powershellUpdateDay = "1st Tuesday"    # Week 1
+        $windowsUpdateDay = "3rd Tuesday"
+        $softwareUpdateDay = "2nd Tuesday"
+        $tempFileCleanupDay = "4th Tuesday"
+        $powershellUpdateDay = "1st Tuesday"
     }
     "ExchangeEven" {
-        $windowsUpdateDay = "4th Wednesday"     # Week 4
-        $softwareUpdateDay = "2nd Wednesday"    # Week 2
-        $tempFileCleanupDay = "3rd Wednesday"   # Week 3
-        $powershellUpdateDay = "1st Wednesday"  # Week 1
+        $windowsUpdateDay = "4th Wednesday"
+        $softwareUpdateDay = "2nd Wednesday"
+        $tempFileCleanupDay = "3rd Wednesday"
+        $powershellUpdateDay = "1st Wednesday"
     }
     "ExchangeOdd" {
-        $windowsUpdateDay = "3rd Wednesday"     # Week 3
-        $softwareUpdateDay = "1st Wednesday"    # Week 1
-        $tempFileCleanupDay = "4th Wednesday"   # Week 4
-        $powershellUpdateDay = "2nd Wednesday"  # Week 2
+        $windowsUpdateDay = "3rd Wednesday"
+        $softwareUpdateDay = "1st Wednesday"
+        $tempFileCleanupDay = "4th Wednesday"
+        $powershellUpdateDay = "2nd Wednesday"
     }
     default {
-        $windowsUpdateDay = "4th Thursday"      # Week 4
-        $softwareUpdateDay = "2nd Thursday"     # Week 2
-        $tempFileCleanupDay = "3rd Thursday"    # Week 3
-        $powershellUpdateDay = "1st Thursday"   # Week 1
+        $windowsUpdateDay = "4th Thursday"
+        $softwareUpdateDay = "2nd Thursday"
+        $tempFileCleanupDay = "3rd Thursday"
+        $powershellUpdateDay = "1st Thursday"
     }
 }
 
