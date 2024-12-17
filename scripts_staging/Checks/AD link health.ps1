@@ -16,7 +16,6 @@
 
 .CHANGELOG
     26.11.24 SAN big code cleanup, bug fix, removal of debug to help with cleanup
-    17.12.24 SAN Fixed counting issue
 
 .TODO
     Make ldap rpc smb followup querries to test that the protocol works 
@@ -97,7 +96,6 @@ function Test-KerberosAuthentication {
     }
 }
 
-# Main function to test AD connections
 function Test-ADConnection {
     param (
         [string[]]$ADDomainControllers,
@@ -115,6 +113,13 @@ function Test-ADConnection {
         # Port tests
         foreach ($service in $PortsToCheck.GetEnumerator()) {
             $results += Test-PortConnection -ADDomainController $ADDomainController -Port $service.Value -ServiceName $service.Key
+        }
+
+        # Add a separator
+        $results += [PSCustomObject]@{
+            TestName  = "--------"
+            Status    = ""
+            TargetDC  = "--------"
         }
     }
 
