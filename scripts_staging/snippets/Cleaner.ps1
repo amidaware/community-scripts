@@ -38,9 +38,6 @@ $VerbosePreference = "Continue"
 $ErrorActionPreference = "SilentlyContinue"
 $Starters = Get-Date  
 
-# Log initial information
-Write-Host "[DONE] Retrieving current disk percent free for comparison after script completion."
-
 # Function to retrieve and display disk space info
 function Get-DiskInfo {
     $DiskInfo = Get-WmiObject Win32_LogicalDisk | Where-Object { $_.DriveType -eq 3 } | 
@@ -131,6 +128,7 @@ $UserPathsToClean = @{
 }
 
 # Display disk space before cleanup
+Write-Host "[INFO] Retrieving current disk percent free for comparison after script completion."
 $Before = Get-DiskInfo | Format-Table -AutoSize | Out-String
 
 # Stop Windows Update service
