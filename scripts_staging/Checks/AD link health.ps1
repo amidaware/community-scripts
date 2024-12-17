@@ -16,6 +16,7 @@
 
 .CHANGELOG
     26.11.24 SAN big code cleanup, bug fix, removal of debug to help with cleanup
+    17.12.24 SAN fixed couting issue, added a fallback in case tnc does not work
 
 .TODO
     Make ldap rpc smb followup querries to test that the protocol works 
@@ -71,15 +72,32 @@ function Test-PortConnection {
         [int]$Port,
         [string]$ServiceName
     )
-    $connection = Test-NetConnection -ComputerName $ADDomainController -Port $Port
-    $status = if ($connection.TcpTestSucceeded) { "OK" } else { "KO" }
 
+    # Try Test-NetConnection first
+    try {
+        $connection = Test-NetConnection -ComputerName $ADDomainController -Port $Port -WarningAction SilentlyContinue
+        $status = if ($connection.TcpTestSucceeded) { "OK" } else { "KO" }
+    } catch {
+        # Fallback to System.Net.Sockets.TcpClient
+        $tcpClient = New-Object System.Net.Sockets.TcpClient
+        try {
+            $tcpClient.Connect($ADDomainController, $Port)
+            $status = "OK"
+        } catch {
+            $status = "KO"
+        } finally {
+            $tcpClient.Close()
+        }
+    }
+
+    # Return the result
     [PSCustomObject]@{
         TestName  = "Port $Port ($ServiceName)"
         Status    = $status
         TargetDC  = $ADDomainController
     }
 }
+
 
 # Function to perform Kerberos authentication test
 function Test-KerberosAuthentication {
