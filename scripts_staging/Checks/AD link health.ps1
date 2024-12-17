@@ -16,7 +16,6 @@
 
 .CHANGELOG
     26.11.24 SAN big code cleanup, bug fix, removal of debug to help with cleanup
-    17.12.24 SAN fixed couting issue, added a fallback in case tnc does not work
 
 .TODO
     Make ldap rpc smb followup querries to test that the protocol works 
@@ -72,32 +71,15 @@ function Test-PortConnection {
         [int]$Port,
         [string]$ServiceName
     )
+    $connection = Test-NetConnection -ComputerName $ADDomainController -Port $Port
+    $status = if ($connection.TcpTestSucceeded) { "OK" } else { "KO" }
 
-    # Try Test-NetConnection first
-    try {
-        $connection = Test-NetConnection -ComputerName $ADDomainController -Port $Port -WarningAction SilentlyContinue
-        $status = if ($connection.TcpTestSucceeded) { "OK" } else { "KO" }
-    } catch {
-        # Fallback to System.Net.Sockets.TcpClient
-        $tcpClient = New-Object System.Net.Sockets.TcpClient
-        try {
-            $tcpClient.Connect($ADDomainController, $Port)
-            $status = "OK"
-        } catch {
-            $status = "KO"
-        } finally {
-            $tcpClient.Close()
-        }
-    }
-
-    # Return the result
     [PSCustomObject]@{
         TestName  = "Port $Port ($ServiceName)"
         Status    = $status
         TargetDC  = $ADDomainController
     }
 }
-
 
 # Function to perform Kerberos authentication test
 function Test-KerberosAuthentication {
@@ -114,6 +96,7 @@ function Test-KerberosAuthentication {
     }
 }
 
+# Main function to test AD connections
 function Test-ADConnection {
     param (
         [string[]]$ADDomainControllers,
@@ -133,17 +116,13 @@ function Test-ADConnection {
             $results += Test-PortConnection -ADDomainController $ADDomainController -Port $service.Value -ServiceName $service.Key
         }
 
-        # Add a separator
-        $results += [PSCustomObject]@{
-            TestName  = "--------"
-            Status    = ""
-            TargetDC  = "--------"
-        }
+        # Spacer
+        $results += ""
     }
 
-    # Count and handle failures
-    $failedCount = ($results | Where-Object { $_.Status -eq "KO" -and $_.Status }) | Measure-Object | Select-Object -ExpandProperty Count
 
+    # Count and handle failures
+    $failedCount = ($results | Where-Object { $_.Status -eq "KO" }).Count
     Write-Host "$failedCount tests failed."
     Write-Host ""
 
@@ -154,7 +133,6 @@ function Test-ADConnection {
         exit 1
     }
 }
-
 
 # Discover all domain controllers in the current domain
 $domain = (Get-WmiObject Win32_ComputerSystem).Domain
