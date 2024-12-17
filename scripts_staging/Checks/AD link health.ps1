@@ -16,6 +16,7 @@
 
 .CHANGELOG
     26.11.24 SAN big code cleanup, bug fix, removal of debug to help with cleanup
+    17.12.24 SAN Fixed counting issue
 
 .TODO
     Make ldap rpc smb followup querries to test that the protocol works 
@@ -115,14 +116,11 @@ function Test-ADConnection {
         foreach ($service in $PortsToCheck.GetEnumerator()) {
             $results += Test-PortConnection -ADDomainController $ADDomainController -Port $service.Value -ServiceName $service.Key
         }
-
-        # Spacer
-        $results += ""
     }
 
-
     # Count and handle failures
-    $failedCount = ($results | Where-Object { $_.Status -eq "KO" }).Count
+    $failedCount = ($results | Where-Object { $_.Status -eq "KO" -and $_.Status }) | Measure-Object | Select-Object -ExpandProperty Count
+
     Write-Host "$failedCount tests failed."
     Write-Host ""
 
@@ -133,6 +131,7 @@ function Test-ADConnection {
         exit 1
     }
 }
+
 
 # Discover all domain controllers in the current domain
 $domain = (Get-WmiObject Win32_ComputerSystem).Domain
