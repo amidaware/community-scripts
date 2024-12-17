@@ -29,7 +29,7 @@
 .CHANGELOG
     06.08.24 SAN Initial release for generating task dates based on monthly recurrence patterns.
     12.12.24 SAN changed var names to make it clear that the template is used rather than the old current values, fixed empty values in the env var
-    17.12.24 SAN fixed cases where the date contained dashes
+
 
 .TODO
     Add error handling for invalid schedule formats.
@@ -95,8 +95,7 @@ foreach ($schedule in $rawSchedules) {
         $updatedTime = $timeWithOffset.ToString("HH:mm:ss")
 
         # Format the date as MM/dd/yyyy
-        $formattedTaskDate = $taskDate.ToString("MM/dd/yyyy").Replace('.', '/').Replace('-', '/')
-
+        $formattedTaskDate = $taskDate.ToString("MM/dd/yyyy").Replace('.', '/')
 
         # Replace the occurrence and day of the week in the schedule with the formatted date and time
         $updatedSchedule = $schedule -replace "(\d+)(st|nd|rd|th) (\w+) \d{2}:\d{2}:\d{2}", "$formattedTaskDate $updatedTime" 
