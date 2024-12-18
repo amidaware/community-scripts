@@ -9,6 +9,8 @@
 .EXEMPLE
     NEXTCLOUD_WEBDAV_URL=https://nextcloud.XYZ.AB/public.php/webdav/
     NEXTCLOUD_TOKEN=SHARETOKEN
+    SITE_NAME={{site.name}}
+    CLIENT_NAME={{client.name}}
 
 .NOTES
     Author: SAN
@@ -17,12 +19,15 @@
     #PUBLIC
 
 .CHANGELOG
+    18.12.24 SAN Added site & client name to the uploaded file
 
 #>
 
-# Step 1: Retrieve Nextcloud WebDAV URL and Token from environment variables
+# Step 1: Retrieve Nextcloud WebDAV URL, Token, Client Name, and Site Name from environment variables
 $nextcloudWebdavUrl = [System.Environment]::GetEnvironmentVariable("NEXTCLOUD_WEBDAV_URL")
 $webdavUser = [System.Environment]::GetEnvironmentVariable("NEXTCLOUD_TOKEN")
+$clientName = [System.Environment]::GetEnvironmentVariable("CLIENT_NAME")
+$siteName = [System.Environment]::GetEnvironmentVariable("SITE_NAME")
 
 # Exit the script if the Nextcloud WebDAV URL or token is not provided
 if (-not $nextcloudWebdavUrl -or -not $webdavUser) {
@@ -30,9 +35,20 @@ if (-not $nextcloudWebdavUrl -or -not $webdavUser) {
     exit 1
 }
 
+# Ensure WebDAV URL ends with a slash
+if (-not $nextcloudWebdavUrl.EndsWith("/")) {
+    $nextcloudWebdavUrl += "/"
+}
+
 # Variables (defined at the top for easy configuration)
 $minidumpPath = "C:\Windows\Minidump"  # Path to Minidump folder
 $hostname = (Get-WmiObject -Class Win32_ComputerSystem).Name  # Get the system hostname
+
+# Sanitize Client Name and Site Name to keep only a-z, 0-9, and spaces, then replace spaces with underscores
+$sanitizePattern = "[^a-zA-Z0-9 ]"
+$clientName = ($clientName -replace $sanitizePattern, "").Replace(" ", "_")
+$siteName = ($siteName -replace $sanitizePattern, "").Replace(" ", "_")
+$hostname = $hostname.Replace(" ", "_")  # Ensure hostname has no spaces
 
 # Bluescreen Viewer Installation Variables
 $bluescreenViewerPath = "C:\Program Files (x86)\NirSoft\BlueScreenView\BlueScreenView.exe"
@@ -50,9 +66,13 @@ if ($LASTEXITCODE -ne 0) {
 
 # Step 3: Run Bluescreen Viewer to generate the crash log and save it to a text file
 Write-Host "Running Bluescreen Viewer to generate crash log..."
-Start-Process $bluescreenViewerPath -ArgumentList "/stext $bluescreenLogFile" -Wait
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Failed to run Bluescreen Viewer. Continuing with script."
+if (Test-Path $bluescreenViewerPath) {
+    Start-Process $bluescreenViewerPath -ArgumentList "/stext $bluescreenLogFile" -Wait
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Failed to run Bluescreen Viewer. Continuing with script."
+    }
+} else {
+    Write-Host "Bluescreen Viewer executable not found. Skipping crash log generation."
 }
 
 # Step 4: Output the content of the crash log file to the terminal
@@ -70,9 +90,9 @@ if (Test-Path $minidumpPath) {
 
     # Step 6: Loop through each Minidump file and upload to Nextcloud WebDAV
     foreach ($file in $files) {
-        # Construct a new file name with the hostname at the beginning
-        $newFileName = "$hostname" + "_" + $file.Name
-        $uploadUrl = $nextcloudWebdavUrl + $newFileName  # Construct WebDAV URL for each file
+
+        $newFileName = "$clientName`_$siteName`_$hostname`_$($file.Name)"
+        $uploadUrl = $nextcloudWebdavUrl + $newFileName 
 
         # Step 7: Prepare the authorization header for WebDAV (no password)
         $headers = @{
@@ -83,17 +103,21 @@ if (Test-Path $minidumpPath) {
         # Step 8: Upload the file to Nextcloud WebDAV
         try {
             Write-Host "Uploading $($file.Name) to $uploadUrl..."
-            Invoke-WebRequest -Uri $uploadUrl -Method Put -InFile $file.FullName -Headers $headers -UseBasicParsing
-            Write-Host "Successfully uploaded $newFileName"
+            $response = Invoke-WebRequest -Uri $uploadUrl -Method Put -InFile $file.FullName -Headers $headers -UseBasicParsing
+            if ($response.StatusCode -eq 201 -or $response.StatusCode -eq 204) {
+                Write-Host "Successfully uploaded $newFileName"
 
-            # Step 9: Rename the file by appending "_sent" after successful upload
-            $fileBaseName = [System.IO.Path]::GetFileNameWithoutExtension($file.Name)
-            $fileExtension = [System.IO.Path]::GetExtension($file.Name)
-            $newSentName = "$fileBaseName`_sent$fileExtension"
+                # Step 9: Rename the file by appending "_sent" after successful upload
+                $fileBaseName = [System.IO.Path]::GetFileNameWithoutExtension($file.Name)
+                $fileExtension = [System.IO.Path]::GetExtension($file.Name)
+                $newSentName = "$fileBaseName`_sent$fileExtension"
 
-            # Step 10: Rename the file to indicate it has been successfully sent
-            Rename-Item -Path $file.FullName -NewName $newSentName
-            Write-Host "Renamed $($file.Name) to $newSentName"
+                # Step 10: Rename the file to indicate it has been successfully sent
+                Rename-Item -Path $file.FullName -NewName $newSentName
+                Write-Host "Renamed $($file.Name) to $newSentName"
+            } else {
+                Write-Host "Unexpected response from server: $($response.StatusCode)"
+            }
         } catch {
             Write-Host "Failed to upload $($file.Name): $_"
         }
