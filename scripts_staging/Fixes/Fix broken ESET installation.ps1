@@ -28,8 +28,8 @@ if ($env:force_execution -eq 'true') {
 } else {
     # Only check if the file exists if force_execution is not enabled
     if (Test-Path "C:\Program Files\ESET\ESET Security\ermm.exe") {
-        Write-Error "Error: The file 'ermm.exe' exists at the specified path. This script may not work as expected."
-        exit 1
+        Write-Host "Error: The file 'ermm.exe' exists at the specified path. This script may not work as expected."
+        exit 0
     } else {
         Write-Host "The file 'ermm.exe' does not exist. The script can proceed."
     }
