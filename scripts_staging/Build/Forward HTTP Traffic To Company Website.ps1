@@ -15,6 +15,9 @@
         to the resolved IP address.
         5. Creates a single Windows Firewall rule to allow inbound traffic on ports 80 and 443 from the local subnet only.
 
+.EXEMPLE
+    DNS_SERVER=x.x.x.x
+    
 .NOTES
     Author: SAN
     Date: 15.08.24

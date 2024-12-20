@@ -24,7 +24,8 @@
 
     10016 safe to ignore
     https://learn.microsoft.com/en-us/troubleshoot/windows-client/application-management/event-10016-logged-when-accessing-dcom
-
+    36874 to ignore
+    Fixing the issue would be more dangerous than leaving it be it would require blocking tls 1.2 and forcing 1.1 with unsafe cyphers and loosing connection to devices that do not support 1.1
 
 .CHANGELOG
     04.12.24 SAN added id to ignore in comma separeted variable
@@ -36,8 +37,8 @@
 
 #>
 
-$defaultEventIds = @(10016) #add value comma separeted
-$defaultKeywords = @("gupdate")  #add value comma separeted
+$defaultEventIds = @(10016,36874)
+$defaultKeywords = @("gupdate","anotherkeyword")
 
 $debug = [System.Environment]::GetEnvironmentVariable("DEBUG")
 $filterIdEnv = [System.Environment]::GetEnvironmentVariable("FILTER_ID")
