@@ -10,21 +10,21 @@
 
 .PARAMETER version
     Specifies the version to download. If set to "latest," the script retrieves the latest version available on GitHub. 
-    This can be specified through the environment variable `version`.
-
-.PARAMETER isSigned
-    Boolean flag to determine if the signed version should be downloaded. 
-    Set to true in the environment variable `issigned` to download the signed version; otherwise, the unsigned version is downloaded.
+    This should be specified through the environment variable `version`.
 
 .PARAMETER signedDownloadToken
-    The token used for authenticated signed downloads. This should be set in the environment variable `trmm_sign_download_token` 
-    and is required if `isSigned` is set to true.
+    The token used for authenticated signed downloads. This should be set in the environment variable `trmm_sign_download_token`. 
+    If this token is provided, the script will download the signed version.
 
-.EXEMPLE var
+.PARAMETER trmm_api_target
+    The API target required for signed downloads. This should be specified in the environment variable `trmm_api_target`. 
+    This is only necessary if using a signed download.
+
+.EXEMPLE
     trmm_sign_download_token={{global.trmm_sign_download_token}}
     version=latest
     version=2.7.0
-    issigned=true
+    trmm_api_target=api.exemple.com
     
 .NOTES
     Author: SAN
@@ -32,25 +32,20 @@
     #public
 
 .CHANGELOG
-    - Initial version
-    - Added support for environment variable input
-    - Enhanced error handling and process execution
-    - Added local version check to skip download if versions match
+    29.10.24 SAN Initial script with signed and unsigned download support.
+    21.12.24 SAN updated the script to not require "issigned"
 
 .TODO 
-    integrate to monthly update runs
+    integrate to our monthly update runs
+    test if api target is really needed
+    default to latest when nothing is set
 #>
+
 
 # Variables
 $version = $env:version                  # Specify a version manually, or leave as "latest" to get the latest version from GitHub
-$isSigned = $env:issigned -eq 'true'     # Set to true to download the signed version
 $signedDownloadToken = $env:trmm_sign_download_token  # Token used for signed downloads only
-
-# Check for signed download token if isSigned is true
-if ($isSigned -and -not $signedDownloadToken) {
-    Write-Output "Error: Missing signed download token. Exiting..."
-    exit 1
-}
+$apiTarget = $env:trmm_api_target        # Environment variable for the API target URL
 
 # Define GitHub API URL for the RMMAgent repository
 $repoUrl = "https://api.github.com/repos/amidaware/rmmagent/releases/latest"
@@ -108,31 +103,21 @@ try {
         }
     } else {
         Write-Output "'Tactical RMM Agent' is not installed on this system. Checking installed software..."
-        # List all installed software for debugging
-        $allInstalledSoftware = Get-CimInstance -ClassName Win32_Product
-        Write-Output "Currently installed software (Win32_Product):"
-        $allInstalledSoftware | ForEach-Object { Write-Output "- $($_.Name)" }
-
-        # Check the uninstall registry key as well
-        $uninstallKeys = @(
-            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*",
-            "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
-        )
-        Write-Output "Currently installed software (Registry):"
-        foreach ($key in $uninstallKeys) {
-            $allInstalledSoftware = Get-ItemProperty $key
-            $allInstalledSoftware | ForEach-Object { Write-Output "- $($_.DisplayName)" }
-        }
     }
-    
+
     # Define the temp directory for downloading
     $tempDir = [System.IO.Path]::GetTempPath()
     $outputFile = Join-Path -Path $tempDir -ChildPath "tacticalagent-v$version.exe"
 
-    # Determine the download URL based on the $isSigned variable
-    if ($isSigned) {
+    # Determine the download URL based on the presence of $signedDownloadToken
+    if ($signedDownloadToken) {
+        if (-not $apiTarget) {
+            Write-Output "Error: Missing API target for signed downloads. Exiting..."
+            exit 1
+        }
+
         # Download the signed agent using the token
-        $downloadUrl = "https://agents.tacticalrmm.com/api/v2/agents?version=$version&arch=amd64&token=$signedDownloadToken&plat=windows&api=api-rmm-managed-services.vtx.ch"
+        $downloadUrl = "https://agents.tacticalrmm.com/api/v2/agents?version=$version&arch=amd64&token=$signedDownloadToken&plat=windows&api=$apiTarget"
     } else {
         # Download the unsigned agent directly from GitHub releases
         $downloadUrl = "https://github.com/amidaware/rmmagent/releases/download/v$version/tacticalagent-v$version-windows-amd64.exe"
