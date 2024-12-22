@@ -40,8 +40,6 @@
     test if api target is really needed
     default to latest when nothing is set
 #>
-
-
 # Variables
 $version = $env:version                  # Specify a version manually, or leave as "latest" to get the latest version from GitHub
 $signedDownloadToken = $env:trmm_sign_download_token  # Token used for signed downloads only
@@ -52,7 +50,7 @@ $repoUrl = "https://api.github.com/repos/amidaware/rmmagent/releases/latest"
 
 # Function to get the currently installed version of the Tactical RMM agent from the software list
 function Get-InstalledVersion {
-    $appName = "Tactical RMM Agent"  # Adjust if the application's display name differs
+    $appName = "Tactical RMM Agent"  # Adjust if the application's display name differs left this in case whitelabel changes the name of the app
     $installedSoftware = Get-CimInstance -ClassName Win32_Product | Where-Object { $_.Name -like "*$appName*" }
 
     if ($installedSoftware) {
@@ -79,6 +77,11 @@ try {
     # Set up headers for GitHub API request
     $headers = @{
         "User-Agent" = "PowerShell Script"
+    }
+
+    # If version is not set, default to "latest"
+    if (-not $version) {
+        $version = "latest"
     }
 
     # If version is set to "latest", fetch the latest release information from GitHub
