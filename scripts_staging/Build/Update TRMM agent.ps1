@@ -34,11 +34,12 @@
 .CHANGELOG
     29.10.24 SAN Initial script with signed and unsigned download support.
     21.12.24 SAN updated the script to not require "issigned"
+    22.12.24 SAN default to latest when no version is set
 
 .TODO 
     integrate to our monthly update runs
     test if api target is really needed
-    default to latest when nothing is set
+    
 #>
 # Variables
 $version = $env:version                  # Specify a version manually, or leave as "latest" to get the latest version from GitHub
