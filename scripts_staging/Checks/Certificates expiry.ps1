@@ -28,16 +28,27 @@
     04.09.2024 SAN Problems corrections
     30.09.2024 SAN changed outputs layouts
     11.12.24 SAN added errorThresholdDays to help change the status when close to expiry, moved threshold to env
+    07.01.25 SAN Bugfix in env var
 
 .TODO
     Make the output messages more readable
     move all flags and var to env
 
+
 #>
 
 # Get values from environment variables, defaulting if unset
-$warnThresholdDays = [int](if ($env:WARN_THRESHOLD_DAYS) { $env:WARN_THRESHOLD_DAYS } else { 20 })
-$errorThresholdDays = [int](if ($env:ERROR_THRESHOLD_DAYS) { $env:ERROR_THRESHOLD_DAYS } else { 5 })
+if ($env:WARN_THRESHOLD_DAYS -ne $null) {
+    $warnThresholdDays = [int]$env:WARN_THRESHOLD_DAYS
+} else {
+    $warnThresholdDays = 20
+}
+
+if ($env:ERROR_THRESHOLD_DAYS -ne $null) {
+    $errorThresholdDays = [int]$env:ERROR_THRESHOLD_DAYS
+} else {
+    $errorThresholdDays = 5
+}
 
 # Configuration Variables
 $certificateStores = @("Cert:\LocalMachine\My", "Cert:\LocalMachine\WebHosting", "Cert:\LocalMachine\Remote Desktop")
