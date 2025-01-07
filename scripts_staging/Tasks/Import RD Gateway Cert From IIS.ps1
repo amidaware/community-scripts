@@ -38,6 +38,7 @@ ignore the fail-safe checks and force the replacement of rds certs and restart t
     02/09/24 SAN added -ForceReplaceCertRDS and a couple of fail-safe
     03/09/24 SAN added choco install to install section
     04/09/24 SAN corrected logic for deployement and force
+    07/01/24 SAN changed old cert deletion logic
 
 
 .TODO
@@ -104,15 +105,7 @@ function Is-ValidThumbprint {
     return $Thumbprint -and $Thumbprint.Length -eq 40 -and $Thumbprint -match '^[0-9A-Fa-f]+$'
 }
 
-Function Remove-OldCertificates {
-    param (
-        [string]$OldThumbprint
-    )
-
-    if (-not $OldThumbprint) {
-        Write-Warning "Old thumbprint is not provided. Skipping certificate removal process."
-        return $false
-    }
+Function Remove-OldLECertificates {
 
     $stores = @(
         "Cert:\LocalMachine\My",
@@ -124,13 +117,20 @@ Function Remove-OldCertificates {
 
     foreach ($store in $stores) {
         try {
-            $certs = Get-ChildItem -Path $store -Recurse | Where-Object {$_.Thumbprint -eq $OldThumbprint}
-            if ($certs.Count -eq 0) {
-                Write-Host "No certificates with thumbprint $OldThumbprint found in $store."
+            # Get Let's Encrypt certificates by checking the Issuer or Subject
+            $leCerts = Get-ChildItem -Path $store -Recurse | Where-Object { 
+                $_.Issuer -like "*Let's Encrypt*" 
+            }
+
+            if ($leCerts.Count -le 1) {
+                Write-Host "Less than two Let's Encrypt certificates found in $store. No removal required."
             } else {
-                foreach ($cert in $certs) {
-                    Remove-Item -Path $cert.PSPath -Confirm:$false
-                    Write-Host "Removed certificate with thumbprint $OldThumbprint from $store."
+                # Sort certificates by NotAfter date (ascending) and select the oldest one
+                $oldCert = $leCerts | Sort-Object -Property NotAfter | Select-Object -First 1
+
+                if ($oldCert) {
+                    Remove-Item -Path $oldCert.PSPath -Confirm:$false
+                    Write-Host "Removed oldest Let's Encrypt certificate with thumbprint $($oldCert.Thumbprint) from $store."
                     $certsRemoved = $true
                 }
             }
@@ -141,6 +141,7 @@ Function Remove-OldCertificates {
 
     return $certsRemoved
 }
+
 
 # Check if Get-RDUserSession is available, if not exit with code 0
 try {
@@ -205,9 +206,13 @@ if ($gatewayService -and $winAcmeTask) {
 
     if (-not $ForceReplaceCertRDS) {
         if ($RDSCertThumbprint -eq $IISCertThumbprint) {
+            Write-Host "RDS: $RDSCertThumbprint"
+            Write-Host "IIS: $IISCertThumbprint"
             Write-Host "The RD Gateway SSL certificate is already the same as IIS. No replacement needed."
             exit 0
         }
+        Write-Host "RDS: $RDSCertThumbprint"
+        Write-Host "IIS: $IISCertThumbprint"
 
         # Validate IIS certificate thumbprint
         if (Is-ValidThumbprint -Thumbprint $IISCertThumbprint) {
@@ -216,14 +221,6 @@ if ($gatewayService -and $winAcmeTask) {
             Write-Error "Invalid IIS certificate thumbprint: $IISCertThumbprint. Exiting script."
             exit 1
         }
-<#
-        # Validate RD Gateway certificate thumbprint
-        if (Is-ValidThumbprint -Thumbprint $RDSCertThumbprint) {
-            Write-Host "RD Gateway certificate thumbprint $RDSCertThumbprint is valid. Continuing."
-        } else {
-            Write-Error "Invalid RD Gateway certificate thumbprint: $RDSCertThumbprint. Exiting script."
-            exit 1
-        }#>
     }
 
     # Retrieve the certificate from the local machine store that matches the specified thumbprint
@@ -274,12 +271,12 @@ if ($gatewayService -and $winAcmeTask) {
             Restart-Service TSGateway -Force -ErrorAction Stop
             Write-Host "TSGateway service restarted successfully."
 
-            # Call function to remove old certificates (assumes function is defined elsewhere)
-            $certsRemoved = Remove-OldCertificates -OldThumbprint $RDSCertThumbprint
+            # Call function to remove old certificates
+            $certsRemoved = Remove-OldLECertificates
 
             # Check if old certificates were removed
             if (-not $certsRemoved) {
-                Write-Error "No old certificates were removed. Exiting script."
+                Write-Error "No old certificates $RDSCertThumbprint were removed. Exiting script."
                 exit 1
             } else {
                 Write-Host "Old certificates removed successfully."
