@@ -23,13 +23,14 @@
 .CHANGELOG
     28.10.24 SAN - Removed ignored output without the debug flag.
     28.10.24 SAN - cleanup documentation.
+    21.01.25 SAN - Code cleanup
+
 
 #>
 
 
-
-# Define a generic list of services names to be ignored by the check
-$ignoredPartialDisplayNames = @(
+# Define a generic list of service names to be ignored by default
+$ignoredByDefault = @(
     "Software Protection",
     "Remote Registry",
     "State Repository Service",
@@ -37,7 +38,7 @@ $ignoredPartialDisplayNames = @(
     "Clipboard User Service",
     "Service Brave Update",
     "Google Update Service",
-    "Windows Modules Installer", # not sure about this one if we should monitor it or not
+    "Windows Modules Installer", # Unsure if this one should be monitored
     "Downloaded Maps Manager",
     "Windows Biometric Service",
     "RemoteRegistry",
@@ -51,31 +52,30 @@ $ignoredPartialDisplayNames = @(
     "sppsvc",
     "SharePoint Migration Service",
     "dbupdate",
-    "TrustedInstaller", # this one is strange it was failing on a lot of devices but no idea if it should or could be fixed
+    "TrustedInstaller", # Frequently failing; unclear if actionable
     "MSExchangeNotificationsBroker",
     "tiledatamodelsvc",
     "BITS",
     "CDPSvc",
     "AGSService",
-    "ShellHWDetection" # this one is strange it was failing on a lot of devices but no idea if it should or could be fixed
-
+    "ShellHWDetection" # Frequently failing; unclear if actionable
 )
 
-# Check if "IgnoredServices" environment variable exists and add those services to the ignore list
-$envIgnoredServices = [Environment]::GetEnvironmentVariable('IgnoredServices')
-if (-not [string]::IsNullOrEmpty($envIgnoredServices)) {
-    $additionalIgnoredServices = $envIgnoredServices -split ','
-    $ignoredPartialDisplayNames += $additionalIgnoredServices
+# Check if the "IgnoredServices" environment variable exists and add those services to the ignore list
+$addonsToIgnoredList = [Environment]::GetEnvironmentVariable('IgnoredServices')
+if (-not [string]::IsNullOrEmpty($addonsToIgnoredList)) {
+    $additionalServices = $addonsToIgnoredList -split ','
+    $ignoredByDefault += $additionalServices
 }
 
-# Convert ignored partial display names to a regular expression pattern
-$ignoredPattern = ($ignoredPartialDisplayNames | ForEach-Object { [regex]::Escape($_) }) -join '|'
+# Convert ignored services to a regular expression pattern
+$ignoredPattern = ($ignoredByDefault | ForEach-Object { [regex]::Escape($_) }) -join '|'
 
-# Get services with automatic start type or Automatic (Delayed Start) that are not running
+# Get services with Automatic start type or Automatic (Delayed Start) that are not running
 $servicesToCheck = Get-Service | Where-Object { ($_.StartType -eq 'Automatic' -or $_.StartType -eq 'Automatic (Delayed Start)') -and $_.Status -ne 'Running' }
 
 # Initialize arrays to store services that need attention and services that were stopped but ignored
-$servicesToStart = @()
+$servicesNeedingAttention = @()
 $ignoredStoppedServices = @()
 
 # Check the status of each service
@@ -83,29 +83,29 @@ foreach ($service in $servicesToCheck) {
     # Check if the display name or service name matches the ignored pattern
     if ($service.DisplayName -notmatch $ignoredPattern -and $service.ServiceName -notmatch $ignoredPattern) {
         # Add the service to the list of services to start
-        $servicesToStart += $service
+        $servicesNeedingAttention += $service
     } else {
         # Add the service to the list of ignored stopped services
         $ignoredStoppedServices += $service
     }
 }
 
-# Check if enabledebug environment variable is set to true
+# Check if the "enabledebug" environment variable is set to true
 $enableDebugValue = [System.Environment]::GetEnvironmentVariable("enabledebugscript")
 $debugEnabled = $enableDebugValue -ne $null -and [System.Boolean]::Parse($enableDebugValue)
 
-
 if ($debugEnabled) {
-    Write-Host "Debug enabled"
+    Write-Host "Debug mode is enabled."
 }
+
 # Display the results
-if ($servicesToStart.Count -eq 0) {
+if ($servicesNeedingAttention.Count -eq 0) {
     if (-not $debugEnabled) {
         Write-Host "All required services are running."
     }
 
     if ($ignoredStoppedServices.Count -ne 0 -and $debugEnabled) {
-        Write-Host "The following services were stopped but ignored:"
+        Write-Host "The following services were stopped but are ignored:"
         foreach ($service in $ignoredStoppedServices) {
             Write-Host "$($service.DisplayName) ($($service.ServiceName))"
         }
@@ -115,10 +115,9 @@ if ($servicesToStart.Count -eq 0) {
 
 } else {
     Write-Host "The following services need attention:"
-    foreach ($service in $servicesToStart) {
+    foreach ($service in $servicesNeedingAttention) {
         Write-Host "$($service.DisplayName) ($($service.ServiceName))"
     }
 
     Exit 1
-
 }
