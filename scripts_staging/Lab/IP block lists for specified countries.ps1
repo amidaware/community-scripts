@@ -13,7 +13,7 @@
     This script can be used to block IPs from countries with high levels of unwanted 
     traffic or suspected malicious activity.
 
-    Problematic Countries (often associated with cyberattacks, fraud, or high-risk traffic):
+    Sample of problematic Countries (often associated with cyberattacks, fraud, or high-risk traffic):
     - CN (China)
     - RU (Russia)
     - IN (India)
@@ -60,7 +60,7 @@
     If set, deletes all firewall rules matching "*xx.zone*".
 
 .EXAMPLE
-    -Countries  "ru,cn"
+    -Countries "ru,cn"
     Downloads and processes IP block lists for Russia and China and creates corresponding inbound firewall rules
 
     -InputFile "C:\path\to\my-blocklist.txt" -RuleName "CustomBlock" -Direction Both
@@ -70,13 +70,13 @@
     -DeleteOnly
 
 .NOTE
-    V1 Author: Jason Fossen (http://www.sans.org/windows-security/)  
-    V2 Author: Vinahost release
-    V3 Author: SAN
+    V1 Author: Jason Fossen (http://www.sans.org/windows-security/) 20.Mar.2012 
+    V2 Author: Vinahost release (https://cloudcraft.info) 15.Aug.2017
+    V3 Author: SAN 28.01.25
     #public
 
 .CHANGELOG
-    28.01.25 Default to inbound only to reduce the load, added feature to add countries in bulk, fixed deleteonly to remove all rules created, upgrade to PowerShell cmdlets for fw rules
+    28.01.25 New feature to set direction will default to inbound only to reduce the load on cpu, added feature to add countries in bulk, fixed deleteonly to remove all rules created, upgrade to PowerShell cmdlets for fw rules
 
 .TODO
     add the postfix to rule name in every case to make sure DeleteOnly can catch them all
