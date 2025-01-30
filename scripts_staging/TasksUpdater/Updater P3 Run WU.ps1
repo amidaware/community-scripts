@@ -74,4 +74,6 @@ if (Get-Module -ListAvailable -Name PSWindowsUpdate) {
 }
 
 # Run Windows update with PSWindowsUpdate and rebooting at time found in parser
+Write-Output "Running windows updates:"
+Write-Output "Get-WindowsUpdate -Verbose -Install -AcceptAll -AutoReboot -ScheduleReboot $scheduledTime"
 Get-WindowsUpdate -Verbose -Install -AcceptAll -AutoReboot -ScheduleReboot $scheduledTime
