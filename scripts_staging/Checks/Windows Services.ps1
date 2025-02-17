@@ -58,7 +58,8 @@ $ignoredByDefault = @(
     "BITS",
     "CDPSvc",
     "AGSService",
-    "ShellHWDetection" # Frequently failing; unclear if actionable
+    "ShellHWDetection", # Frequently failing; unclear if actionable
+    "DropboxUpdater"
 )
 
 # Check if the "IgnoredServices" environment variable exists and add those services to the ignore list
