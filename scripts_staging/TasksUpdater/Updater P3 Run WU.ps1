@@ -32,6 +32,7 @@
 .CHANGELOG
     04.10.24 SAN Removed last output; the data is non-sense.
     13.12.24 SAN Split logging from parser.
+    30.01.25 SAN Changed output for troubleshooting
     
 #>
 
@@ -74,4 +75,6 @@ if (Get-Module -ListAvailable -Name PSWindowsUpdate) {
 }
 
 # Run Windows update with PSWindowsUpdate and rebooting at time found in parser
+Write-Host "Running windows updates:"
+Write-Host "Get-WindowsUpdate -Verbose -Install -AcceptAll -AutoReboot -ScheduleReboot $scheduledTime"
 Get-WindowsUpdate -Verbose -Install -AcceptAll -AutoReboot -ScheduleReboot $scheduledTime

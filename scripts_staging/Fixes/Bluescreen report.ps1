@@ -20,6 +20,7 @@
 
 .CHANGELOG
     18.12.24 SAN Added site & client name to the uploaded file, added boot time to the report, moved dmp check
+    08.01.25 SAN Remove error code in case of missing folder it is causing issues in case of false positive on failure runs
 
 #>
 # Step 1: Retrieve Nextcloud WebDAV URL, Token, Client Name, and Site Name from environment variables
@@ -45,11 +46,11 @@ $hostname = (Get-WmiObject -Class Win32_ComputerSystem).Name
 
 # Check if the Minidump directory exists and contains any .dmp
 if (-not (Test-Path $minidumpPath)) {
-    Write-Host "Minidump folder not found!"
-    exit 1
+    Write-Error "Minidump folder not found!"
+    exit
 } elseif (-not (Get-ChildItem -Path $minidumpPath -Filter "*.dmp")) {
-    Write-Host "No dump files found in Minidump folder!"
-    exit 1
+    Write-Error "No dump files found in Minidump folder!"
+    exit
 }
 
 # Sanitize Client Name and Site Name to keep only a-z, 0-9, and spaces, then replace spaces with dashes

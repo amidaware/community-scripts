@@ -23,10 +23,11 @@
     19.11.24 SAN removed colors
     19.11.24 SAN added cleanup of search index
     17.12.24 SAN Full code refactoring, set a single value for file expiration
+    14.01.25 SAN More verbose output for the deletion of items
     
 .TODO
     Integrate bleachbit this would help avoid having to update this script too often.
-    
+    add days to array to overide defaut day to delete in some folder
 #>
 
 # Check environment variable and set default if not defined
@@ -49,7 +50,6 @@ function Get-DiskInfo {
     return $DiskInfo
 }
 
-# Function to remove items
 function Remove-Items {
     param (
         [string]$Path,
@@ -59,24 +59,45 @@ function Remove-Items {
     if (Test-Path $Path) {
         # Check if the Path is a file
         if ((Get-Item $Path).PSIsContainer -eq $false) {
-            # Remove the single file if it meets the age condition
-            if ((Get-Item $Path).CreationTime -lt (Get-Date).AddDays(-$Days)) {
-                Remove-Item -Path $Path -Force -Verbose
-                Write-Host "[DONE] Removed single item: $Path"
-            } else {
-                Write-Host "[INFO] $Path does not meet the age condition, skipping removal."
+            try {
+                # Remove the single file if it meets the age condition
+                if ((Get-Item $Path).CreationTime -lt (Get-Date).AddDays(-$Days)) {
+                    Remove-Item -Path $Path -Force -Verbose -Confirm:$false
+                    Write-Host "[DONE] Removed single item: $Path"
+                } else {
+                    Write-Host "[INFO] $Path does not meet the age condition, skipping removal."
+                }
+            } catch {
+                Write-Host "[ERROR] Failed to remove item: $Path. $_"
             }
         } else {
-            # If it's a directory, remove its sub-items based on the age condition
-            Get-ChildItem -Path $Path -Recurse -Force |
-                Where-Object { $_.CreationTime -lt (Get-Date).AddDays(-$Days) } |
-                Remove-Item -Force -Recurse -Verbose
-            Write-Host "[DONE] Cleaned up directory: $Path"
+            try {
+                # Get all items in the folder
+                $items = Get-ChildItem -Path $Path -Recurse -Force |
+                    Where-Object { $_.CreationTime -lt (Get-Date).AddDays(-$Days) } |
+                    Sort-Object { $_.Name.Length } -Descending
+
+                if ($items.Count -gt 0) {
+                    Write-Host "[INFO] Listing items for removal in order of name length:"
+                    foreach ($item in $items) {
+                        Write-Host " - $($item.FullName)"
+                    }
+
+                    # Remove items from longest name to shortest
+                    $items | Remove-Item -Force -Recurse -Verbose -Confirm:$false
+                    Write-Host "[DONE] Cleaned up directory: $Path"
+                } else {
+                    Write-Host "[INFO] No items met the age condition in directory: $Path"
+                }
+            } catch {
+                Write-Host "[ERROR] Failed to clean up directory: $Path. $_"
+            }
         }
     } else {
         Write-Host "[WARNING] $Path does not exist, skipping cleanup."
     }
 }
+
 
 # Function to add or update registry keys for Disk Cleanup
 function Add-RegistryKeys-CleanMGR {
