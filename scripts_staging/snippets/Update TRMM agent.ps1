@@ -38,6 +38,7 @@
     22.12.24 SAN default to latest when no version is set
 
 .TODO 
+    Add a small (15 seconds) delay to the execution of the exe to ensure trmm is capable of properly capturing the output of the script before the agent kills the service
     
 #>
 # Variables
