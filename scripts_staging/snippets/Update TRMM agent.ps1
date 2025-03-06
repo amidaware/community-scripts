@@ -25,6 +25,7 @@
     version=latest
     version=2.7.0
     trmm_api_target=api.exemple.com
+    trmm_api_target={{global.RMM_API_URL}}
     
 .NOTES
     Author: SAN
