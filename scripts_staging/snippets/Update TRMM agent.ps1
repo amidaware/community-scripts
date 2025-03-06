@@ -83,7 +83,7 @@ try {
         $version = "latest"
     }
     if ($version -eq "latest") {
-        Write-Output "Fetching the latest version information from GitHub..."
+        Write-Output "Fetching the latest version information of the TRMM agent from GitHub..."
         $response = Invoke-RestMethod -Uri $repoUrl -Headers $headers -Method Get -ErrorAction Stop
         $version = $response.tag_name.TrimStart('v')  # Remove 'v' prefix if exists
         Write-Output "Latest version found: $version"
@@ -96,7 +96,7 @@ try {
     if ($installedVersion) {
         Write-Output "Installed version of 'Tactical RMM Agent': $installedVersion"
         if ($installedVersion -eq $version) {
-            Write-Output "The installed version matches the desired version. No download required."
+            Write-Output "The installed version matches the desired version. No upgrade required."
             exit 0
         } else {
             Write-Output "The installed version ($installedVersion) does not match the desired version ($version). Proceeding with download."
