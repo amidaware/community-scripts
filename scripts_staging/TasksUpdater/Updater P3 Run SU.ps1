@@ -17,6 +17,9 @@
     Schedules={{agent.Schedules}}
     Company_folder_path={{global.Company_folder_path}}
 
+    trmm_sign_download_token={{global.trmm_sign_download_token}}
+    trmm_api_target={{global.RMM_API_URL}}
+
 .NOTES
     Author: SAN // MSA
     Date: 06.08.2024
@@ -24,6 +27,7 @@
         Logging snippet for logging
         Updater P3.5 Schedules parser snippet for parsing the date
         CallPowerShell7 snippet to upgrade the script to pwsh
+        Update TRMM agent snipper for agent upgrade
     #public
 
 .CHANGELOG 
@@ -33,6 +37,7 @@
     27.11.24 SAN More verbose output for the reboot and fixed some lack of logs from the Chocolatey commands.
     27.11.24 SAN Disabled file rename check due to issues.
     13.12.24 SAN Split logging from parser.
+    06.03.25 SAN added TRMM agent updater.
 
 .TODO
     Fix rename?
@@ -120,7 +125,7 @@ if ($result.RebootRequired) {
     Write-Host "No Reboot is pending BEFORE updates."
 }
 
-# The following section is in place due to the fact that ps logging does not capture RAW output from choco
+# The following section is in place due to the fact that ps logging does not capture RAW output from choco please do not touch
 # List outdated packages and capture output
 $outdatedPackages = choco outdated | Out-String
 # Upgrade all packages and capture output
@@ -129,14 +134,17 @@ $upgradeResult = choco upgrade all -y | Out-String
 Write-Host ""
 Write-Host "------------------------------------------------------------"
 Write-Host ""
-Write-Host "Outdated Packages:"
+Write-Host "Chocolatey Outdated Packages before upgrade:"
 Write-Host $outdatedPackages
 Write-Host "------------------------------------------------------------"
-Write-Host "Upgrade Result:"
+Write-Host "Chocolatey Upgrade Result:"
 Write-Host $upgradeResult
 Write-Host ""
 Write-Host "------------------------------------------------------------"
 Write-Host ""
+Write-Host "------------------------------------------------------------"
+Write-Host "TRMM Agent update"
+{{Update TRMM agent}}
 
 
 # Check if a reboot is pending and reboot if necessary
