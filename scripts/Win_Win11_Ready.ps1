@@ -12,7 +12,7 @@ $osInfo = Get-WmiObject -Class Win32_OperatingSystem
 $winVersion = [System.Version]$osInfo.Version
 
 if ($winVersion -ge [System.Version]::new(10, 0, 22000)) {
-    Write-Output "Already running Windows 11."
+    Write-Output "Already Windows 11."
     Exit 0
 }
 
