@@ -7,6 +7,17 @@
 #
 #=============================================================================================================================
 
+# Check Windows Version
+$osInfo = Get-WmiObject -Class Win32_OperatingSystem
+$winVersion = [System.Version]$osInfo.Version
+
+if ($winVersion -ge [System.Version]::new(10, 0, 22000)) {
+    Write-Output "Already Windows 11"
+    Exit 0
+}
+
+# Continue with Windows 11 readiness check
+
 $exitCode = 0
 
 [int]$MinOSDiskSizeGB = 64
@@ -480,6 +491,6 @@ if (0 -eq $outObject.returncode) {
     "Windows 11 Ready"
 }
 else {
-    "Not Windows 11 Ready"
+    "Not Windows 11 Ready | "
     Write-Output $outObject.returnReason
 }
