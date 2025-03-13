@@ -90,6 +90,21 @@ function Compare-GPOVersions {
     }
 }
 
+# Function to check if the Recycle Bin in enabled
+
+function Check-ADRecycleBin {
+    $recycleFeatures = Get-ADOptionalFeature -Filter {name -like "recycle bin feature"}
+
+    foreach ($feature in $recycleFeatures) {
+        if ($null -ne $feature.EnabledScopes) {
+            Write-Output "OK: Recycle Bin enabled"
+        } else {
+            Write-Output "KO: Recycle Bin disabled"
+            $global:exitCode++ 
+        }
+    }
+}
+
 # Check if Active Directory Domain Services feature is installed
 try {
     $adFeature = Get-WindowsFeature -Name AD-Domain-Services -ErrorAction Stop
@@ -114,6 +129,12 @@ try {
         Write-Host "GPO Versions checks"
         # Call the function to compare GPO versions
         Compare-GPOVersions
+
+        Write-Host ""
+        Write-Host "Recycle Bin checks"
+        # Call the function to check the Recycle Bin
+        Check-ADRecycleBin
+        
     } else {
         Write-Host "Active Directory Domain Services feature is not installed or not in the 'Installed' state."
         exit
