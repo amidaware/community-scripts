@@ -3,20 +3,24 @@
     This script performs health checks on a machine with SQL Server installed.
 
 .DESCRIPTION
-    The script checks various aspects of SQL Server health, including version and blocked requests.
-    It provides a modular approach with separate functions for each check.
+    The script checks various aspects of SQL Server health, including version, blocked requests, 
+    and availability group synchronization. It provides a modular approach with separate functions 
+    for each check.
 
 .NOTES
     Author: SAN
-    Date: 01.01.24
+    Date: 01.01.2024
     #public
-    
-.TODO
-
 
 .CHANGELOG
-    SAN 12.12.24 Changed outputs
-    SAN 14.03.24 Added availability groups checks
+    SAN 12.12.2023 Changed outputs
+    SAN 14.03.2024 Added availability group checks
+    
+.TODO
+    Optimize query execution
+    Improve error handling
+
+
 #>
 
 function Get-SqlServerVersion {
