@@ -12,11 +12,11 @@
     #public
     
 .TODO
-    Need to go back to version 1 and implement the missing functions of this check
-    handle Master-slave monitoring
+
 
 .CHANGELOG
     SAN 12.12.24 Changed outputs
+    SAN 14.03.24 Added availability groups checks
 #>
 
 function Get-SqlServerVersion {
@@ -126,11 +126,77 @@ function Get-BlockedSqlRequests {
     }
 
     if ($errorEncountered) {
-        return "Error"  # Return "Error" if any error occurred during the process
+        return "Error" 
     } else {
-        return "OK"  # Return "OK" if no errors occurred
+        return "OK"
     }
 }
+
+Function Get-SqlAgSyncStatus {
+    Write-Host "Function Get-SqlAgSyncStatus"
+    
+    $server = "$( $env:COMPUTERNAME)\$( (Get-Item 'HKLM:\Software\Microsoft\Microsoft SQL Server\Instance Names\SQL').Property[0])"
+    Write-Host "Detected SQL Server Instance: $server"
+    
+    Function RunQuery($query) {
+        Try {
+            $conn = New-Object System.Data.SqlClient.SqlConnection
+            $conn.ConnectionString = "Server=$server;Database=master;Integrated Security=True"
+            $conn.Open()
+            
+            $userQuery = "SELECT SUSER_NAME(), USER_NAME();"
+            $cmdUser = New-Object System.Data.SqlClient.SqlCommand($userQuery, $conn)
+            $userReader = $cmdUser.ExecuteReader()
+            If ($userReader.Read()) {
+                Write-Host "Connected as: $($userReader.GetString(0)) ($($userReader.GetString(1)))"
+            }
+            $userReader.Close()
+            
+            Write-Host "SQL Connection Successful: $server"
+            
+            $cmd = New-Object System.Data.SqlClient.SqlCommand($query, $conn)
+            $adapter = New-Object System.Data.SqlClient.SqlDataAdapter($cmd)
+            $dataSet = New-Object System.Data.DataSet
+            $adapter.Fill($dataSet) | Out-Null
+            $conn.Close()
+            
+            return $dataSet.Tables[0]
+        } Catch {
+            Write-Host "SQL Error: $_"
+            return $null
+        }
+    }
+    
+    $query = "SELECT c.name, s.synchronization_health FROM sys.availability_groups_cluster c 
+    JOIN sys.dm_hadr_availability_group_states s ON c.group_id = s.group_id 
+    WHERE LOWER(s.primary_replica) = LOWER('$server') OR LOWER('$server') IN 
+    (SELECT LOWER(replica_server_name) FROM sys.availability_replicas);"
+    
+    $result = RunQuery $query 
+    
+    if ($null -eq $result -or $result.Rows.Count -eq 0) {
+        Write-Host "OK : $server AG SYNCHRO : No Availability Groups found."
+        return "OK"
+    }
+    
+    Write-Host "Query Result Count: $($result.Rows.Count)"
+    Write-Host "Query Result: $($result | Out-String)"
+    
+    $description = ""
+    $statusLevel = 0
+    foreach ($row in $result) {
+        switch ($row.synchronization_health) {
+            0 { $statusLevel = [Math]::Max($statusLevel, 2); $description += "$($row.name): Not Healthy " }
+            1 { $statusLevel = [Math]::Max($statusLevel, 1); $description += "$($row.name): Partially Healthy " }
+            2 { $description += "$($row.name): Healthy " }
+        }
+    }
+    
+    $status = @("OK", "WARNING", "CRITICAL")[$statusLevel]
+    Write-Host "$status : $server AG SYNCHRO : $description"
+    return $status
+}
+
 
 
 function Check-SqlServerInstallation {
@@ -150,9 +216,10 @@ if (Check-SqlServerInstallation) {
     # Run each function and report the result
     $result1 = Get-SqlServerVersion
     $result2 = Get-BlockedSqlRequests
+    $result3 = Get-SqlAgSyncStatus
 
     # Check the results and provide the overall status
-    if ($result1 -eq "OK" -and $result2 -eq "OK") {
+    if ($result1 -eq "OK" -and $result2 -eq "OK" -and $result3 -eq "OK") {
         Write-Host "OK: All components are functioning properly"
     } else {
         $errorComponents = @()
@@ -164,9 +231,14 @@ if (Check-SqlServerInstallation) {
         if ($result2 -ne "OK") {
             $errorComponents += "Blocked SQL Requests Check"
         }
+        
+        if ($result3 -ne "OK") {
+            $errorComponents += "AG Synchronization Check"
+        }
 
         $errorList = $errorComponents -join ", "
         Write-Host "Overall Status: Some components encountered errors. Errors in: $errorList"
         Exit 1
     }
 }
+
