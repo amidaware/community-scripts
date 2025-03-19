@@ -131,8 +131,10 @@ foreach ($file in $files) {
             Write-Host "Renamed $($file.Name) to $newSentName"
         } else {
             Write-Host "Unexpected response from server: $($response.StatusCode)"
+            exit 1
         }
     } catch {
         Write-Host "Failed to upload $($file.Name): $_"
+        exit 1
     }
 }
