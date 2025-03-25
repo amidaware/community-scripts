@@ -16,6 +16,10 @@
 
 .CHANGELOG
     SAN 25.03.2025 Initial version of the script to check updates older than a specified threshold.
+
+.TODO
+    Add filters to ignore updates in env
+    
 #>
 
 $ThresholdDays = $env:ThresholdDays
