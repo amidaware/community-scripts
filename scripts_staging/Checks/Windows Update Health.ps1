@@ -16,7 +16,6 @@
 
 .CHANGELOG
     SAN 25.03.2025 Initial version of the script to check updates older than a specified threshold.
-    
 #>
 
 $ThresholdDays = $env:ThresholdDays
@@ -28,7 +27,7 @@ $CurrentDate = Get-Date
 $AgeLimit = $CurrentDate.AddDays(-$ThresholdDays)
 
 try {
-    $updates = Get-WindowsUpdate
+    $updates = Get-WindowsUpdate -ErrorAction Stop
 } catch {
     Write-Host "KO: An error occurred while fetching the updates: $_"
     exit 1
