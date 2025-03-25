@@ -16,16 +16,17 @@
 
 .NOTES
     Author: SAN
-    Date: ???
+    Date: 01.01.25
     #public
 
 .CHANGELOG
-
+    25.03.25 SAN Format output
 .TODO
     Include customizable input for the list of IP addresses.
     Enhance error handling for unreachable hosts.
-    for test all to env
-    tnc has some relability issue maybe use normal ping
+    move test all to env
+    tnc has some relability issue maybe use normal ping as fallback
+
 #>
 
 
@@ -59,10 +60,10 @@ if ($TestAll) {
         $pingResult = Test-Connection -ComputerName $ip -Count 1 -Quiet
 
         if (-not $pingResult) {
-            Write-Host "Ping to $ip ($owner) failed."
+            Write-Host "KO: Ping to $ip ($owner) failed."
             $pingFailed = $true
         } else {
-            Write-Host "Ping to $ip ($owner) succeeded."
+            Write-Host "OK: Ping to $ip ($owner) succeeded."
         }
     }
 
@@ -80,9 +81,9 @@ if ($TestAll) {
 
     # Check the result of the ping and exit with status code 1 if it fails
     if (-not $pingResult) {
-        Write-Host "Ping to $randomIp ($owner) failed."
+        Write-Host "KO: Ping to $randomIp ($owner) failed."
         exit 1
     } else {
-        Write-Host "Ping to $randomIp ($owner) succeeded."
+        Write-Host "OK: Ping to $randomIp ($owner) succeeded."
     }
 }
