@@ -119,20 +119,21 @@ function Add-RegistryKeys-CleanMGR {
 
 # Cleanup paths grouped by purpose
 $PathsToClean = @{
-    "SystemTemp"         = "$env:windir\Temp\*"
-    "Minidump"           = "$env:windir\minidump\*"
-    "Prefetch"           = "$env:windir\Prefetch\*"
-    "MemoryDump"         = "$env:windir\memory.dmp"
-    "RecycleBin"         = "C:\$Recycle.Bin"
-    "AdobeARM"           = "C:\ProgramData\Adobe\ARM"
+    "SystemTemp"           = "$env:windir\Temp\*"
+    "Minidump"             = "$env:windir\minidump\*"
+    "Prefetch"             = "$env:windir\Prefetch\*"
+    "MemoryDump"           = "$env:windir\memory.dmp"
+    "RecycleBin"           = "C:\$Recycle.Bin"
+    "AdobeARM"             = "C:\ProgramData\Adobe\ARM"
     "SoftwareDistribution" = "C:\Windows\SoftwareDistribution"
-    "CSBack"             = "C:\csback"
-    "CBSLogs"            = "C:\Windows\logs\CBS\*.log"
-    "IISLogs"            = "C:\inetpub\logs\LogFiles"
-    "ConfigMsi"          = "C:\Config.Msi"
-    "Intel"              = "C:\Intel"
-    "PerfLogs"           = "C:\PerfLogs"
-    "ErrorReporting"     = "C:\ProgramData\Microsoft\Windows\WER"
+    "CSBack"               = "C:\csback"
+    "CBSLogs"              = "C:\Windows\logs\CBS\*.log"
+    "IISLogs"              = "C:\inetpub\logs\LogFiles"
+    "ConfigMsi"            = "C:\Config.Msi"
+    "Intel"                = "C:\Intel"
+    "PerfLogs"             = "C:\PerfLogs"
+    "ErrorReporting"       = "C:\ProgramData\Microsoft\Windows\WER"
+    "PreviousWindows"      = "C:\Windows.old"
 }
 
 # User-specific cleanup paths
