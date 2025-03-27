@@ -24,7 +24,7 @@
     28.10.24 SAN - Removed ignored output without the debug flag.
     28.10.24 SAN - cleanup documentation.
     21.01.25 SAN - Code cleanup
-
+    27.03.25 SAN - added kerberos local key to default
 
 #>
 
@@ -59,7 +59,8 @@ $ignoredByDefault = @(
     "CDPSvc",
     "AGSService",
     "ShellHWDetection", # Frequently failing; unclear if actionable
-    "DropboxUpdater"
+    "DropboxUpdater",
+    "LocalKDC" # https://learn.microsoft.com/en-us/answers/questions/2136070/windows-server-2025-kerberos-local-key-distributio
 )
 
 # Check if the "IgnoredServices" environment variable exists and add those services to the ignore list
