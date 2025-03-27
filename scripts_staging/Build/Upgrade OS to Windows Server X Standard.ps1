@@ -6,7 +6,7 @@ This script performs an in-place upgrade of a Windows Server machine by download
 The script downloads the ISO from a Nextcloud share, verifies its checksum, extracts it using 7-Zip, and then initiates an in-place upgrade of the server.
 The Nextcloud share URL format should be as follows:
 https://nextcloud.xxx.xxx/s/xxxxxxxxx/download?path=%2F&files=
-
+All keys are valid for initial installation and from https://learn.microsoft.com/en-us/windows-server/get-started/kms-client-activation-keys?tabs=server2016%2Cwindows1110ltsc%2Cversion1803%2Cwindows81
 
 .EXAMPLE
     TARGETED_VERSION=2019
