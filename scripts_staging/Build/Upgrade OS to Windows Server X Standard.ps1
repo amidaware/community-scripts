@@ -26,7 +26,7 @@ All keys are valid for initial installation and from https://learn.microsoft.com
     more testing
     find solutions for automated DC server upgrades
     Add password on the nextcloud repo and make the script use it
-
+    Find a way to use UUP to download the ISO of all windows versions
 #>
 
 
