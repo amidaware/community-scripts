@@ -51,7 +51,7 @@ try {
 }
 
 if ($updates.Count -eq 0) {
-    Write-Host "OK: No updates found."
+    Write-Host "OK: No outdated updates found."
 } else {
     $updates | ForEach-Object {
         Write-Host "$($_.LastDeploymentChangeTime) | KB: $($_.KBArticleIDs) | $($_.Title)"
