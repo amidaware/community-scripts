@@ -15,13 +15,24 @@
         PSWindowsUpdate module
 
 .CHANGELOG
-    SAN 25.03.2025 Initial version of the script to check updates older than a specified threshold.
+    25.03.2025 SAN Initial version of the script to check updates older than a specified threshold.
+    28.03.2025 SAN added skip for windows 2012.
 
 .TODO
     Add filters to ignore updates in env
     
 #>
 
+$osVersion = [System.Environment]::OSVersion.Version
+
+# Check if the OS version is Windows Server 2012 (6.2)
+if ($osVersion.Major -eq 6 -and $osVersion.Minor -eq 2) {
+    Write-Host "Not supported on Server 2012"
+    exit 15
+}
+
+# Continue with the rest of the script
+Write-Host "Proceeding with the script."
 $ThresholdDays = $env:ThresholdDays
 if (-not $ThresholdDays) {
     $ThresholdDays = 90
