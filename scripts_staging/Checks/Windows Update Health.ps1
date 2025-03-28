@@ -14,6 +14,7 @@
     Dependencies: 
         PSWindowsUpdate module
         CallPowerShell7 snippet to upgrade the script to pwsh
+        
 .CHANGELOG
     25.03.2025 SAN Initial version of the script to check updates older than a specified threshold.
     28.03.2025 SAN added skip for windows 2012 & pwsh support
@@ -51,7 +52,7 @@ try {
 }
 
 if ($updates.Count -eq 0) {
-    Write-Host "OK: No outdated updates found."
+    Write-Host "OK: No updates found."
 } else {
     $updates | ForEach-Object {
         Write-Host "$($_.LastDeploymentChangeTime) | KB: $($_.KBArticleIDs) | $($_.Title)"
