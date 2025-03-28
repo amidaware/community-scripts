@@ -243,6 +243,18 @@
     "category": "TRMM (Win):TacticalRMM Related"
   },
   {
+    "guid": "65a82cdc-1e87-4956-8b43-e1e8a76ebf85",
+    "filename": "Win_TRMM_Troubleshooting_Agent.ps1",
+    "submittedBy": "https://github.com/silversword411",
+    "name": "TacticalRMM - Agent Troubleshooting Script TRMM and Mesh on Windows",
+    "description": "For troubleshooting problems. If TRMM agent is online you can run thru TRMM otherwise you can save as .ps1 file and run manually. It will create a timestamped log file",
+    "shell": "powershell",
+    "supported_platforms": [
+      "windows"
+    ],
+    "category": "TRMM (Win):TacticalRMM Related"
+  },
+  {
     "guid": "b90fb6a1-cf53-48d4-9747-60dd333c7159",
     "filename": "Win_TRMM_Mesh_Install.ps1",
     "submittedBy": "https://github.com/NiceGuyIT",
