@@ -28,11 +28,10 @@ $osVersion = [System.Environment]::OSVersion.Version
 # Check if the OS version is Windows Server 2012 (6.2)
 if ($osVersion.Major -eq 6 -and $osVersion.Minor -eq 2) {
     Write-Host "Not supported on Server 2012"
+    $host.SetShouldExit(15)
     exit 15
 }
 
-# Continue with the rest of the script
-Write-Host "Proceeding with the script."
 $ThresholdDays = $env:ThresholdDays
 if (-not $ThresholdDays) {
     $ThresholdDays = 90
