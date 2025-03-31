@@ -18,13 +18,16 @@
     #public
 
 .TODO
-    - Recheck the list of services for any that should be monitored (e.g., ShellHWDetection).
+    Recheck the list of services for any that should be monitored (e.g., ShellHWDetection).
+    Add "IgnoredServices" env to "ignoredPatternSuffix" also
+
 
 .CHANGELOG
-    28.10.24 SAN - Removed ignored output without the debug flag.
-    28.10.24 SAN - cleanup documentation.
-    21.01.25 SAN - Code cleanup
-    27.03.25 SAN - added kerberos local key to default
+    28.10.24 SAN Removed ignored output without the debug flag.
+    28.10.24 SAN cleanup documentation.
+    21.01.25 SAN Code cleanup
+    27.03.25 SAN added kerberos local key to default
+    31.03.25 SAN Added a new patern for ignroring user services (servicename_XXX) while keeping their system counterpart inculded
 
 #>
 
@@ -63,15 +66,23 @@ $ignoredByDefault = @(
     "LocalKDC" # https://learn.microsoft.com/en-us/answers/questions/2136070/windows-server-2025-kerberos-local-key-distributio
 )
 
-# Check if the "IgnoredServices" environment variable exists and add those services to the ignore list
+# Define a list of services to ignore that match the pattern "nameoftheservice_xxxx"
+$ignoredPatternSuffix = @(
+    "CDPUserSvc",
+    "OneSyncSvc",
+    "WpnUserService"
+)
+
+# Get any additional services to ignore from the environment variable
 $addonsToIgnoredList = [Environment]::GetEnvironmentVariable('IgnoredServices')
 if (-not [string]::IsNullOrEmpty($addonsToIgnoredList)) {
     $additionalServices = $addonsToIgnoredList -split ','
     $ignoredByDefault += $additionalServices
 }
 
-# Convert ignored services to a regular expression pattern
+# Combine the regular ignored services and the ones with suffix _xxxx pattern
 $ignoredPattern = ($ignoredByDefault | ForEach-Object { [regex]::Escape($_) }) -join '|'
+$ignoredPatternSuffixRegex = ($ignoredPatternSuffix | ForEach-Object { [regex]::Escape($_) + '_\w+' }) -join '|'
 
 # Get services with Automatic start type or Automatic (Delayed Start) that are not running
 $servicesToCheck = Get-Service | Where-Object { ($_.StartType -eq 'Automatic' -or $_.StartType -eq 'Automatic (Delayed Start)') -and $_.Status -ne 'Running' }
@@ -80,27 +91,26 @@ $servicesToCheck = Get-Service | Where-Object { ($_.StartType -eq 'Automatic' -o
 $servicesNeedingAttention = @()
 $ignoredStoppedServices = @()
 
-# Check the status of each service
+# Check the status of each service and categorize based on ignore patterns
 foreach ($service in $servicesToCheck) {
-    # Check if the display name or service name matches the ignored pattern
-    if ($service.DisplayName -notmatch $ignoredPattern -and $service.ServiceName -notmatch $ignoredPattern) {
-        # Add the service to the list of services to start
+    # Ignore services that match the defined patterns (both regular and suffixed with _xxxx)
+    if ($service.DisplayName -notmatch $ignoredPattern -and $service.ServiceName -notmatch $ignoredPattern -and $service.ServiceName -notmatch $ignoredPatternSuffixRegex) {
         $servicesNeedingAttention += $service
     } else {
-        # Add the service to the list of ignored stopped services
         $ignoredStoppedServices += $service
     }
 }
 
-# Check if the "enabledebug" environment variable is set to true
+# Check if debug mode is enabled via the environment variable
 $enableDebugValue = [System.Environment]::GetEnvironmentVariable("enabledebugscript")
 $debugEnabled = $enableDebugValue -ne $null -and [System.Boolean]::Parse($enableDebugValue)
 
+# Display debug message if enabled
 if ($debugEnabled) {
     Write-Host "Debug mode is enabled."
 }
 
-# Display the results
+# Display the results based on the service statuses
 if ($servicesNeedingAttention.Count -eq 0) {
     if (-not $debugEnabled) {
         Write-Host "All required services are running."
