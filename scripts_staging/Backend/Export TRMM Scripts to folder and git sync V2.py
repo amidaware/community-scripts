@@ -68,10 +68,8 @@ SCRIPTPATH=/var/RMM-script-repo
     simplify the functions that does the writeback
     Move raws from "scriptsraw" to scripts/subfolder/raws/ to group them with their scripts 
     add debug statements and debug flags
-    find edge-cases and add exit code for them
     add logging
     add counters and separators at the end of each function
-    investigate if the lines returns in the code causes issues in some case (theoretical issue)
     send workflow flags to ENV default to true
     make the commit message to be dynamic ex. "modified xxx.ps1, xxx.py"
     
