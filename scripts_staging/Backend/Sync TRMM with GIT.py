@@ -1,6 +1,4 @@
 #!/usr/bin/python3
-#public
-
 """
 .TITLE
     Tactical RMM Script Sync with GIT Integration
@@ -34,12 +32,16 @@
         If there are no changes, no commit will be made.
 
 .EXEMPLE
-DOMAIN=https://api-rmm
-DOMAIN=https://{{global.RMM_API_URL}}
-API_TOKEN={{global.rmm_key_for_git_script}}
-API_TOKEN=asdf1234
-SCRIPTPATH=/var/RMM-script-repo
+    DOMAIN=https://api-rmm
+    DOMAIN=https://{{global.RMM_API_URL}}
+    API_TOKEN={{global.rmm_key_for_git_script}}
+    API_TOKEN=asdf1234
+    SCRIPTPATH=/var/RMM-script-repo
 
+.NOTES
+    #public
+    Original source not disclosed
+    
 .CHANGELOG
     v5.0 Y Exports functional, adds script ID to from as "id - " 
     v5.a Y "id - " for only raw folder. Fixed to use X-API-KEY
