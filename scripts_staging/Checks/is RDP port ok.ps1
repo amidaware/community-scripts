@@ -15,6 +15,7 @@
 .CHANGELOG
     12.12.24 SAN Changed outputs
     20.12.24 SAN Changed outputs
+    02.04.25 SAN Fixed Warn output
 #>
 
 $port = 3389
@@ -22,7 +23,7 @@ $address = "localhost"
 
 # Try Test-NetConnection if available
 if (Get-Command Test-NetConnection -ErrorAction SilentlyContinue) {
-    $tcpConnection = Test-NetConnection -ComputerName $address -Port $port
+    $tcpConnection = Test-NetConnection -ComputerName 127.0.0.1 -Port $port 2>$null -WarningAction SilentlyContinue
     if ($tcpConnection.TcpTestSucceeded) {
         Write-Output "OK: RDP is open."
     } else {

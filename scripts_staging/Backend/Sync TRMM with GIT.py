@@ -1,6 +1,4 @@
 #!/usr/bin/python3
-#public
-
 """
 .TITLE
     Tactical RMM Script Sync with GIT Integration
@@ -9,16 +7,17 @@
 .DESCRIPTION
     This script was made to add some form of support to Tactical RMM for GIT sync of scripts and other code-based tools. 
     It is recommended to run this script regularly to keep everything updated, ideally at least once every hour.
-    Each part can be toggled with its own flag to help troubleshoot any issue.
     The flags only prevent anything from being written to files or API; any possible outcome will still be displayed on the terminal.
 
     No script created on git side will be created in TRMM as they will be missing an id in the database and the json that goes with it
-    While possible no support to auto-create scripts in TRMM is planned as of now
+    While possible no support to auto-create scripts in TRMM is planned as of now as this would also require to plan for multi-instance cases.
+
+    This script can be executed on any device including the TRMM server itself as the only requirements are git + access to the API.
 
 .WORKFLOW
     0. The mapped folder should already be configured with git
 
-    1. Pull all the modifications from the git repo configured for the folder via git commands
+    1. Pull all the modifications from the git repo pre-configured for the folder via git commands
         Any modification that would have been done on TRMM and git that would conflit will be overwriten by the GIT in priority.
 
     2. Check for diff between the json and scripts; if there is a diff, write back to the API the changes.
@@ -29,14 +28,20 @@
         snippets: extracted snippet code from the API converted from json
         snippetsraw: All json data for later import/migration
 
-    4. Push all the modifications to the git repo configured for the folder via git commands
+    4. Push all the modifications to the git repo pre-configured for the folder via git commands
         If there are no changes, no commit will be made.
 
 .EXEMPLE
-DOMAIN=https://api-rmm
-API_TOKEN={{global.rmm_key_for_git_script}}
-SCRIPTPATH=/var/RMM-script-repo
+    DOMAIN=https://api-rmm
+    DOMAIN=https://{{global.RMM_API_URL}}
+    API_TOKEN={{global.rmm_key_for_git_script}}
+    API_TOKEN=asdf1234
+    SCRIPTPATH=/var/RMM-script-repo
 
+.NOTES
+    #public
+    Original source not disclosed
+    
 .CHANGELOG
     v5.0 Y Exports functional, adds script ID to from as "id - " 
     v5.a Y "id - " for only raw folder. Fixed to use X-API-KEY
@@ -60,20 +65,18 @@ SCRIPTPATH=/var/RMM-script-repo
     v9.0.0.2 16/08/24 SAN bug fixes and corrected some logic errors 
     v9.0.0.3 16/08/24 SAN bug fixe on huge payloads
     v9.0.0.4 16/08/24 SAN bug fixe on huge payloads
+    v9.0.1.0 02/04/25 SAN Added dynamic commit messages
+    v9.0.1.0 02/04/25 SAN bug fix on commit messages
 
 
 .TODO
     Add reporting support
-    add writeback for snippets
+    add writeback support for snippets
     simplify the functions that does the writeback
-    Move raws from "scriptsraw" to scripts/subfolder/raws/ to group them with their scripts 
-    add debug statements and debug flags
-    find edge-cases and add exit code for them
+    Move raws from "scriptsraw" to scripts/subfolder/raws/ to group them with their scripts
     add logging
     add counters and separators at the end of each function
-    investigate if the lines returns in the code causes issues in some case (theoretical issue)
     send workflow flags to ENV default to true
-    make the commit message to be dynamic ex. "modified xxx.ps1, xxx.py"
     
 """
 
@@ -364,17 +367,76 @@ def git_pull(base_dir):
         print("Git pull is disabled.")
 
 
+
+def get_staged_changes(base_dir):
+    """Get a list of staged files along with their status (created, modified, deleted, renamed)."""
+    result = subprocess.run(
+        ['git', '-C', base_dir, 'diff', '--cached', '--name-status'],
+        capture_output=True, text=True, check=True
+    )
+
+    changes = {"created": [], "modified": [], "deleted": [], "renamed": []}
+
+    for line in result.stdout.strip().split("\n"):
+        if not line:
+            continue
+        
+        parts = line.split("\t")
+        status, file = parts[0], parts[-1] 
+
+        # Exclude files in the scriptsraw/ folder
+        if file.startswith("scriptsraw/"):
+            continue
+
+        if status.startswith("A"): 
+            changes["created"].append(file)
+        elif status.startswith("M"):
+            changes["modified"].append(file)
+        elif status.startswith("D"):
+            changes["deleted"].append(file)
+        elif status.startswith("R"):
+            changes["renamed"].append(f"{parts[1]} -> {parts[2]}")
+
+    return changes
+
+def generate_commit_message(changes, max_files=5):
+    """Generate a meaningful commit message with filenames, truncating if needed."""
+    if not any(changes.values()):
+        return "Minor update"
+
+    parts = []
+    
+    def format_files(change_type, files):
+        return f"{change_type} {len(files)}: {', '.join(files[:max_files])}" + ("..." if len(files) > max_files else "")
+
+    if changes["created"]:
+        parts.append(format_files("Created", changes["created"]))
+    if changes["modified"]:
+        parts.append(format_files("Modified", changes["modified"]))
+    if changes["deleted"]:
+        parts.append(format_files("Deleted", changes["deleted"]))
+    if changes["renamed"]:
+        parts.append(format_files("Renamed", changes["renamed"]))
+
+    return "; ".join(parts)
+
+
 def git_push(base_dir):
     """Push local changes to the git repository."""
     if ENABLE_GIT_PUSH:
         print("Starting git push...")
         try:
-            rebase_in_progress = subprocess.run(['git', '-C', base_dir, 'rebase', '--show-current-patch'],
-                                                capture_output=True, text=True).returncode == 0
+            # Check if a rebase is in progress
+            rebase_in_progress = subprocess.run(
+                ['git', '-C', base_dir, 'rebase', '--show-current-patch'],
+                capture_output=True, text=True
+            ).returncode == 0
+
             if rebase_in_progress:
                 print("Rebase in progress. Please complete or abort the rebase manually.")
                 sys.exit(1)
 
+            # Get the current branch
             branch_result = subprocess.run(['git', '-C', base_dir, 'rev-parse', '--abbrev-ref', 'HEAD'],
                                            capture_output=True, text=True)
             branch_name = branch_result.stdout.strip()
@@ -388,8 +450,12 @@ def git_push(base_dir):
                                            capture_output=True, text=True)
             if status_result.stdout:
                 subprocess.check_call(['git', '-C', base_dir, 'add', '.'])
-                subprocess.check_call(['git', '-C', base_dir, 'commit', '-m', 'Update scripts and raw data'])
-                print(f"Committed changes to branch '{branch_name}'")
+
+                staged_changes = get_staged_changes(base_dir)
+                commit_message = generate_commit_message(staged_changes)
+
+                subprocess.check_call(['git', '-C', base_dir, 'commit', '-m', commit_message])
+                print(f"Committed changes to branch '{branch_name}': {commit_message}")
             else:
                 print("No changes to commit.")
 
