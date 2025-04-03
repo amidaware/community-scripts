@@ -21,11 +21,13 @@ All keys are valid for initial installation and from https://learn.microsoft.com
 .CHANGELOG
 
     27.03.25 SAN Full code refactorisation for more locale support & checksum verification & transfer repo to a single NC share
+    03.04.25 SAN exit if missing version
 
 .TODO
     find solutions for automated DC server upgrades
     Add password on the nextcloud repo and make the script use it
     Find a way to use UUP to download the ISO of all windows versions
+    
 #>
 
 
@@ -111,36 +113,18 @@ function Perform-InPlaceUpgrade {
 # Function to check requirements
 function Check-Requirements {
     param ([string]$targetedVersion, [string]$baseUrl)
-    
-    if (-not $targetedVersion) { Write-Host "TARGETED_VERSION is not set. Exiting."; exit 1 }
-    if (-not $baseUrl) { Write-Host "Download_Source is not set. Exiting."; exit 1 }
-    
-    # Detect system language (first two letters)
+
+    if (-not $targetedVersion -or -not $baseUrl) { Write-Host "Missing parameters. Exiting."; exit 1 }
+    if (-not $serverVersions.ContainsKey($targetedVersion)) { Write-Host "Invalid version: $targetedVersion. Exiting."; exit 1 }
+
     $systemLocale = (Get-WinSystemLocale).Name.Substring(0,2).ToLower()
-    
-    # Validate language availability
-    if (-not $serverVersions[$targetedVersion].ContainsKey($systemLocale)) {
-        Write-Host "Unsupported language: $systemLocale. Exiting."
-        exit 1
-    }
-    
-    # Check for 7-Zip
+    if (-not $serverVersions[$targetedVersion].ContainsKey($systemLocale)) { Write-Host "Unsupported language: $systemLocale. Exiting."; exit 1 }
+
     $sevenZipPath = (Get-Command 7z.exe -ErrorAction SilentlyContinue).Source
-    if (-not $sevenZipPath) {
-        $sevenZipPath = "C:\\Program Files\\7-Zip\\7z.exe"
-        if (-not (Test-Path $sevenZipPath)) {
-            Write-Host "7-Zip not found in PATH or default location. Exiting."
-            exit 1
-        }
-    }
-    
-    # Check available disk space
-    $freeSpace = (Get-PSDrive C).Free
-    if ($freeSpace -lt 12GB) { 
-        Write-Host "Not enough disk space. Exiting."
-        exit 1
-    }
-    
+    if (-not $sevenZipPath -and -not (Test-Path ($sevenZipPath = "C:\Program Files\7-Zip\7z.exe"))) { Write-Host "7-Zip not found. Exiting."; exit 1 }
+
+    if ((Get-PSDrive C).Free -lt 12GB) { Write-Host "Not enough disk space. Exiting."; exit 1 }
+
     return $systemLocale, $sevenZipPath
 }
 
