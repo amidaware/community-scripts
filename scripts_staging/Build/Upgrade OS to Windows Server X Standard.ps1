@@ -23,7 +23,6 @@ All keys are valid for initial installation and from https://learn.microsoft.com
     27.03.25 SAN Full code refactorisation for more locale support & checksum verification & transfer repo to a single NC share
 
 .TODO
-    more testing
     find solutions for automated DC server upgrades
     Add password on the nextcloud repo and make the script use it
     Find a way to use UUP to download the ISO of all windows versions
