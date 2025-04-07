@@ -21,12 +21,14 @@ All keys are valid for initial installation and from https://learn.microsoft.com
 .CHANGELOG
 
     27.03.25 SAN Full code refactorisation for more locale support & checksum verification & transfer repo to a single NC share
+    03.04.25 SAN exit if missing version
+    07.04.25 SAN Added timestamps to messages
 
 .TODO
-    more testing
     find solutions for automated DC server upgrades
     Add password on the nextcloud repo and make the script use it
     Find a way to use UUP to download the ISO of all windows versions
+    
 #>
 
 
@@ -100,49 +102,38 @@ function Verify-Checksum {
     return (Get-FileChecksum -filePath $filePath) -eq $expectedChecksum
 }
 
+# Function to check requirements
+function Check-Requirements {
+    param ([string]$targetedVersion, [string]$baseUrl)
+
+    if (-not $targetedVersion -or -not $baseUrl) { Write-Log "Missing parameters. Exiting."; exit 1 }
+    if (-not $serverVersions.ContainsKey($targetedVersion)) { Write-Log "Invalid version: $targetedVersion. Exiting."; exit 1 }
+
+    $systemLocale = (Get-WinSystemLocale).Name.Substring(0,2).ToLower()
+    if (-not $serverVersions[$targetedVersion].ContainsKey($systemLocale)) { Write-Log "Unsupported language: $systemLocale. Exiting."; exit 1 }
+
+    $sevenZipPath = (Get-Command 7z.exe -ErrorAction SilentlyContinue).Source
+    if (-not $sevenZipPath -and -not (Test-Path ($sevenZipPath = "C:\Program Files\7-Zip\7z.exe"))) { Write-Log "7-Zip not found. Exiting."; exit 1 }
+
+    if ((Get-PSDrive C).Free -lt 12GB) { Write-Log "Not enough disk space. Exiting."; exit 1 }
+
+    return $systemLocale, $sevenZipPath
+}
+
+# Function to write log with timestamp
+function Write-Log {
+    param ([string]$message)
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    Write-Host "[$timestamp] $message"
+}
+
 # Function to perform in-place upgrade
 function Perform-InPlaceUpgrade {
     param ([string]$setupPath, [string]$licenseKey)
     $upgradeArgs = "/auto upgrade /quiet /dynamicupdate disable /imageindex 2 /eula accept /pkey $licenseKey"
-    Write-Host "Starting in-place upgrade..."
+    Write-Log "Starting in-place upgrade..."
     Start-Process -FilePath $setupPath -ArgumentList $upgradeArgs -Wait -NoNewWindow
-    Write-Host "Upgrade process initiated."
-}
-
-# Function to check requirements
-function Check-Requirements {
-    param ([string]$targetedVersion, [string]$baseUrl)
-    
-    if (-not $targetedVersion) { Write-Host "TARGETED_VERSION is not set. Exiting."; exit 1 }
-    if (-not $baseUrl) { Write-Host "Download_Source is not set. Exiting."; exit 1 }
-    
-    # Detect system language (first two letters)
-    $systemLocale = (Get-WinSystemLocale).Name.Substring(0,2).ToLower()
-    
-    # Validate language availability
-    if (-not $serverVersions[$targetedVersion].ContainsKey($systemLocale)) {
-        Write-Host "Unsupported language: $systemLocale. Exiting."
-        exit 1
-    }
-    
-    # Check for 7-Zip
-    $sevenZipPath = (Get-Command 7z.exe -ErrorAction SilentlyContinue).Source
-    if (-not $sevenZipPath) {
-        $sevenZipPath = "C:\\Program Files\\7-Zip\\7z.exe"
-        if (-not (Test-Path $sevenZipPath)) {
-            Write-Host "7-Zip not found in PATH or default location. Exiting."
-            exit 1
-        }
-    }
-    
-    # Check available disk space
-    $freeSpace = (Get-PSDrive C).Free
-    if ($freeSpace -lt 12GB) { 
-        Write-Host "Not enough disk space. Exiting."
-        exit 1
-    }
-    
-    return $systemLocale, $sevenZipPath
+    Write-Log "Upgrade process initiated."
 }
 
 # Main Execution
@@ -161,20 +152,21 @@ $extractFolder = "C:\\Windows\\Temp\\windows_server_extract"
 
 # Validate or download ISO
 if (!(Verify-Checksum -filePath $isoFile -expectedChecksum $metadata.checksum)) {
-    Write-Host "Downloading ISO..."
+    Write-Log "Downloading ISO..."
     Invoke-WebRequest -Uri "$baseUrl$($metadata.file)" -OutFile $isoFile
     if (!(Verify-Checksum -filePath $isoFile -expectedChecksum $metadata.checksum)) {
-        Write-Host "Checksum verification failed. Exiting."; exit 1
+        Write-Log "Checksum verification failed. Exiting."
+        exit 1
     }
 }
 
 # Clean and extract ISO
 if (Test-Path $extractFolder) { Remove-Item -Recurse -Force $extractFolder }
-Write-Host "Extracting ISO..."
+Write-Log "Extracting ISO..."
 Start-Process -FilePath $sevenZipPath -ArgumentList "x `"$isoFile`" -o`"$extractFolder`" -y" -Wait
 
 # Delete ISO file to free up space
-Write-Host "Deleting ISO file to free up space..."
+Write-Log "Deleting ISO file to free up space..."
 Remove-Item -Path $isoFile -Force
 
 # Locate and execute setup.exe
@@ -182,6 +174,7 @@ $setupPath = Get-ChildItem -Path $extractFolder -Recurse -Filter "setup.exe" -Fi
 if ($setupPath) {
     Perform-InPlaceUpgrade -setupPath $setupPath.FullName -licenseKey $metadata.licenseKey
 } else {
-    Write-Host "setup.exe not found. Exiting."; exit 1
+    Write-Log "setup.exe not found. Exiting."
+    exit 1
 }
 
