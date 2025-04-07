@@ -68,18 +68,17 @@
     v9.0.1.0 02/04/25 SAN Added dynamic commit messages
     v9.0.1.0 02/04/25 SAN bug fix on commit messages
     v9.0.1.1 07/04/25 SAN lots of code optimisation
-
+    v9.0.2.0 07/04/25 SAN Added support for snippets writeback, added counters and separators
 
 
 .TODO
     Add reporting support
-    add writeback support for snippets
-    simplify the functions that does the writeback
     Move raws from "scriptsraw" to scripts/subfolder/raws/ to group them with their scripts
     add logging
-    add counters and separators at the end of each function
     send workflow flags to ENV default to true
-    
+    Delete script support from git (dedicated function required as the current delete_obsolete_files only work based on api)
+    Review flow of step 3 for optimisations
+
 """
 
 import subprocess
@@ -113,7 +112,7 @@ def delete_obsolete_files(folder, current_scripts):
 
 
 def process_scripts(scripts, script_folder, script_raw_folder, shell_summary, is_snippet=False):
-    print(f"Processing {'snippets' if is_snippet else 'user-defined scripts'}...")
+    print(f"Processing {'snippets' if is_snippet else 'scripts'}...")
     current = set()
 
     for s in scripts:
@@ -172,70 +171,98 @@ def write_modifications_to_api(base_dir, folders, api_token):
     """Compare local script files and JSON definitions, then push mismatches to the API."""
     print("Comparing script files with JSON files...")
     mismatches = []
+    
+    total_files_checked = 0
+    total_matches = 0
+    total_mismatches = 0
+    total_updated = 0
+    total_skipped = 0
 
-    for raw_path in folders['scriptsraw'].rglob('*.json'):
-        raw_name = re.sub(r'^\d+ - ', '', raw_path.stem).lower()
-        match = next((p for p in folders['scripts'].rglob('*') 
-                      if p.is_file() and p.stem.lower() == raw_name), None)
+    for folder_key, folder in folders.items():
+        is_snippet = folder_key == 'snippetsraw'
+        folder_name = 'snippets' if is_snippet else 'scripts'
+        
+        for raw_path in folder.rglob('*.json'):
+            total_files_checked += 1
+            raw_name = re.sub(r'^\d+ - ', '', raw_path.stem).lower()
+            match = next((p for p in folders[folder_name].rglob('*') 
+                          if p.is_file() and p.stem.lower() == raw_name), None)
 
-        if not match:
-            print(f"No match for: {raw_path}")
-            continue
+            if not match:
+                print(f"No match for {'snippet' if is_snippet else 'script'}: {raw_path}")
+                total_skipped += 1
+                continue
 
-        print(f"Matched: {match} <-> {raw_path}")
-        script_hash = compute_hash(match)
+            print(f"Matched {'snippet' if is_snippet else 'script'}: {match} <-> {raw_path}")
+            total_matches += 1
+            file_hash = compute_hash(match)
 
-        with raw_path.open(encoding='utf-8') as f:
-            raw_data = json.load(f)
-        code = raw_data.get('code', '')
-        code_hash = hashlib.sha256(code.encode('utf-8')).hexdigest()
+            with raw_path.open(encoding='utf-8') as f:
+                raw_data = json.load(f)
+            code = raw_data.get('code', '')
+            code_hash = hashlib.sha256(code.encode('utf-8')).hexdigest()
 
-        print(f"Script hash: {script_hash}\nJSON hash:   {code_hash}")
+            print(f"{'Snippet' if is_snippet else 'Script'} hash: {file_hash}\nJSON hash:   {code_hash}")
 
-        if script_hash != code_hash:
-            print("\n--- Script (first 10 lines) ---")
-            with match.open(encoding='utf-8') as f:
-                for i, line in enumerate(f):
-                    if i >= 10: break
+            if file_hash != code_hash:
+                total_mismatches += 1
+                print(f"\n--- {'Snippet' if is_snippet else 'Script'} (first 10 lines) ---")
+                with match.open(encoding='utf-8') as f:
+                    for i, line in enumerate(f):
+                        if i >= 10: break
+                        print(line.strip())
+
+                print(f"\n--- JSON Code (first 10 lines) ---")
+                for line in code.splitlines()[:10]:
                     print(line.strip())
 
-            print("\n--- JSON Code (first 10 lines) ---")
-            for line in code.splitlines()[:10]:
-                print(line.strip())
+                with match.open(encoding='utf-8') as f:
+                    updated_payload = {**raw_data, 'code': f.read()}
 
-            with match.open(encoding='utf-8') as f:
-                updated_payload = {**raw_data, 'code': f.read()}
+                try:
+                    if ENABLE_WRITEBACK:
+                        print(f"Updating API for {'snippet' if is_snippet else 'script'} {match}...")
+                        update_api(raw_data.get('id'), updated_payload, api_token, is_snippet)
+                        total_updated += 1
+                    else:
+                        print(f"Simulated push for {'snippet' if is_snippet else 'script'} {match}:")
+                        updated_payload['script_body'] = updated_payload.pop('code')
+                        print(json.dumps(updated_payload, indent=4))
+                        sys.stdout.flush()
+                except BrokenPipeError:
+                    sys.stderr.close()
+                    sys.stdout.close()
 
-            try:
-                if ENABLE_WRITEBACK:
-                    print(f"Updating API for {match}...")
-                    update_api(raw_data.get('id'), updated_payload, api_token)
-                else:
-                    print(f"Simulated push for {match}:")
-                    updated_payload['script_body'] = updated_payload.pop('code')
-                    print(json.dumps(updated_payload, indent=4))
-                    sys.stdout.flush()
-            except BrokenPipeError:
-                sys.stderr.close()
-                sys.stdout.close()
+    print("\nComparison Complete:")
+    print(f"Total files checked: {total_files_checked}")
+    print(f"Total matches: {total_matches}")
+    print(f"Total mismatches: {total_mismatches}")
+    print(f"Total updates: {total_updated}")
+    print(f"Total skipped: {total_skipped}")
 
+def update_api(item_id, payload, api_token, is_snippet=False):
+    """Update the API with the provided item ID and payload."""
+    
+    # Correctly handle 'code' or 'script_body' based on whether it's a snippet or a script
+    if is_snippet:
+        payload['code'] = payload.pop('code', '')
+        endpoint = f"{domain}/scripts/snippets/{item_id}/"
+    else:
+        payload['script_body'] = payload.pop('code', '')
+        endpoint = f"{domain}/scripts/{item_id}/"
 
-def update_api(script_id, payload):
-    """Update the API with the provided script ID and payload."""
-    payload['script_body'] = payload.pop('code', '')
+    body = payload['code'] if is_snippet else payload['script_body']
 
-    url = f"{domain}/scripts/{script_id}/"
-    body = payload['script_body']
-
-    print(f"Updating {script_id}, length: {len(body)}, preview: {body[:1000]}{'...' if len(body) > 1000 else ''}")
+    print(f"Updating {'snippet' if is_snippet else 'script'} {item_id}, length: {len(body)}, preview: {body[:1000]}{'...' if len(body) > 1000 else ''}")
 
     try:
-        res = requests.put(url, headers=headers, json=payload, timeout=120)
-        print(f"{script_id} update: {res.status_code} {res.reason}")
+        res = requests.put(endpoint, headers={"X-API-KEY": api_token}, json=payload, timeout=120)
+        print(f"{item_id} update: {res.status_code} {res.reason}")
         if res.status_code != 200:
             print(res.text)
     except requests.exceptions.RequestException as e:
-        print(f"Request error for {script_id}: {e}")
+        print(f"Request error for {'snippet' if is_snippet else 'script'} {item_id}: {e}")
+
 
 def git_pull(base_dir):
     """Force pull the latest changes from the git repository, discarding local changes."""
@@ -288,7 +315,7 @@ def git_push(base_dir):
                 for line in result.stdout.strip().split("\n"):
                     if not line: continue
                     status, file = line.split("\t")
-                    if file.startswith("scriptsraw/"): continue
+                    if file.startswith("scriptsraw/") or file.startswith("snippetsraw/"): continue
                     if status.startswith("A"): changes["created"].append(file)
                     elif status.startswith("M"): changes["modified"].append(file)
                     elif status.startswith("D"): changes["deleted"].append(file)
@@ -340,43 +367,50 @@ def main():
     # Initialize counters and sets
     shell_summary, current_scripts = defaultdict(int), set()
 
-    # 1 Git pull
+    # 1. Git Pull
+    print("\n===== Step 1: Git Pull =====")
     if ENABLE_GIT_PULL:
         git_pull(base_dir)
     else:
         print("Git pull is disabled.")
+    print("===== End of Step 1 =====\n")
 
-    # 2 Write any modifications made to scripts back to the API
+    # 2. Write modifications to the API
+    print("\n===== Step 2: Write Modifications to API =====")
     write_modifications_to_api(base_dir, folders, api_token)
+    print("===== End of Step 2 =====\n")
 
-    # 3 Fetch and process user-defined scripts
-    print("Fetching user-defined scripts...")
+    # 3. Fetch and process scripts
+    print("\n===== Step 3: Fetch and Process Scripts and Snippets =====")
+    print("Fetching scripts...")
     user_defined_scripts = fetch_data(f"{domain}/scripts/?showHiddenScripts=true", headers)
     user_defined_scripts = [item for item in user_defined_scripts if item.get('script_type') == 'userdefined']
-    
-    # Process the user-defined scripts and add them to the current set
     current_scripts.update(process_scripts(user_defined_scripts, folders["scripts"], folders["scriptsraw"], shell_summary))
 
     # Fetch and process snippets
     print("Fetching snippets...")
     snippets = fetch_data(f"{domain}/scripts/snippets/", headers)
-    
-    # Process the snippets and add them to the current set
     current_scripts.update(process_scripts(snippets, folders["snippets"], folders["snippetsraw"], shell_summary, is_snippet=True))
 
-    # Remove any obsolete files that are no longer needed
+
+    # Output the total number of scripts exported and provide a summary of the shell counts
+    print(f"Total number of scripts exported: {len(current_scripts)}")
+    print("Shell summary:", "\n".join(f"{shell}: {count}" for shell, count in shell_summary.items()))   
+
+
+    # Remove any obsolete files that are no longer existing in the api
     for folder in folders.values():
         delete_obsolete_files(folder, current_scripts)
 
-    # 4 If Git push is enabled, push the local changes to the repository
+    print("===== End of Step 3 =====\n")
+
+    # 4. Git Push
+    print("\n===== Step 4: Git Push =====")
     if ENABLE_GIT_PUSH:
         git_push(base_dir)
     else:
         print("Git push is disabled.")
-
-    # Output the total number of scripts exported and provide a summary of the shell counts
-    print(f"Total number of scripts exported: {len(current_scripts)}")
-    print("Shell summary:", "\n".join(f"{shell}: {count}" for shell, count in shell_summary.items()))
+    print("===== End of Step 4 =====\n")
 
 if __name__ == "__main__":
     main()
