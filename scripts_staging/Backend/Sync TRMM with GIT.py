@@ -69,6 +69,8 @@
     v9.0.1.0 02/04/25 SAN bug fix on commit messages
     v9.0.1.1 07/04/25 SAN lots of code optimisation
     v9.0.2.0 07/04/25 SAN Added support for snippets writeback, added counters and separators
+    v9.0.2.1 07/04/25 SAN small optimisations & added a var for changing the branch
+    v9.0.2.2 07/04/25 SAN better handeling of custom git setup
 
 
 .TODO
@@ -78,6 +80,7 @@
     send workflow flags to ENV default to true
     Delete script support from git (dedicated function required as the current delete_obsolete_files only work based on api)
     Review flow of step 3 for optimisations
+    move all big var to global and ensure they are used from global only.
 
 """
 
@@ -97,6 +100,9 @@ ENABLE_GIT_PULL = True
 ENABLE_GIT_PUSH = True
 ENABLE_WRITEBACK = True
 ENABLE_WRITETOFILE = True
+
+# Can be changed to "main" or other if needed.
+git_pull_branch = 'master'
 
 def delete_obsolete_files(folder, current_scripts):
     print(f"Cleaning {folder}...")
@@ -264,89 +270,119 @@ def update_api(item_id, payload, api_token, is_snippet=False):
         print(f"Request error for {'snippet' if is_snippet else 'script'} {item_id}: {e}")
 
 
+
 def git_pull(base_dir):
     """Force pull the latest changes from the git repository, discarding local changes."""
-    if ENABLE_GIT_PULL:
-        print("Starting force pull...")
-        try:
-            subprocess.check_call(['git', '-C', base_dir, 'fetch', 'origin'])
-            subprocess.check_call(['git', '-C', base_dir, 'reset', '--hard', 'origin/master'])
-            print("Successfully force-pulled the latest changes from the repository.")
-        except subprocess.CalledProcessError as e:
-            print(f"Failed to force-pull changes from Git: {e}")
-            sys.exit(1)
-    else:
-        print("Git pull is disabled.")
+    if not os.path.isdir(base_dir):
+        print(f"Invalid directory: {base_dir}")
+        sys.exit(1)
+    
+    print("Starting force pull...")
+    try:
+        subprocess.check_call(['git', '-C', base_dir, 'fetch', 'origin'])
+        subprocess.check_call(['git', '-C', base_dir, 'reset', '--hard', f'origin/{git_pull_branch}'])
+        print(f"Successfully force-pulled the latest changes from the '{git_pull_branch}' branch.")
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to force-pull changes from Git: {e}")
+        sys.exit(1)
+
 
 def git_push(base_dir):
     """Push local changes to the git repository."""
-    if ENABLE_GIT_PUSH:
-        try:
-            # Check if a rebase is in progress
-            rebase_in_progress = subprocess.run(
-                ['git', '-C', base_dir, 'rebase', '--show-current-patch'],
-                capture_output=True, text=True
-            ).returncode == 0
-            if rebase_in_progress:
-                sys.exit("Rebase in progress. Complete or abort it.")
+    try:
+        # Check if a rebase is in progress
+        rebase_in_progress = subprocess.run(
+            ['git', '-C', base_dir, 'rebase', '--show-current-patch'],
+            capture_output=True, text=True
+        ).returncode == 0
+        if rebase_in_progress:
+            sys.exit("Rebase in progress. Complete or abort it.")
 
-            # Get current branch
-            branch_name = subprocess.run(
-                ['git', '-C', base_dir, 'rev-parse', '--abbrev-ref', 'HEAD'],
-                capture_output=True, text=True
-            ).stdout.strip() or "update-scripts"
-            if branch_name == 'HEAD':
-                subprocess.check_call(['git', '-C', base_dir, 'checkout', '-b', branch_name])
+        # Get current branch
+        branch_name = subprocess.run(
+            ['git', '-C', base_dir, 'rev-parse', '--abbrev-ref', 'HEAD'],
+            capture_output=True, text=True
+        ).stdout.strip() or "update-scripts"
+        if branch_name == 'HEAD':
+            subprocess.check_call(['git', '-C', base_dir, 'checkout', '-b', branch_name])
 
-            # Get staged changes
-            status_result = subprocess.run(
-                ['git', '-C', base_dir, 'status', '--porcelain'],
-                capture_output=True, text=True
+        # Get staged changes
+        status_result = subprocess.run(
+            ['git', '-C', base_dir, 'status', '--porcelain'],
+            capture_output=True, text=True
+        )
+        if status_result.stdout:
+            subprocess.check_call(['git', '-C', base_dir, 'add', '.'])
+
+            # Get the list of staged changes
+            result = subprocess.run(
+                ['git', '-C', base_dir, 'diff', '--cached', '--name-status'],
+                capture_output=True, text=True, check=True
             )
-            if status_result.stdout:
-                subprocess.check_call(['git', '-C', base_dir, 'add', '.'])
+            changes = {"created": [], "modified": [], "deleted": [], "renamed": []}
+            for line in result.stdout.strip().split("\n"):
+                if not line: continue
+                status, file = line.split("\t")
+                if file.startswith("scriptsraw/") or file.startswith("snippetsraw/"): continue
+                if status.startswith("A"): changes["created"].append(file)
+                elif status.startswith("M"): changes["modified"].append(file)
+                elif status.startswith("D"): changes["deleted"].append(file)
+                elif status.startswith("R"): changes["renamed"].append(f"{line.split()[1]} -> {line.split()[2]}")
 
-                # Get the list of staged changes
-                result = subprocess.run(
-                    ['git', '-C', base_dir, 'diff', '--cached', '--name-status'],
-                    capture_output=True, text=True, check=True
-                )
-                changes = {"created": [], "modified": [], "deleted": [], "renamed": []}
-                for line in result.stdout.strip().split("\n"):
-                    if not line: continue
-                    status, file = line.split("\t")
-                    if file.startswith("scriptsraw/") or file.startswith("snippetsraw/"): continue
-                    if status.startswith("A"): changes["created"].append(file)
-                    elif status.startswith("M"): changes["modified"].append(file)
-                    elif status.startswith("D"): changes["deleted"].append(file)
-                    elif status.startswith("R"): changes["renamed"].append(f"{line.split()[1]} -> {line.split()[2]}")
+            # Generate commit message
+            def generate_commit_message(changes, max_files=5):
+                if not any(changes.values()): return "Minor update"
+                parts = [f"{change_type} {len(files)}: {', '.join(files[:max_files])}{'...' if len(files) > max_files else ''}"
+                         for change_type, files in changes.items() if files]
+                return "; ".join(parts)
 
-                # Generate commit message
-                def generate_commit_message(changes, max_files=5):
-                    if not any(changes.values()): return "Minor update"
-                    parts = [f"{change_type} {len(files)}: {', '.join(files[:max_files])}{'...' if len(files) > max_files else ''}"
-                             for change_type, files in changes.items() if files]
-                    return "; ".join(parts)
+            commit_message = generate_commit_message(changes)
 
-                commit_message = generate_commit_message(changes)
+            # Commit changes
+            subprocess.check_call(['git', '-C', base_dir, 'commit', '-m', commit_message])
+            print(f"Committed changes to branch '{branch_name}': {commit_message}")
 
-                # Commit changes
-                subprocess.check_call(['git', '-C', base_dir, 'commit', '-m', commit_message])
-                print(f"Committed changes to branch '{branch_name}': {commit_message}")
+            # Push changes
+            subprocess.check_call(['git', '-C', base_dir, 'push', 'origin', branch_name])
+            print(f"Changes pushed to branch '{branch_name}'")
+        else:
+            print("No changes to commit.")
+    except subprocess.CalledProcessError as e:
+        print(f"Git operation failed: {e}")
 
-                # Push changes
-                subprocess.check_call(['git', '-C', base_dir, 'push', 'origin', branch_name])
-                print(f"Changes pushed to branch '{branch_name}'")
-            else:
-                print("No changes to commit.")
-        except subprocess.CalledProcessError as e:
-            print(f"Git operation failed: {e}")
-    else:
-        print("Git push is disabled.")
+
+def check_git_health(base_dir):
+    """Check if the Git folder is healthy by ensuring it's initialized, clean, and the git command is available."""
+    try:
+        # Check if the 'git' command is available by calling 'git --version'
+        subprocess.check_call(['git', '--version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        
+        # Check if the directory is a Git repo by running 'git rev-parse'
+        subprocess.check_call(['git', '-C', base_dir, 'rev-parse', '--is-inside-work-tree'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+        # Check if the repo has any uncommitted changes by running 'git status --porcelain'
+        status = subprocess.check_output(['git', '-C', base_dir, 'status', '--porcelain']).decode().strip()
+        if status:
+            print("Error: There are uncommitted changes in the Git repository.")
+            return False
+
+        # Check if the repo is on the expected branch by running 'git symbolic-ref --short HEAD'
+        current_branch = subprocess.check_output(['git', '-C', base_dir, 'symbolic-ref', '--short', 'HEAD']).decode().strip()
+        if current_branch != git_pull_branch:
+            print(f"Warning: You're not on the expected branch '{git_pull_branch}'. Current branch is '{current_branch}'.")
+            return False
+
+        return True
+    except subprocess.CalledProcessError:
+        print("Error: The 'git' command is not available or the folder is not a valid Git repository.")
+        return False
 
 def main():
     global domain, headers
 
+    # 0. General Prep: Setup Environment and Git Folder Health Check
+    print("\n===== Step 0: General Prep =====")
+    
     # Fetch environment variables needed
     domain, api_token, scriptpath = os.getenv('DOMAIN'), os.getenv('API_TOKEN'), os.getenv('SCRIPTPATH')
     if not all([domain, api_token, scriptpath]):
@@ -364,11 +400,17 @@ def main():
     for folder in folders.values():
         folder.mkdir(parents=True, exist_ok=True)
 
-    # Initialize counters and sets
-    shell_summary, current_scripts = defaultdict(int), set()
+    # Check the health of the Git folder
+    if check_git_health(base_dir):
+        print("Git folder is healthy.")
+    else:
+        print("Error: Git folder is not healthy.")
+        sys.exit(1)
+    print("===== End of Step 0: General Prep =====\n")
 
     # 1. Git Pull
     print("\n===== Step 1: Git Pull =====")
+    print(f"Branch to pull: '{git_pull_branch}'")
     if ENABLE_GIT_PULL:
         git_pull(base_dir)
     else:
@@ -382,6 +424,8 @@ def main():
 
     # 3. Fetch and process scripts
     print("\n===== Step 3: Fetch and Process Scripts and Snippets =====")
+    # Initialize counters and sets
+    shell_summary, current_scripts = defaultdict(int), set()
     print("Fetching scripts...")
     user_defined_scripts = fetch_data(f"{domain}/scripts/?showHiddenScripts=true", headers)
     user_defined_scripts = [item for item in user_defined_scripts if item.get('script_type') == 'userdefined']
@@ -392,11 +436,9 @@ def main():
     snippets = fetch_data(f"{domain}/scripts/snippets/", headers)
     current_scripts.update(process_scripts(snippets, folders["snippets"], folders["snippetsraw"], shell_summary, is_snippet=True))
 
-
     # Output the total number of scripts exported and provide a summary of the shell counts
     print(f"Total number of scripts exported: {len(current_scripts)}")
-    print("Shell summary:", "\n".join(f"{shell}: {count}" for shell, count in shell_summary.items()))   
-
+    print("Shell summary:", "\n".join(f"{shell}: {count}" for shell, count in shell_summary.items()))
 
     # Remove any obsolete files that are no longer existing in the api
     for folder in folders.values():
@@ -411,6 +453,8 @@ def main():
     else:
         print("Git push is disabled.")
     print("===== End of Step 4 =====\n")
+
+
 
 if __name__ == "__main__":
     main()
