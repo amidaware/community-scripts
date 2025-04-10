@@ -71,7 +71,7 @@
     v9.0.2.0 07/04/25 SAN Added support for snippets writeback, added counters and separators
     v9.0.2.1 07/04/25 SAN small optimisations & added a var for changing the branch
     v9.0.2.2 07/04/25 SAN better handeling of custom git setup
-    v9.0.2.3 07/04/25 SAN removed pathvalidate dependency
+    v9.0.2.3 10/04/25 SAN removed pathvalidate dependency
 
 
 .TODO
