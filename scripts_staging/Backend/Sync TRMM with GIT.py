@@ -15,18 +15,23 @@
     This script can be executed on any device including the TRMM server itself as the only requirements are git + access to the API.
 
 .WORKFLOW
-    0. The mapped folder should already be configured with git
+        ------------------------------------------
+    0. /!\TO BE READY BEFORE RUNNING THE SCRIPT/!\:
+        ------------------------------------------
+        The mapped folder should already be configured with git in the way you want to use it.
+        An api key for a dedicated user with the role including the permissions "List Scripts"+"Manage Scripts"
+        should be created and added in the vars as per the exemples bellow.
 
     1. Pull all the modifications from the git repo pre-configured for the folder via git commands
         Any modification that would have been done on TRMM and git that would conflit will be overwriten by the GIT in priority.
 
     2. Check for diff between the json and scripts; if there is a diff, write back to the API the changes.
 
-    3. Exports scripts out to 4 folders:
+    3. Exports and overwrite all current scripts and scripts data to the 4 folders:
         scripts: extracted script code from the API converted from json
-        scriptsraw: All json data from the API for later processing, currently used for hash comparison
+        scriptsraw: All json data from the API used for hash comparison and ID matches
         snippets: extracted snippet code from the API converted from json
-        snippetsraw: All json data for later import/migration
+        snippetsraw: All json data from the API used for hash comparison and ID matches
 
     4. Push all the modifications to the git repo pre-configured for the folder via git commands
         If there are no changes, no commit will be made.
@@ -72,6 +77,7 @@
     v9.0.2.1 07/04/25 SAN small optimisations & added a var for changing the branch
     v9.0.2.2 07/04/25 SAN better handeling of custom git setup
     v9.0.2.3 10/04/25 SAN removed pathvalidate dependency
+    v9.0.2.4 10/04/25 SAN improvements in the git healthchecks and documentation
 
 
 .TODO
@@ -358,28 +364,37 @@ def git_push(base_dir):
 def check_git_health(base_dir):
     """Check if the Git folder is healthy by ensuring it's initialized, clean, and the git command is available."""
     try:
-        # Check if the 'git' command is available by calling 'git --version'
         subprocess.check_call(['git', '--version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        
-        # Check if the directory is a Git repo by running 'git rev-parse'
-        subprocess.check_call(['git', '-C', base_dir, 'rev-parse', '--is-inside-work-tree'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError:
+        print("Error: The 'git' command is not available.")
+        return False
 
-        # Check if the repo has any uncommitted changes by running 'git status --porcelain'
+    try:
+        subprocess.check_call(['git', '-C', base_dir, 'rev-parse', '--is-inside-work-tree'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError:
+        print(f"Error: '{base_dir}' is not a valid Git repository.")
+        return False
+
+    try:
         status = subprocess.check_output(['git', '-C', base_dir, 'status', '--porcelain']).decode().strip()
         if status:
             print("Error: There are uncommitted changes in the Git repository.")
             return False
+    except subprocess.CalledProcessError:
+        print("Error: Failed to check Git status.")
+        return False
 
-        # Check if the repo is on the expected branch by running 'git symbolic-ref --short HEAD'
+    try:
         current_branch = subprocess.check_output(['git', '-C', base_dir, 'symbolic-ref', '--short', 'HEAD']).decode().strip()
         if current_branch != git_pull_branch:
             print(f"Warning: You're not on the expected branch '{git_pull_branch}'. Current branch is '{current_branch}'.")
             return False
-
-        return True
     except subprocess.CalledProcessError:
-        print("Error: The 'git' command is not available or the folder is not a valid Git repository.")
+        print("Error: Unable to determine the current Git branch.")
         return False
+
+    return True
+
 
 def main():
     global domain, headers
@@ -404,12 +419,15 @@ def main():
     for folder in folders.values():
         folder.mkdir(parents=True, exist_ok=True)
 
-    # Check the health of the Git folder
-    if check_git_health(base_dir):
-        print("Git folder is healthy.")
+    # Check the health of the Git repo
+    if ENABLE_GIT_PULL or ENABLE_GIT_PUSH:
+        if check_git_health(base_dir):
+            print("Git repo is healthy.")
+        else:
+            print("Error: Git folder is not healthy.")
+            sys.exit(1)
     else:
-        print("Error: Git folder is not healthy.")
-        sys.exit(1)
+        print("Skipping Git health check because both pull and push are disabled.")
     print("===== End of Step 0: General Prep =====\n")
 
     # 1. Git Pull
