@@ -20,7 +20,7 @@
         ------------------------------------------
         The mapped folder should already be configured with git in the way you want to use it.
         An api key for a dedicated user with the role including the permissions "List Scripts"+"Manage Scripts"
-        should be created and added in the vars as per the exemples bellow.
+        should be created in TRMM and added in the environements vars as per the exemples below.
 
     1. Pull all the modifications from the git repo pre-configured for the folder via git commands
         Any modification that would have been done on TRMM and git that would conflit will be overwriten by the GIT in priority.
@@ -37,8 +37,8 @@
         If there are no changes, no commit will be made.
 
 .EXEMPLE
-    DOMAIN=https://api-rmm
-    DOMAIN=https://{{global.RMM_API_URL}}
+    DOMAIN=api-rmm.exemple.com
+    DOMAIN={{global.RMM_API_URL}}
     API_TOKEN={{global.rmm_key_for_git_script}}
     API_TOKEN=asdf1234
     SCRIPTPATH=/var/RMM-script-repo
@@ -78,16 +78,18 @@
     v9.0.2.2 07/04/25 SAN better handeling of custom git setup
     v9.0.2.3 10/04/25 SAN removed pathvalidate dependency
     v9.0.2.4 10/04/25 SAN improvements in the git healthchecks and documentation
+    v9.0.2.5 11/04/25 SAN added more detailed checks before running and dummy proofing
 
 
 .TODO
+
     Add reporting support
     Move raws from "scriptsraw" to scripts/subfolder/raws/ to group them with their scripts
-    add logging
     send workflow flags to ENV default to true
-    Delete script support from git (dedicated function required as the current delete_obsolete_files only work based on api)
+    Delete script support from git ? (dedicated function required as the current delete_obsolete_files only work based on api)
     Review flow of step 3 for optimisations
     move all big var to global and ensure they are used from global only.
+    add api check for write.
 
 """
 
@@ -100,6 +102,7 @@ from collections import defaultdict
 from pathlib import Path
 import requests
 import re
+import socket
 
 # Toggle flags
 ENABLE_GIT_PULL = True
@@ -362,19 +365,22 @@ def git_push(base_dir):
 
 
 def check_git_health(base_dir):
-    """Check if the Git folder is healthy by ensuring it's initialized, clean, and the git command is available."""
+    git_dir = Path(base_dir) / '.git'
+    if not git_dir.exists():
+        print(f"Error: .git folder not found in {base_dir}")
+        return False
     try:
         subprocess.check_call(['git', '--version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except subprocess.CalledProcessError:
         print("Error: The 'git' command is not available.")
         return False
-
+    
     try:
         subprocess.check_call(['git', '-C', base_dir, 'rev-parse', '--is-inside-work-tree'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except subprocess.CalledProcessError:
         print(f"Error: '{base_dir}' is not a valid Git repository.")
         return False
-
+    
     try:
         status = subprocess.check_output(['git', '-C', base_dir, 'status', '--porcelain']).decode().strip()
         if status:
@@ -383,7 +389,7 @@ def check_git_health(base_dir):
     except subprocess.CalledProcessError:
         print("Error: Failed to check Git status.")
         return False
-
+    
     try:
         current_branch = subprocess.check_output(['git', '-C', base_dir, 'symbolic-ref', '--short', 'HEAD']).decode().strip()
         if current_branch != git_pull_branch:
@@ -396,38 +402,93 @@ def check_git_health(base_dir):
     return True
 
 
-def main():
-    global domain, headers
+def pre_flight():
+    global domain, api_token, scriptpath, headers
 
+    domain = os.getenv('DOMAIN')
+    api_token = os.getenv('API_TOKEN')
+    scriptpath = os.getenv('SCRIPTPATH')
+
+    missing = [var for var in ['DOMAIN', 'API_TOKEN', 'SCRIPTPATH'] if not globals().get(var.lower())]
+    if missing:
+        print(f"✗ Error: Missing environment variable(s): {', '.join(missing)}")
+        for var in missing:
+            if var == 'DOMAIN': print("  - DOMAIN: The URL of your RMM API.(eg. api-rmm.exemple.com)")
+            if var == 'API_TOKEN': print("  - API_TOKEN: An API token for a user with permission to access and write scripts.")
+            if var == 'SCRIPTPATH': print("  - SCRIPTPATH: The local folder path for Git commands.")
+        sys.exit(1)
+
+    headers = {"X-API-KEY": api_token}
+    domain_for_connection = domain.replace("https://", "").replace("http://", "")
+    
+    try:
+        socket.create_connection((domain_for_connection, 443), timeout=5)
+        print(f"✓ Connectivity to {domain} on port 443 OK.")
+    except Exception as e:
+        print(f"✗ Error: Unable to connect to {domain} on port 443 - {e}")
+        sys.exit(1)
+
+    if not domain.startswith("http://") and not domain.startswith("https://"):
+        domain = "https://" + domain
+
+    try:
+        response = requests.get(f"{domain}/scripts/", headers=headers, timeout=5)
+        if response.status_code == 200:
+            print("✓ API token validated successfully for read.")
+        else:
+            print(f"✗ Error: Invalid API token. Status code: {response.status_code}")
+            sys.exit(1)
+    except Exception as e:
+        print(f"✗ Error: API token validation failed - {e}")
+        sys.exit(1)
+
+def check_and_create_folders(base_path, subfolders):
+    try:
+        if not base_path.exists():
+            base_path.mkdir(parents=True, exist_ok=True)
+            print(f"✓ Root folder created at {base_path.resolve()}.")
+        else:
+            print(f"✓ Root folder exists at {base_path.resolve()}.")
+        
+        for folder_path in subfolders.values():
+            if folder_path.exists():
+                print(f"✓ Folder '{folder_path.name}' exists.")
+            else:
+                folder_path.mkdir(parents=True, exist_ok=True)
+                print(f"✓ Folder '{folder_path.name}' created at {folder_path.resolve()}.")
+    except Exception as e:
+        print(f"✗ Error: Failed to create folder(s).")
+        print(f"Error: {e}")
+        sys.exit(1)
+
+def main():
     # 0. General Prep: Setup Environment and Git Folder Health Check
     print("\n===== Step 0: General Prep =====")
     
-    # Fetch environment variables needed
-    domain, api_token, scriptpath = os.getenv('DOMAIN'), os.getenv('API_TOKEN'), os.getenv('SCRIPTPATH')
-    if not all([domain, api_token, scriptpath]):
-        print("Error: DOMAIN, API_TOKEN, and SCRIPTPATH must be set in the environment.")
-        sys.exit(1)
+    # ENV vars  & network checks
+    pre_flight()
 
-    # Set headers for API requests
-    headers = {"X-API-KEY": api_token}
-
-    # Resolve the base directory where scripts will be saved and prepared
+    # Folder structure check
     base_dir = Path(scriptpath).resolve()
-
-    # Define folders for storing scripts, raw scripts, snippets, and raw snippets
-    folders = {name: base_dir / name for name in ["scripts", "scriptsraw", "snippets", "snippetsraw"]}
-    for folder in folders.values():
-        folder.mkdir(parents=True, exist_ok=True)
-
+    folders = {
+        "scripts": base_dir / "scripts",
+        "scriptsraw": base_dir / "scriptsraw",
+        "snippets": base_dir / "snippets",
+        "snippetsraw": base_dir / "snippetsraw"
+    }
+    check_and_create_folders(base_dir, folders)
+    print("✓ All folders created and verified.")
+    
     # Check the health of the Git repo
     if ENABLE_GIT_PULL or ENABLE_GIT_PUSH:
         if check_git_health(base_dir):
-            print("Git repo is healthy.")
+            print("✓ Git repo is healthy.")
         else:
-            print("Error: Git folder is not healthy.")
+            print("✗ Error: Git folder is not healthy.")
             sys.exit(1)
     else:
         print("Skipping Git health check because both pull and push are disabled.")
+    
     print("===== End of Step 0: General Prep =====\n")
 
     # 1. Git Pull
@@ -475,8 +536,6 @@ def main():
     else:
         print("Git push is disabled.")
     print("===== End of Step 4 =====\n")
-
-
 
 if __name__ == "__main__":
     main()
