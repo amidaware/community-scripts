@@ -13,15 +13,25 @@
     #public
 
 .CHANGELOG
+    09.04.25 SAN move to Get-CimInstance and other improvements
 
 #>
 
-$activationStatus = Get-WmiObject -Query "SELECT * FROM SoftwareLicensingProduct WHERE PartialProductKey <> NULL"
 
-if ($activationStatus.LicenseStatus -eq 1) {
-    Write-Host "Windows is activated."
-    exit 0
-} else {
-    Write-Host "Windows is not activated."
+try {
+    $activationStatus = Get-CimInstance -Query "SELECT * FROM SoftwareLicensingProduct WHERE LicenseStatus = 1 AND PartialProductKey IS NOT NULL" -ErrorAction Stop
+
+    if ($activationStatus) {
+        foreach ($product in $activationStatus) {
+            Write-Host "OK: Activated - $($product.Name) [$($product.Description)]"
+        }
+        exit 0
+    } else {
+        Write-Host "KO: Windows is not activated."
+        exit 1
+    }
+} catch {
+    Write-Host "ERROR: Failed to check activation status. $_"
     exit 1
 }
+
