@@ -79,6 +79,7 @@
     v9.0.2.3 10/04/25 SAN removed pathvalidate dependency
     v9.0.2.4 10/04/25 SAN improvements in the git healthchecks and documentation
     v9.0.2.5 11/04/25 SAN added more detailed checks before running and dummy proofing
+    v9.0.2.6 11/04/25 SAN improvements to sanitize, moved vars to global and fixed an issue that could delete all scripts from git randomly
 
 
 .TODO
@@ -88,7 +89,6 @@
     send workflow flags to ENV default to true
     Delete script support from git ? (dedicated function required as the current delete_obsolete_files only work based on api)
     Review flow of step 3 for optimisations
-    move all big var to global and ensure they are used from global only.
     add api check for write.
 
 """
@@ -190,14 +190,20 @@ def save_file(path, content, is_json=False):
     else:
         print(f"File would be saved (simulation): {path}")
 
+
 def fetch_data(url):
-    print(f"Fetching: {url}")
-    r = requests.get(url, headers=headers)
-    if r.ok:
-        print("Success.")
-        return r.json()
-    print(f"Error {r.status_code}")
-    return []
+    try:
+        print(f"Fetching: {url}")
+        r = requests.get(url, headers=headers)
+        r.raise_for_status()
+        return r.json() if r.ok else []
+    except RequestException as e:
+        print(f"Request failed: {e}")
+        sys.exit(1)
+    except ValueError as e:
+        print(f"Error decoding JSON: {e}")
+        sys.exit(1)
+
 
 def write_modifications_to_api(base_dir, folders):
     """Compare local script files and JSON definitions, then push mismatches to the API."""
@@ -455,23 +461,6 @@ def pre_flight():
     except Exception as e:
         print(f"✗ Token read access check failed: {e}")
         sys.exit(1)
-
-    '''
-    this does not work the api will create an empty file need to find another way.
-    try:
-        response = requests.post(f"{domain}/scripts/", headers=headers, json={}, timeout=5)
-        if response.status_code in (200, 201, 400):
-            print(f"✓ Token valid for write access: {obfuscated}")
-        elif response.status_code == 403:
-            print("✗ Token write access denied (status 403)")
-            sys.exit(1)
-        else:
-            print(f"✗ Token write access denied (status {response.status_code})")
-            sys.exit(1)
-    except Exception as e:
-        print(f"✗ Token write access check failed: {e}")
-        sys.exit(1)
-    '''
 
     return
 
