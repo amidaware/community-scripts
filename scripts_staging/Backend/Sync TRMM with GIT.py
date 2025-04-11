@@ -103,6 +103,7 @@ from pathlib import Path
 import requests
 import re
 import socket
+from requests.exceptions import RequestException, HTTPError
 
 # Toggle flags
 ENABLE_GIT_PULL = True
@@ -126,9 +127,21 @@ def delete_obsolete_files(folder, current_scripts):
             except Exception as e: print(f"Could not delete dir {d}: {e}")
 
 def sanitize_filename(name: str) -> str:
-    name = name.replace('\0', '')
-
-    return re.sub(r'[<>:"/\\|?*]', '', name).strip()
+    removed_chars = []
+    
+    if '\0' in name:
+        removed_chars.append("\\0")
+        name = name.replace('\0', '')
+    
+    invalid_chars = re.findall(r'[<>:"/\\|?*]', name)
+    if invalid_chars:
+        removed_chars.extend(invalid_chars)
+        name = re.sub(r'[<>:"/\\|?*]', '', name)
+    
+    if removed_chars:
+        print(f"Removed: {', '.join(removed_chars)}")
+    
+    return name.strip()
 
 def process_scripts(scripts, script_folder, script_raw_folder, shell_summary, is_snippet=False):
     print(f"Processing {'snippets' if is_snippet else 'scripts'}...")
@@ -143,7 +156,7 @@ def process_scripts(scripts, script_folder, script_raw_folder, shell_summary, is
         folder.mkdir(parents=True, exist_ok=True)
         raw_folder.mkdir(parents=True, exist_ok=True)
 
-        data = s if is_snippet else fetch_data(f"{domain}/scripts/{sid}/download/?with_snippets=false", headers)
+        data = s if is_snippet else fetch_data(f"{domain}/scripts/{sid}/download/?with_snippets=false")
         if not data: continue
 
         code = data.get('code')
@@ -177,7 +190,7 @@ def save_file(path, content, is_json=False):
     else:
         print(f"File would be saved (simulation): {path}")
 
-def fetch_data(url, headers):
+def fetch_data(url):
     print(f"Fetching: {url}")
     r = requests.get(url, headers=headers)
     if r.ok:
@@ -186,7 +199,7 @@ def fetch_data(url, headers):
     print(f"Error {r.status_code}")
     return []
 
-def write_modifications_to_api(base_dir, folders, api_token):
+def write_modifications_to_api(base_dir, folders):
     """Compare local script files and JSON definitions, then push mismatches to the API."""
     print("Comparing script files with JSON files...")
     mismatches = []
@@ -241,7 +254,7 @@ def write_modifications_to_api(base_dir, folders, api_token):
                 try:
                     if ENABLE_WRITEBACK:
                         print(f"Updating API for {'snippet' if is_snippet else 'script'} {match}...")
-                        update_api(raw_data.get('id'), updated_payload, api_token, is_snippet)
+                        update_api(raw_data.get('id'), updated_payload, is_snippet)
                         total_updated += 1
                     else:
                         print(f"Simulated push for {'snippet' if is_snippet else 'script'} {match}:")
@@ -259,7 +272,7 @@ def write_modifications_to_api(base_dir, folders, api_token):
     print(f"Total updates: {total_updated}")
     print(f"Total skipped: {total_skipped}")
 
-def update_api(item_id, payload, api_token, is_snippet=False):
+def update_api(item_id, payload, is_snippet=False):
     """Update the API with the provided item ID and payload."""
     
     # Correctly handle 'code' or 'script_body' based on whether it's a snippet or a script
@@ -275,7 +288,7 @@ def update_api(item_id, payload, api_token, is_snippet=False):
     print(f"Updating {'snippet' if is_snippet else 'script'} {item_id}, length: {len(body)}, preview: {body[:1000]}{'...' if len(body) > 1000 else ''}")
 
     try:
-        res = requests.put(endpoint, headers={"X-API-KEY": api_token}, json=payload, timeout=120)
+        res = requests.put(endpoint, headers=headers, json=payload, timeout=120)
         print(f"{item_id} update: {res.status_code} {res.reason}")
         if res.status_code != 200:
             print(res.text)
@@ -403,24 +416,23 @@ def check_git_health(base_dir):
 
 
 def pre_flight():
-    global domain, api_token, scriptpath, headers
-
+    global domain, scriptpath, headers
     domain = os.getenv('DOMAIN')
     api_token = os.getenv('API_TOKEN')
     scriptpath = os.getenv('SCRIPTPATH')
 
-    missing = [var for var in ['DOMAIN', 'API_TOKEN', 'SCRIPTPATH'] if not globals().get(var.lower())]
+    missing = [name for name, val in [('DOMAIN', domain), ('API_TOKEN', api_token), ('SCRIPTPATH', scriptpath)] if not val]
     if missing:
         print(f"✗ Error: Missing environment variable(s): {', '.join(missing)}")
         for var in missing:
-            if var == 'DOMAIN': print("  - DOMAIN: The URL of your RMM API.(eg. api-rmm.exemple.com)")
+            if var == 'DOMAIN': print("  - DOMAIN: The URL of your RMM API. (e.g. api-rmm.example.com)")
             if var == 'API_TOKEN': print("  - API_TOKEN: An API token for a user with permission to access and write scripts.")
             if var == 'SCRIPTPATH': print("  - SCRIPTPATH: The local folder path for Git commands.")
         sys.exit(1)
 
     headers = {"X-API-KEY": api_token}
     domain_for_connection = domain.replace("https://", "").replace("http://", "")
-    
+
     try:
         socket.create_connection((domain_for_connection, 443), timeout=5)
         print(f"✓ Connectivity to {domain} on port 443 OK.")
@@ -431,16 +443,37 @@ def pre_flight():
     if not domain.startswith("http://") and not domain.startswith("https://"):
         domain = "https://" + domain
 
+    obfuscated = api_token[:3] + '*' * (len(api_token) - 6) + api_token[-3:]
+
     try:
         response = requests.get(f"{domain}/scripts/", headers=headers, timeout=5)
         if response.status_code == 200:
-            print("✓ API token validated successfully for read.")
+            print(f"✓ Token valid for read access: {obfuscated}")
         else:
-            print(f"✗ Error: Invalid API token. Status code: {response.status_code}")
+            print(f"✗ Token read access denied (status {response.status_code})")
             sys.exit(1)
     except Exception as e:
-        print(f"✗ Error: API token validation failed - {e}")
+        print(f"✗ Token read access check failed: {e}")
         sys.exit(1)
+
+    '''
+    this does not work the api will create an empty file need to find another way.
+    try:
+        response = requests.post(f"{domain}/scripts/", headers=headers, json={}, timeout=5)
+        if response.status_code in (200, 201, 400):
+            print(f"✓ Token valid for write access: {obfuscated}")
+        elif response.status_code == 403:
+            print("✗ Token write access denied (status 403)")
+            sys.exit(1)
+        else:
+            print(f"✗ Token write access denied (status {response.status_code})")
+            sys.exit(1)
+    except Exception as e:
+        print(f"✗ Token write access check failed: {e}")
+        sys.exit(1)
+    '''
+
+    return
 
 def check_and_create_folders(base_path, subfolders):
     try:
@@ -462,6 +495,7 @@ def check_and_create_folders(base_path, subfolders):
         sys.exit(1)
 
 def main():
+    
     # 0. General Prep: Setup Environment and Git Folder Health Check
     print("\n===== Step 0: General Prep =====")
     
@@ -502,7 +536,7 @@ def main():
 
     # 2. Write modifications to the API
     print("\n===== Step 2: Write Modifications to API =====")
-    write_modifications_to_api(base_dir, folders, api_token)
+    write_modifications_to_api(base_dir, folders)
     print("===== End of Step 2 =====\n")
 
     # 3. Fetch and process scripts
@@ -510,13 +544,13 @@ def main():
     # Initialize counters and sets
     shell_summary, current_scripts = defaultdict(int), set()
     print("Fetching scripts...")
-    user_defined_scripts = fetch_data(f"{domain}/scripts/?showHiddenScripts=true", headers)
+    user_defined_scripts = fetch_data(f"{domain}/scripts/?showHiddenScripts=true")
     user_defined_scripts = [item for item in user_defined_scripts if item.get('script_type') == 'userdefined']
     current_scripts.update(process_scripts(user_defined_scripts, folders["scripts"], folders["scriptsraw"], shell_summary))
 
     # Fetch and process snippets
     print("Fetching snippets...")
-    snippets = fetch_data(f"{domain}/scripts/snippets/", headers)
+    snippets = fetch_data(f"{domain}/scripts/snippets/")
     current_scripts.update(process_scripts(snippets, folders["snippets"], folders["snippetsraw"], shell_summary, is_snippet=True))
 
     # Output the total number of scripts exported and provide a summary of the shell counts
