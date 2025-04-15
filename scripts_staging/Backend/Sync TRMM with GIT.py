@@ -92,6 +92,7 @@
     v9.0.3.1 14/04/25 SAN split step 2 into functions for easier upgrade 
 
 .TODO
+    Handle rights issues when executing git commands
     Review flow of step 3 for optimisations
 
     Revamp folder structure:
