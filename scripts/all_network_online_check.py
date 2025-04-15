@@ -9,8 +9,8 @@ This PC online check script will alert when a PC comes online. It does this by p
 RMM server.
 
 In Tactical RMM, a return code of 0 indicates success.
-  - If the ping is successful, a return code of 1 used to indicate failure so an alert can be sent.
-  - If the ping is not successful, a return code of 0 is used to indicate success and no alert is sent.
+  - If the ping is not successful, a return code of 1 used to indicate failure so an alert can be sent.
+  - If the ping is successful, a return code of 0 is used to indicate success and no alert is sent.
 
 Command line arguments:
   There are no command line arguments. All parameters are passed using environmental variables.
@@ -162,12 +162,12 @@ def main():
     if success:
         print("Success!")
         print(output)
-        # Exit with failure; send alert
-        return 1
+        # Exit with sucess; dot not send alert
+        return 0
     else:
         print(output)
-        # Exit with success; do not send alert
-        return 0
+        # Exit with failure; send alert
+        return 1
 
 
 if __name__ == '__main__':
