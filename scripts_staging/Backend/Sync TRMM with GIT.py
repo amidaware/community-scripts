@@ -89,13 +89,27 @@
     v9.0.2.5 11/04/25 SAN added more detailed checks before running and dummy proofing
     v9.0.2.6 11/04/25 SAN improvements to sanitize, moved vars to global and fixed an issue that could delete all scripts from git randomly
     v9.0.3.0 11/04/25 SAN improvements to the git healthchecks and git push, disabled deletetions if writetofile is false and moved alls toggle flags and branch to env
+    v9.0.3.1 14/04/25 SAN split step 2 into functions for easier upgrade 
 
 .TODO
+    Handle rights issues when executing git commands
+    Review flow of step 3 for optimisations
+
+    Revamp folder structure:
+        Move raws from "scriptsraw" to Category/folder/raws/
+        add "uncategorised" folder
+        remove "scripts" top level folder while keeping snippets
+
+    Move ID from json to an array like this and make sure that this array is never overwriten to keep tracks of IDs across instances only add current instance in step 2 if missing:
+        "ids": [
+        {
+        "server": "rmm.example.com", (this needs to be a hash of the domain not clear text)
+        "id": 123
+        }
+        before writing to api the modifications in step 2 new function to check all .json for id missing to this instance if missing create script then step 2 will add it to the array
+    
+    Delete script support from git ? (dedicated function required at the end of step 2, if json exist but no script matches mark for delete json and use the id of the json to tell the api to delete in trmm)
     Add reporting support
-    Move raws from "scriptsraw" to scripts/subfolder/raws/ to group them with their scripts
-    Delete script support from git ? (dedicated function required in step 2, if json exist but no script matches mark for delete json and use the id of the json to tell the api to delete in trmm)
-    Review flow of step 3 for optimisations 
-    Split step 2 into more functions for clarity 
 
 """
 
@@ -110,7 +124,6 @@ import requests
 import re
 import socket
 from requests.exceptions import RequestException, HTTPError
-import os
 
 
 
@@ -127,6 +140,8 @@ if not ENABLE_GIT_PULL: print("Git Pull is disabled.")
 if not ENABLE_GIT_PUSH: print("Git Push is disabled.")
 if not ENABLE_WRITEBACK: print("Writeback is disabled.")
 if not ENABLE_WRITETOFILE: print("Write to file is disabled.")
+
+
 
 def delete_obsolete_files(folder, current_scripts):
     print(f"Cleaning {folder}...")
@@ -158,7 +173,6 @@ def delete_obsolete_files(folder, current_scripts):
                 print(f"Could not delete dir {d}: {e}")
         else:
             print(f"Simulated removal of empty directory: {d}")
-
 
 def sanitize_filename(name: str) -> str:
     removed_chars = []
@@ -238,9 +252,62 @@ def pull_from_api(url):
         print(f"Error decoding JSON: {e}")
         sys.exit(1)
 
+def compare_files_and_hashes(match, raw_path):
+    try:
+        file_hash = compute_hash(match)
+    except Exception as e:
+        print(f"Error computing hash for file {match}: {e}")
+        return None, None, None
+    
+    try:
+        with raw_path.open(encoding='utf-8') as f:
+            raw_data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        print(f"Error reading JSON file {raw_path}: {e}")
+        return None, None, None
+    except Exception as e:
+        print(f"Unexpected error reading file {raw_path}: {e}")
+        return None, None, None
+
+    code = raw_data.get('code', '')
+    try:
+        code_hash = hashlib.sha256(code.encode('utf-8')).hexdigest()
+    except Exception as e:
+        print(f"Error generating hash for code in {raw_path}: {e}")
+        return None, None, None
+
+    return file_hash, code_hash, raw_data
+
+def update_api_if_needed(match, raw_data, is_snippet):
+    try:
+        with match.open(encoding='utf-8') as f:
+            updated_payload = {**raw_data, 'code': f.read()}
+    except (FileNotFoundError, IOError) as e:
+        print(f"Error reading script file {match}: {e}")
+        return False
+    except Exception as e:
+        print(f"Unexpected error reading file {match}: {e}")
+        return False
+
+    try:
+        if ENABLE_WRITEBACK:
+            print(f"Updating API for {'snippet' if is_snippet else 'script'} {match}...")
+            update_to_api(raw_data.get('id'), updated_payload, is_snippet)
+            return True
+        else:
+            print(f"Simulated push for {'snippet' if is_snippet else 'script'} {match}:")
+            updated_payload['script_body'] = updated_payload.pop('code')
+            print(json.dumps(updated_payload, indent=4))
+            sys.stdout.flush()
+            return False
+    except (ConnectionError, TimeoutError) as e:
+        print(f"Network error while updating API for {'snippet' if is_snippet else 'script'} {match}: {e}")
+    except Exception as e:
+        print(f"Unexpected error while updating API for {'snippet' if is_snippet else 'script'} {match}: {e}")
+    
+    return False
 
 def write_modifications_to_api(base_dir, folders):
-    """Compare local script files and JSON definitions, then push mismatches to the API."""
     print("Comparing script files with JSON files...")
     mismatches = []
     
@@ -257,8 +324,13 @@ def write_modifications_to_api(base_dir, folders):
         for raw_path in folder.rglob('*.json'):
             total_files_checked += 1
             raw_name = re.sub(r'^\d+ - ', '', raw_path.stem).lower()
-            match = next((p for p in folders[folder_name].rglob('*') 
-                          if p.is_file() and p.stem.lower() == raw_name), None)
+            try:
+                match = next((p for p in folders[folder_name].rglob('*') 
+                              if p.is_file() and p.stem.lower() == raw_name), None)
+            except Exception as e:
+                print(f"Error matching file for {raw_path}: {e}")
+                total_skipped += 1
+                continue
 
             if not match:
                 print(f"No match for {'snippet' if is_snippet else 'script'}: {raw_path}")
@@ -267,43 +339,28 @@ def write_modifications_to_api(base_dir, folders):
 
             print(f"Matched {'snippet' if is_snippet else 'script'}: {match} <-> {raw_path}")
             total_matches += 1
-            file_hash = compute_hash(match)
 
-            with raw_path.open(encoding='utf-8') as f:
-                raw_data = json.load(f)
-            code = raw_data.get('code', '')
-            code_hash = hashlib.sha256(code.encode('utf-8')).hexdigest()
+            file_hash, code_hash, raw_data = compare_files_and_hashes(match, raw_path)
 
-            print(f"{'Snippet' if is_snippet else 'Script'} hash: {file_hash}\nJSON hash:   {code_hash}")
-
-            if file_hash != code_hash:
+            if file_hash and code_hash and file_hash != code_hash:
                 total_mismatches += 1
                 print(f"\n--- {'Snippet' if is_snippet else 'Script'} (first 10 lines) ---")
-                with match.open(encoding='utf-8') as f:
-                    for i, line in enumerate(f):
-                        if i >= 10: break
-                        print(line.strip())
+                try:
+                    with match.open(encoding='utf-8') as f:
+                        for i, line in enumerate(f):
+                            if i >= 10: break
+                            print(line.strip())
+                except Exception as e:
+                    print(f"Error reading file {match}: {e}")
 
                 print(f"\n--- JSON Code (first 10 lines) ---")
-                for line in code.splitlines()[:10]:
+                for line in raw_data.get('code', '').splitlines()[:10]:
                     print(line.strip())
 
-                with match.open(encoding='utf-8') as f:
-                    updated_payload = {**raw_data, 'code': f.read()}
+                updated = update_api_if_needed(match, raw_data, is_snippet)
 
-                try:
-                    if ENABLE_WRITEBACK:
-                        print(f"Updating API for {'snippet' if is_snippet else 'script'} {match}...")
-                        update_to_api(raw_data.get('id'), updated_payload, is_snippet)
-                        total_updated += 1
-                    else:
-                        print(f"Simulated push for {'snippet' if is_snippet else 'script'} {match}:")
-                        updated_payload['script_body'] = updated_payload.pop('code')
-                        print(json.dumps(updated_payload, indent=4))
-                        sys.stdout.flush()
-                except BrokenPipeError:
-                    sys.stderr.close()
-                    sys.stdout.close()
+                if updated:
+                    total_updated += 1
 
     print("\nComparison Complete:")
     print(f"Total files checked: {total_files_checked}")
@@ -350,8 +407,6 @@ def git_pull(base_dir):
     except subprocess.CalledProcessError as e:
         print(f"Failed to force-pull changes from Git: {e}")
         sys.exit(1)
-
-
 
 def generate_commit_message(base_dir, max_files=5):
     """Generate a commit message based on staged changes."""
@@ -401,7 +456,6 @@ def git_push(base_dir):
             print("No changes to commit.")
     except subprocess.CalledProcessError as e:
         print(f"Git operation failed: {e}")
-
 
 def check_git_health(base_dir):
     """Check the health of the Git repository."""
