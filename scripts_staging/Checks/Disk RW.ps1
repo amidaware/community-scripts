@@ -28,38 +28,26 @@
 
 .CHANGELOG
     SAN 11.12.24 Moved vars to env
+    SAN 17.04.25 Default to temp dir if no value provided and code cleanup
 #>
 
-# Variables for thresholds with default values from environment or script
-$ReadWarnThresholdMBps = [int]$env:READ_WARN_THRESHOLD_MBPS
-$ReadErrorThresholdMBps = [int]$env:READ_ERROR_THRESHOLD_MBPS
-$WriteWarnThresholdMBps = [int]$env:WRITE_WARN_THRESHOLD_MBPS
-$WriteErrorThresholdMBps = [int]$env:WRITE_ERROR_THRESHOLD_MBPS
+# Set thresholds from environment or fallback to defaults
+$ReadWarnThresholdMBps  = [int]($env:READ_WARN_THRESHOLD_MBPS  || 2000)
+$ReadErrorThresholdMBps = [int]($env:READ_ERROR_THRESHOLD_MBPS || 1500)
+$WriteWarnThresholdMBps = [int]($env:WRITE_WARN_THRESHOLD_MBPS || 80)
+$WriteErrorThresholdMBps = [int]($env:WRITE_ERROR_THRESHOLD_MBPS || 50)
 
-# Set default values if environment variables are not set
-if (-not $ReadWarnThresholdMBps) { $ReadWarnThresholdMBps = 2000 }
-if (-not $ReadErrorThresholdMBps) { $ReadErrorThresholdMBps = 1500 }
-if (-not $WriteWarnThresholdMBps) { $WriteWarnThresholdMBps = 80 }
-if (-not $WriteErrorThresholdMBps) { $WriteErrorThresholdMBps = 50 }
-
-# Function to test disk speed using a test file
+# Function to test disk speed
 function Test-DiskSpeed {
     param (
-        [string]$TestFile = $env:target_file,  # Get target file from environment variable
+        [string]$TestFile = $(if ($env:target_file) { $env:target_file } else { "C:\Windows\Temp\disk_test.tmp" }),
         [int]$FileSizeInMB = 1024
     )
 
-    # Check if the environment variable is set
-    if (-not $TestFile) {
-        Write-Output "Error: Environment variable 'target_file' is not set or is empty."
-        exit 1  # Exit with warning code if the variable is not set or empty
-    }
-    
-    # Create a buffer for writing
     $buffer = New-Object byte[] (1MB)
     $rnd = New-Object Random
 
-    # Write speed test
+    # Write test
     $writeStart = Get-Date
     $stream = [System.IO.File]::Create($TestFile)
     for ($i = 0; $i -lt $FileSizeInMB; $i++) {
@@ -67,43 +55,43 @@ function Test-DiskSpeed {
         $stream.Write($buffer, 0, $buffer.Length)
     }
     $stream.Close()
-    $writeEnd = Get-Date
-    $writeDuration = ($writeEnd - $writeStart).TotalSeconds
-    $writeSpeedMBps = $FileSizeInMB / $writeDuration
+    $writeDuration = (Get-Date) - $writeStart
+    $writeSpeedMBps = $FileSizeInMB / $writeDuration.TotalSeconds
 
-    # Read speed test
+    # Read test
     $readStart = Get-Date
     $stream = [System.IO.File]::OpenRead($TestFile)
-    while ($stream.Read($buffer, 0, $buffer.Length)) {
-        # Reading the file
-    }
+    while ($stream.Read($buffer, 0, $buffer.Length)) { }
     $stream.Close()
-    $readEnd = Get-Date
-    $readDuration = ($readEnd - $readStart).TotalSeconds
-    $readSpeedMBps = $FileSizeInMB / $readDuration
+    $readDuration = (Get-Date) - $readStart
+    $readSpeedMBps = $FileSizeInMB / $readDuration.TotalSeconds
 
-    # Cleanup
-    Remove-Item $TestFile
+    Remove-Item -Force $TestFile
 
     return [pscustomobject]@{
         WriteSpeedMBps = [math]::Round($writeSpeedMBps, 2)
-        ReadSpeedMBps = [math]::Round($readSpeedMBps, 2)
+        ReadSpeedMBps  = [math]::Round($readSpeedMBps, 2)
+        TestFile       = $TestFile
     }
 }
 
-# Run the test
+# Run and evaluate
 $speedResults = Test-DiskSpeed
 
-# Output the results
 Write-Output "W: $($speedResults.WriteSpeedMBps) MB/s"
 Write-Output "R: $($speedResults.ReadSpeedMBps) MB/s"
-Write-Output "T: $env:target_file "
+Write-Output "T: $($speedResults.TestFile)"
 
-# Check conditions for exit codes based on thresholds
-if ($speedResults.WriteSpeedMBps -lt $WriteErrorThresholdMBps -or $speedResults.ReadSpeedMBps -lt $ReadErrorThresholdMBps) {
-    exit 2  # Error condition if below error thresholds
-} elseif ($speedResults.WriteSpeedMBps -lt $WriteWarnThresholdMBps -or $speedResults.ReadSpeedMBps -lt $ReadWarnThresholdMBps) {
-    exit 1  # Warning condition if below warning thresholds
+if (
+    $speedResults.WriteSpeedMBps -lt $WriteErrorThresholdMBps -or 
+    $speedResults.ReadSpeedMBps -lt $ReadErrorThresholdMBps
+) {
+    exit 2
+} elseif (
+    $speedResults.WriteSpeedMBps -lt $WriteWarnThresholdMBps -or 
+    $speedResults.ReadSpeedMBps -lt $ReadWarnThresholdMBps
+) {
+    exit 1
 } else {
-    exit 0  # All good
+    exit 0
 }
