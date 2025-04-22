@@ -37,48 +37,48 @@ $serverVersions = @{
     "2016" = @{
         "en" = @{
             "file" = "en_windows_server_2016_vl_x64_dvd_11636701.iso"
-            "checksum" = "47919CE8B4993F531CA1FA3F85941F4A72B47EBAA4D3A321FECF83CA9D17E6B8" # pragma: allowlist-secret
+            "checksum" = "47919CE8B4993F531CA1FA3F85941F4A72B47EBAA4D3A321FECF83CA9D17E6B8" # pragma: allowlist-secret #trufflehog:ignore
             "licenseKey" = "WC2BQ-8NRM3-FDDYY-2BFGV-KHKQY"
         }
         "fr" = @{
             "file" = "fr_windows_server_2016_vl_x64_dvd_11636729.iso"
-            "checksum" = "81B809A9782C046A48D461AAEBFCD33D07A566C5A990373D0A36CDA1E08EA6F0" # pragma: allowlist-secret
+            "checksum" = "81B809A9782C046A48D461AAEBFCD33D07A566C5A990373D0A36CDA1E08EA6F0" # pragma: allowlist-secret #trufflehog:ignore
             "licenseKey" = "WC2BQ-8NRM3-FDDYY-2BFGV-KHKQY"
         }
     }
     "2019" = @{
         "en" = @{
             "file" = "en-us_windows_server_2019_x64_dvd_f9475476.iso"
-            "checksum" = "EA247E5CF4DF3E5829BFAAF45D899933A2A67B1C700A02EE8141287A8520261C" # pragma: allowlist-secret
+            "checksum" = "EA247E5CF4DF3E5829BFAAF45D899933A2A67B1C700A02EE8141287A8520261C" # pragma: allowlist-secret #trufflehog:ignore
             "licenseKey" = "N69G4-B89J2-4G8F4-WWYCC-J464C"
         }
         "fr" = @{
             "file" = "fr-fr_windows_server_2019_x64_dvd_f6f6acf6.iso"
-            "checksum" = "E0C6958E94F41163AA1EA9500825B8523136E1B8C5FC03CB7E3900858C7134AD" # pragma: allowlist-secret
+            "checksum" = "E0C6958E94F41163AA1EA9500825B8523136E1B8C5FC03CB7E3900858C7134AD" # pragma: allowlist-secret #trufflehog:ignore
             "licenseKey" = "N69G4-B89J2-4G8F4-WWYCC-J464C"
         }
     }
     "2022" = @{
         "en" = @{
             "file" = "en-us_windows_server_2022_updated_nov_2024_x64_dvd_4e34897c.iso"
-            "checksum" = "0C388FE9D0A524AC603945F5CFFB7CC600A73432BCCCEA3E95274BF851973C96" # pragma: allowlist-secret
+            "checksum" = "0C388FE9D0A524AC603945F5CFFB7CC600A73432BCCCEA3E95274BF851973C96" # pragma: allowlist-secret #trufflehog:ignore
             "licenseKey" = "VDYBN-27WPP-V4HQT-9VMD4-VMK7H" 
         }
         "fr" = @{
             "file" = "fr-fr_windows_server_2022_updated_nov_2024_x64_dvd_4e34897c.iso"
-            "checksum" = "CCF7FF49503C652E59EE87DE5E66260739F5B20BFB448B3D68411455C291F423" # pragma: allowlist-secret
+            "checksum" = "CCF7FF49503C652E59EE87DE5E66260739F5B20BFB448B3D68411455C291F423" # pragma: allowlist-secret #trufflehog:ignore
             "licenseKey" = "VDYBN-27WPP-V4HQT-9VMD4-VMK7H"
         }
     }
     "2025" = @{
         "en" = @{
             "file" = "en-us_windows_server_2025_x64_dvd_b7ec10f3.iso"
-            "checksum" = "854109E1F215A29FC3541188297A6CA97C8A8F0F8C4DD6236B78DFDF845BF75E" # pragma: allowlist-secret
+            "checksum" = "854109E1F215A29FC3541188297A6CA97C8A8F0F8C4DD6236B78DFDF845BF75E" # pragma: allowlist-secret #trufflehog:ignore
             "licenseKey" = "TVRH6-WHNXV-R9WG3-9XRFY-MY832"
         }
         "fr" = @{
             "file" = "fr-fr_windows_server_2025_x64_dvd_bd6be507.iso"
-            "checksum" = "45384960A3F430D26454955D1198A6E38E7AA98C9E3906AC1AE9367229C103D0" # pragma: allowlist-secret
+            "checksum" = "45384960A3F430D26454955D1198A6E38E7AA98C9E3906AC1AE9367229C103D0" # pragma: allowlist-secret #trufflehog:ignore
             "licenseKey" = "TVRH6-WHNXV-R9WG3-9XRFY-MY832"
         }
     }
