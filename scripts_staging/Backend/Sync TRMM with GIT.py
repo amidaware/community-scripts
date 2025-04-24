@@ -131,7 +131,6 @@ import socket
 from requests.exceptions import RequestException, HTTPError
 
 
-
 # Retrieve the git pull branch or default to 'master'
 git_pull_branch = os.getenv('GIT_PULL_BRANCH', 'master')
 if git_pull_branch != 'master': print(f"Git Pull Branch: {git_pull_branch}")
@@ -145,7 +144,6 @@ if not ENABLE_GIT_PULL: print("Git Pull is disabled.")
 if not ENABLE_GIT_PUSH: print("Git Push is disabled.")
 if not ENABLE_WRITEBACK: print("Writeback is disabled.")
 if not ENABLE_WRITETOFILE: print("Write to file is disabled.")
-
 
 
 def delete_obsolete_files(folder, current_scripts):
@@ -503,9 +501,6 @@ def git_push(base_dir):
             print("No changes to commit.")
     except subprocess.CalledProcessError as e:
         print(f"Git operation failed: {e}")
-
-import subprocess
-from pathlib import Path
 
 def check_git_health(base_dir):
     """Check the health of the Git repository."""
