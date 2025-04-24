@@ -90,6 +90,7 @@
     v9.0.2.6 11/04/25 SAN improvements to sanitize, moved vars to global and fixed an issue that could delete all scripts from git randomly
     v9.0.3.0 11/04/25 SAN improvements to the git healthchecks and git push, disabled deletetions if writetofile is false and moved alls toggle flags and branch to env
     v9.0.3.1 14/04/25 SAN split step 2 into functions for easier upgrade 
+    v9.0.3.2 24/04/25 SAN couple of pre-flight fixes
 
 .TODO
     Handle rights issues when executing git commands
@@ -569,9 +570,9 @@ def pre_flight():
     if missing:
         print(f"✗ Error: Missing environment variable(s): {', '.join(missing)}")
         for var in missing:
-            if var == 'DOMAIN': print("  - DOMAIN: The URL of your RMM API. (e.g. api-rmm.example.com)")
-            if var == 'API_TOKEN': print("  - API_TOKEN: An API token for a user with permission to access and write scripts.")
-            if var == 'SCRIPTPATH': print("  - SCRIPTPATH: The local folder path for Git commands.")
+            if var == 'DOMAIN': print(f"  - DOMAIN: The URL of your RMM API. (e.g. api-rmm.example.com)")
+            if var == 'API_TOKEN': print(f"  - API_TOKEN: An API token for a user with permission to access and write scripts.")
+            if var == 'SCRIPTPATH': print(f"  - SCRIPTPATH: The local folder path for Git commands.")
         sys.exit(1)
 
     headers = {"X-API-KEY": api_token}
@@ -581,7 +582,8 @@ def pre_flight():
         socket.create_connection((domain_for_connection, 443), timeout=5)
         print(f"✓ Connectivity to {domain} on port 443 OK.")
     except Exception as e:
-        print(f"✗ Error: Unable to connect to {domain} on port 443 - {e}")
+        obfuscated = api_token[:3] + '*' * (len(api_token) - 6) + api_token[-3:]
+        print(f"✗ Error: Unable to connect to {domain} on port 443 - {e} (Obfuscated API Token: {obfuscated})")
         sys.exit(1)
 
     if not domain.startswith("http://") and not domain.startswith("https://"):
@@ -594,10 +596,10 @@ def pre_flight():
         if response.status_code == 200:
             print(f"✓ Token valid for read access: {obfuscated}")
         else:
-            print(f"✗ Token read access denied (status {response.status_code})")
+            print(f"✗ Token read access denied (status {response.status_code}) - Obfuscated Token: {obfuscated}")
             sys.exit(1)
     except Exception as e:
-        print(f"✗ Token read access check failed: {e}")
+        print(f"✗ Token read access check failed: {e} - Obfuscated Token: {obfuscated}")
         sys.exit(1)
 
     return
