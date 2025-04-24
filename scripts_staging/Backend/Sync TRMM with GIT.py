@@ -91,6 +91,8 @@
     v9.0.3.0 11/04/25 SAN improvements to the git healthchecks and git push, disabled deletetions if writetofile is false and moved alls toggle flags and branch to env
     v9.0.3.1 14/04/25 SAN split step 2 into functions for easier upgrade 
     v9.0.3.2 24/04/25 SAN couple of pre-flight fixes
+    v9.0.3.3 24/04/25 SAN fix commit errors
+
 
 .TODO
     Handle rights issues when executing git commands
@@ -409,29 +411,47 @@ def git_pull(base_dir):
         print(f"Failed to force-pull changes from Git: {e}")
         sys.exit(1)
 
+
 def generate_commit_message(base_dir, max_files=5):
     """Generate a commit message based on staged changes."""
-    # Get the list of staged changes
     result = subprocess.run(
         ['git', '-C', base_dir, 'diff', '--cached', '--name-status'],
         capture_output=True, text=True, check=True
     )
-    
+
     changes = {"created": [], "modified": [], "deleted": [], "renamed": []}
+
     for line in result.stdout.strip().split("\n"):
-        if not line: continue
-        status, file = line.split("\t")
-        if file.startswith("scriptsraw/") or file.startswith("snippetsraw/"): continue
-        if status.startswith("A"): changes["created"].append(file)
-        elif status.startswith("M"): changes["modified"].append(file)
-        elif status.startswith("D"): changes["deleted"].append(file)
-        elif status.startswith("R"): changes["renamed"].append(f"{line.split()[1]} -> {line.split()[2]}")
+        if not line:
+            continue
+
+        parts = line.split("\t")
+        status = parts[0]
+
+        if status.startswith("R") and len(parts) == 3:
+            old, new = parts[1], parts[2]
+            if old.startswith("scriptsraw/") or old.startswith("snippetsraw/"):
+                continue
+            changes["renamed"].append(f"{old} -> {new}")
+        elif len(parts) >= 2:
+            file = parts[1]
+            if file.startswith("scriptsraw/") or file.startswith("snippetsraw/"):
+                continue
+            if status.startswith("A"):
+                changes["created"].append(file)
+            elif status.startswith("M"):
+                changes["modified"].append(file)
+            elif status.startswith("D"):
+                changes["deleted"].append(file)
 
     if not any(changes.values()):
         return "Minor update"
 
-    parts = [f"{change_type} {len(files)}: {', '.join(files[:max_files])}{'...' if len(files) > max_files else ''}"
-             for change_type, files in changes.items() if files]
+    parts = [
+        f"{change_type} {len(files)}: {', '.join(files[:max_files])}{'...' if len(files) > max_files else ''}"
+        for change_type, files in changes.items() if files
+    ]
+
     return "; ".join(parts)
 
 def git_push(base_dir):
