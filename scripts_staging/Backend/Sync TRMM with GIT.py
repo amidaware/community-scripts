@@ -93,6 +93,7 @@
     v9.0.3.2 24/04/25 SAN couple of pre-flight fixes
     v9.0.3.3 24/04/25 SAN fix commit errors
     v9.0.4.0 24/04/25 SAN New commit design, decreased importance of uncommited at git check, added emojis ✅, bugfix on git stdout
+    v9.0.4.0 24/04/25 SAN Paranoid check added to avoid random deletion, more verbose output on file deletion moved folder check after git as git require an empty folder when first cloning, couple of pre-flight fixes
 
 
 .TODO
@@ -147,35 +148,49 @@ if not ENABLE_WRITETOFILE: print("Write to file is disabled.")
 
 
 def delete_obsolete_files(folder, current_scripts):
-    print(f"Cleaning {folder}...")
-    obsolete = {f for f in folder.rglob('*') if f.is_file() and f.relative_to(folder) not in current_scripts}
-    
+    if not current_scripts:
+        print("❌ ERROR: No valid scripts provided by api. Aborting.")
+        sys.exit(1)
+    if not isinstance(current_scripts, set):
+        print("❌ ERROR: 'current_scripts' must be a set. Aborting.")
+        sys.exit(1)
+
+    print(f"🧹 Cleaning {folder}...")
+
+    all_paths = list(folder.rglob('*'))
+    obsolete = {f for f in all_paths if f.is_file() and f.relative_to(folder) not in current_scripts}
+
     if not obsolete:
-        print("No files missing from the API but still present in the repo.")
+        print("✅ No files missing from the API but still present in the repo.")
+    else:
+        with open("deletion.log", "a") as log:
+            for f in obsolete:
+                action = "🗑️📄 Deleted" if ENABLE_WRITETOFILE else "🗑️📄 Simulated deletion of"
+                try:
+                    if ENABLE_WRITETOFILE:
+                        f.unlink()
+                    print(f"{action} file no longer in the API: {f}")
+                    log.write(f"{action}: {f}\n")
+                except Exception as e:
+                    print(f"⚠️ Error deleting file {f}: {e}")
+                    log.write(f"⚠️ Error deleting {f}: {e}\n")
 
-    for f in obsolete:
-        if ENABLE_WRITETOFILE:
-            try:
-                f.unlink()
-                print(f"Deleted file no longer in the API: {f}")
-            except Exception as e:
-                print(f"Error deleting file {f}: {e}")
-        else:
-            print(f"Simulated deletion of file no longer in the API: {f}")
+    empty_dirs = [d for d in sorted(all_paths, key=lambda p: -len(p.parts)) if d.is_dir() and not any(d.iterdir())]
 
-    empty_dirs = [d for d in sorted(folder.rglob('*'), key=lambda p: -len(p.parts)) if d.is_dir() and not any(d.iterdir())]
     if not empty_dirs:
-        print("No empty directories to remove.")
-
-    for d in empty_dirs:
-        if ENABLE_WRITETOFILE:
-            try:
-                d.rmdir()
-                print(f"Removed empty directory: {d}")
-            except Exception as e:
-                print(f"Could not delete dir {d}: {e}")
-        else:
-            print(f"Simulated removal of empty directory: {d}")
+        print("✅ No empty directories to remove.")
+    else:
+        with open("deletion.log", "a") as log:
+            for d in empty_dirs:
+                action = "🗑️📁 Removed" if ENABLE_WRITETOFILE else "🗑️📁 Simulated removal of"
+                try:
+                    if ENABLE_WRITETOFILE:
+                        d.rmdir()
+                    print(f"{action} empty directory: {d}")
+                    log.write(f"{action}: {d}\n")
+                except Exception as e:
+                    print(f"⚠️ Could not delete dir {d}: {e}")
+                    log.write(f"⚠️ Could not delete dir {d}: {e}\n")
 
 def sanitize_filename(name: str) -> str:
     removed_chars = []
@@ -605,7 +620,8 @@ def check_git_health(base_dir):
     return True
 
 def pre_flight():
-    global domain, scriptpath, headers
+    global domain, headers, base_dir
+
     domain = os.getenv('DOMAIN')
     api_token = os.getenv('API_TOKEN')
     scriptpath = os.getenv('SCRIPTPATH')
@@ -619,8 +635,13 @@ def pre_flight():
             if var == 'SCRIPTPATH': print(f"  - SCRIPTPATH: The local folder path for Git commands.")
         sys.exit(1)
 
+    #Build headers
     headers = {"X-API-KEY": api_token}
-    domain_for_connection = domain.replace("https://", "").replace("http://", "")
+    #Build base_dir path
+    base_dir = Path(scriptpath).resolve()
+
+    # no http for tcp test or any trailing slash
+    domain_for_connection = domain.replace("https://", "").replace("http://", "").rstrip("/")
 
     try:
         socket.create_connection((domain_for_connection, 443), timeout=5)
@@ -630,11 +651,13 @@ def pre_flight():
         print(f"❌ Error: Unable to connect to {domain} on port 443 - {e} (Obfuscated API Token: {obfuscated})")
         sys.exit(1)
 
+    # Make sure domain starts with https:// and remove any trailing slash
     if not domain.startswith("http://") and not domain.startswith("https://"):
         domain = "https://" + domain
+    domain = domain.rstrip("/")
 
+    #Test api token for read, it is currently not possible to test for write as any request to the api would write empty file.
     obfuscated = api_token[:3] + '*' * (len(api_token) - 6) + api_token[-3:]
-
     try:
         response = requests.get(f"{domain}/scripts/", headers=headers, timeout=5)
         if response.status_code == 200:
@@ -647,6 +670,7 @@ def pre_flight():
         sys.exit(1)
 
     return
+
 
 def check_and_create_folders(base_path, subfolders):
     try:
@@ -671,21 +695,11 @@ def main():
     
     # 0. Prep: Verify Dependencies, Set Up Environment, and Git Health Check
     print("\n===== Step 0: General Prep =====")
-    
-    # ENV vars & network checks
+
+
+    # ENV vars & network checks & prep vars
     pre_flight()
 
-    # Folder structure check
-    base_dir = Path(scriptpath).resolve()
-    folders = {
-        "scripts": base_dir / "scripts",
-        "scriptsraw": base_dir / "scriptsraw",
-        "snippets": base_dir / "snippets",
-        "snippetsraw": base_dir / "snippetsraw"
-    }
-    check_and_create_folders(base_dir, folders)
-    print("✅ All folders created and verified.")
-    
     # Check the health of the Git repo
     if ENABLE_GIT_PULL or ENABLE_GIT_PUSH:
         if check_git_health(base_dir):
@@ -695,7 +709,17 @@ def main():
             sys.exit(1)
     else:
         print("Skipping Git health check because both pull and push are disabled.")
-    
+
+    # Folder structure check
+    folders = {
+        "scripts": base_dir / "scripts",
+        "scriptsraw": base_dir / "scriptsraw",
+        "snippets": base_dir / "snippets",
+        "snippetsraw": base_dir / "snippetsraw"
+    }
+    check_and_create_folders(base_dir, folders)
+    print("✅ All folders created and verified.")
+
     print("===== End of Step 0: General Prep =====\n")
 
     # 1. Git Pull
