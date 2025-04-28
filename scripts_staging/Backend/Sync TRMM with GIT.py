@@ -90,6 +90,10 @@
     v9.0.2.6 11/04/25 SAN improvements to sanitize, moved vars to global and fixed an issue that could delete all scripts from git randomly
     v9.0.3.0 11/04/25 SAN improvements to the git healthchecks and git push, disabled deletetions if writetofile is false and moved alls toggle flags and branch to env
     v9.0.3.1 14/04/25 SAN split step 2 into functions for easier upgrade 
+    v9.0.3.2 24/04/25 SAN couple of pre-flight fixes
+    v9.0.3.3 24/04/25 SAN fix commit errors
+    v9.0.4.0 24/04/25 SAN New commit design, decreased importance of uncommited at git check, added emojis ✅, bugfix on git stdout
+
 
 .TODO
     Handle rights issues when executing git commands
@@ -109,6 +113,7 @@
         before writing to api the modifications in step 2 new function to check all .json for id missing to this instance if missing create script then step 2 will add it to the array
     
     Delete script support from git ? (dedicated function required at the end of step 2, if json exist but no script matches mark for delete json and use the id of the json to tell the api to delete in trmm)
+    Squash commit from minor update json with previous commit
     Add reporting support
 
 """
@@ -126,7 +131,6 @@ import socket
 from requests.exceptions import RequestException, HTTPError
 
 
-
 # Retrieve the git pull branch or default to 'master'
 git_pull_branch = os.getenv('GIT_PULL_BRANCH', 'master')
 if git_pull_branch != 'master': print(f"Git Pull Branch: {git_pull_branch}")
@@ -140,7 +144,6 @@ if not ENABLE_GIT_PULL: print("Git Pull is disabled.")
 if not ENABLE_GIT_PUSH: print("Git Push is disabled.")
 if not ENABLE_WRITEBACK: print("Writeback is disabled.")
 if not ENABLE_WRITETOFILE: print("Write to file is disabled.")
-
 
 
 def delete_obsolete_files(folder, current_scripts):
@@ -391,46 +394,88 @@ def update_to_api(item_id, payload, is_snippet=False):
     except requests.exceptions.RequestException as e:
         print(f"Request error for {'snippet' if is_snippet else 'script'} {item_id}: {e}")
 
-
-
 def git_pull(base_dir):
     """Force pull the latest changes from the git repository, discarding local changes."""
-    if not os.path.isdir(base_dir):
-        print(f"Invalid directory: {base_dir}")
-        sys.exit(1)
     
-    print("Starting force pull...")
+    print("Starting pull process...", flush=True)
     try:
-        subprocess.check_call(['git', '-C', base_dir, 'fetch', 'origin'])
-        subprocess.check_call(['git', '-C', base_dir, 'reset', '--hard', f'origin/{git_pull_branch}'])
-        print(f"Successfully force-pulled the latest changes from the '{git_pull_branch}' branch.")
+        print("Fetching latest changes from remote...", flush=True)
+        subprocess.check_call(['git', '-C', base_dir, 'fetch', 'origin'], stdout=sys.stdout, stderr=sys.stderr)
+
+        print(f"Resetting local branch to match 'origin/{git_pull_branch}'...", flush=True)
+        subprocess.check_call(['git', '-C', base_dir, 'reset', '--hard', f'origin/{git_pull_branch}'], stdout=sys.stdout, stderr=sys.stderr)
+
+        print(f"Force-pull completed from 'origin/{git_pull_branch}'.", flush=True)
     except subprocess.CalledProcessError as e:
-        print(f"Failed to force-pull changes from Git: {e}")
+        print("An error occurred during git operations.", flush=True)
+        print(f"Error details: {e}", flush=True)
         sys.exit(1)
 
-def generate_commit_message(base_dir, max_files=5):
-    """Generate a commit message based on staged changes."""
-    # Get the list of staged changes
+    print("Git pull process completed.", flush=True)
+
+def generate_commit_message(base_dir, max_files=5, skip_raw_dirs=True, group_by_dir=False, use_emojis=True):
+    """Generate a commit message based on staged changes with optional enhancements."""
     result = subprocess.run(
         ['git', '-C', base_dir, 'diff', '--cached', '--name-status'],
         capture_output=True, text=True, check=True
     )
-    
-    changes = {"created": [], "modified": [], "deleted": [], "renamed": []}
+
+    changes = {
+        "created": [],
+        "modified": [],
+        "deleted": [],
+        "renamed": []
+    }
+
+    emoji_map = {
+        "created": "➕",
+        "modified": "📝",
+        "deleted": "🗑️",
+        "renamed": "🔁"
+    }
+
     for line in result.stdout.strip().split("\n"):
-        if not line: continue
-        status, file = line.split("\t")
-        if file.startswith("scriptsraw/") or file.startswith("snippetsraw/"): continue
-        if status.startswith("A"): changes["created"].append(file)
-        elif status.startswith("M"): changes["modified"].append(file)
-        elif status.startswith("D"): changes["deleted"].append(file)
-        elif status.startswith("R"): changes["renamed"].append(f"{line.split()[1]} -> {line.split()[2]}")
+        if not line:
+            continue
+
+        parts = line.split("\t")
+        status = parts[0]
+
+        if status.startswith("R") and len(parts) == 3:
+            old, new = parts[1], parts[2]
+            if skip_raw_dirs and (old.startswith("scriptsraw/") or old.startswith("snippetsraw/")):
+                continue
+            changes["renamed"].append(f"{old} -> {new}")
+        elif len(parts) >= 2:
+            file = parts[1]
+            if skip_raw_dirs and (file.startswith("scriptsraw/") or file.startswith("snippetsraw/")):
+                continue
+            if status.startswith("A"):
+                changes["created"].append(file)
+            elif status.startswith("M"):
+                changes["modified"].append(file)
+            elif status.startswith("D"):
+                changes["deleted"].append(file)
 
     if not any(changes.values()):
         return "Minor update"
 
-    parts = [f"{change_type} {len(files)}: {', '.join(files[:max_files])}{'...' if len(files) > max_files else ''}"
-             for change_type, files in changes.items() if files]
+    parts = []
+    for change_type, files in changes.items():
+        if not files:
+            continue
+        icon = emoji_map[change_type] + " " if use_emojis else ""
+
+        if group_by_dir:
+            grouped = defaultdict(list)
+            for f in files:
+                grouped[f.split(os.sep)[0]].append(f)
+            detail = "; ".join(f"{k} ({len(v)})" for k, v in grouped.items())
+        else:
+            detail = ", ".join(files[:max_files]) + ("..." if len(files) > max_files else "")
+
+        parts.append(f"{icon}{change_type} {len(files)}: {detail}")
+
     return "; ".join(parts)
 
 def git_push(base_dir):
@@ -459,29 +504,29 @@ def git_push(base_dir):
 
 def check_git_health(base_dir):
     """Check the health of the Git repository."""
-    
+
     # Check if 'git' command is available
     try:
         subprocess.check_call(['git', '--version'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except subprocess.CalledProcessError:
-        print("Error: The 'git' command is not available.")
+        print("❌ Error: The 'git' command is not available.")
         return False
-    
+
     # Check if the directory is a valid Git repository
     try:
         subprocess.check_call(['git', '-C', base_dir, 'rev-parse', '--is-inside-work-tree'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except subprocess.CalledProcessError:
-        print(f"Error: '{base_dir}' is not a valid Git repository.")
+        print(f"❌ Error: '{base_dir}' is not a valid Git repository.")
         return False
-    
+
     # Check if the Git index is locked
     try:
         index_lock = Path(base_dir) / '.git' / 'index.lock'
         if index_lock.exists():
-            print("Error: Git index is locked. Possibly due to a failed operation.")
+            print("❌ Error: Git index is locked. Possibly due to a failed operation.")
             return False
     except Exception as e:
-        print(f"Error: Failed to check index lock - {e}")
+        print(f"❌ Error: Failed to check index lock - {e}")
         return False
 
     # Check if a rebase is in progress
@@ -491,72 +536,72 @@ def check_git_health(base_dir):
             capture_output=True, text=True
         ).returncode == 0
         if rebase_in_progress:
-            print("Error: Rebase in progress. Complete or abort it.")
+            print("❌ Error: Rebase in progress. Complete or abort it.")
             return False
     except subprocess.CalledProcessError:
-        print("Error: Failed to check rebase status.")
+        print("❌ Error: Failed to check rebase status.")
         return False
-    
+
     # Check for unresolved merge conflicts
     try:
         merge_conflicts = subprocess.check_output(['git', '-C', base_dir, 'ls-files', '--unmerged']).decode().strip()
         if merge_conflicts:
-            print("Error: There are unresolved merge conflicts.")
+            print("❌ Error: There are unresolved merge conflicts.")
             return False
     except subprocess.CalledProcessError:
-        print("Error: Failed to check for merge conflicts.")
+        print("❌ Error: Failed to check for merge conflicts.")
         return False
-    
+
     # Check for uncommitted changes
     try:
         status = subprocess.check_output(['git', '-C', base_dir, 'status', '--porcelain']).decode().strip()
         if status:
-            print("Error: There are uncommitted changes in the Git repository.")
-            return False
+            print("⚠️ Warning: There are uncommitted changes in the Git repository.")
     except subprocess.CalledProcessError:
-        print("Error: Failed to check Git status.")
+        print("❌ Error: Failed to check Git status.")
         return False
-    
+
     # Check for untracked files
     try:
         untracked_files = subprocess.check_output(['git', '-C', base_dir, 'ls-files', '--others', '--exclude-standard']).decode().strip()
         if untracked_files:
-            print("Error: There are untracked files in the Git repository.")
+            print("❌ Error: There are untracked files in the Git repository.")
             return False
     except subprocess.CalledProcessError:
-        print("Error: Failed to check for untracked files.")
+        print("❌ Error: Failed to check for untracked files.")
         return False
-    
+
     # Check the current Git branch
     try:
         current_branch = subprocess.check_output(['git', '-C', base_dir, 'symbolic-ref', '--short', 'HEAD']).decode().strip()
         if current_branch != git_pull_branch:
-            print(f"Warning: You're not on the expected branch '{git_pull_branch}'. Current branch is '{current_branch}'.")
+            print(f"❌ Warning: You're not on the expected branch '{git_pull_branch}'. Current branch is '{current_branch}'.")
             return False
     except subprocess.CalledProcessError:
-        print("Error: Unable to determine the current Git branch.")
+        print("❌ Error: Unable to determine the current Git branch.")
         return False
-    
+
     # Check for remote repository configuration
     try:
         remote_info = subprocess.check_output(['git', '-C', base_dir, 'remote', 'show', 'origin']).decode().strip()
         if not remote_info:
-            print("Error: No remote repository is configured.")
+            print("❌ Error: No remote repository is configured.")
             return False
     except subprocess.CalledProcessError:
-        print("Error: Failed to retrieve remote repository information.")
+        print("❌ Error: Failed to retrieve remote repository information.")
         return False
-    
+
     # Check if there are commits behind the remote
     try:
-        commits_behind = subprocess.check_output(['git', '-C', base_dir, 'rev-list', '--count', 'HEAD..origin/{}'.format(git_pull_branch)]).decode().strip()
+        commits_behind = subprocess.check_output(['git', '-C', base_dir, 'rev-list', '--count', f'HEAD..origin/{git_pull_branch}']).decode().strip()
         if int(commits_behind) > 0:
-            print(f"Warning: You are {commits_behind} commits behind the remote branch.")
+            print(f"❌ Error: You are {commits_behind} commits behind the remote branch.")
             return False
     except subprocess.CalledProcessError:
-        print("Error: Failed to check commit history.")
+        print("❌ Error: Failed to check commit history.")
         return False
-    
+
+    print("✅ Git repository health check passed.")
     return True
 
 def pre_flight():
@@ -567,11 +612,11 @@ def pre_flight():
 
     missing = [name for name, val in [('DOMAIN', domain), ('API_TOKEN', api_token), ('SCRIPTPATH', scriptpath)] if not val]
     if missing:
-        print(f"✗ Error: Missing environment variable(s): {', '.join(missing)}")
+        print(f"❌ Error: Missing environment variable(s): {', '.join(missing)}")
         for var in missing:
-            if var == 'DOMAIN': print("  - DOMAIN: The URL of your RMM API. (e.g. api-rmm.example.com)")
-            if var == 'API_TOKEN': print("  - API_TOKEN: An API token for a user with permission to access and write scripts.")
-            if var == 'SCRIPTPATH': print("  - SCRIPTPATH: The local folder path for Git commands.")
+            if var == 'DOMAIN': print(f"  - DOMAIN: The URL of your RMM API. (e.g. api-rmm.example.com)")
+            if var == 'API_TOKEN': print(f"  - API_TOKEN: An API token for a user with permission to access and write scripts.")
+            if var == 'SCRIPTPATH': print(f"  - SCRIPTPATH: The local folder path for Git commands.")
         sys.exit(1)
 
     headers = {"X-API-KEY": api_token}
@@ -579,9 +624,10 @@ def pre_flight():
 
     try:
         socket.create_connection((domain_for_connection, 443), timeout=5)
-        print(f"✓ Connectivity to {domain} on port 443 OK.")
+        print(f"✅ Connectivity to {domain} on port 443 OK.")
     except Exception as e:
-        print(f"✗ Error: Unable to connect to {domain} on port 443 - {e}")
+        obfuscated = api_token[:3] + '*' * (len(api_token) - 6) + api_token[-3:]
+        print(f"❌ Error: Unable to connect to {domain} on port 443 - {e} (Obfuscated API Token: {obfuscated})")
         sys.exit(1)
 
     if not domain.startswith("http://") and not domain.startswith("https://"):
@@ -592,12 +638,12 @@ def pre_flight():
     try:
         response = requests.get(f"{domain}/scripts/", headers=headers, timeout=5)
         if response.status_code == 200:
-            print(f"✓ Token valid for read access: {obfuscated}")
+            print(f"✅ Token valid for read access: {obfuscated}")
         else:
-            print(f"✗ Token read access denied (status {response.status_code})")
+            print(f"❌ Token read access denied (status {response.status_code}) - Obfuscated Token: {obfuscated}")
             sys.exit(1)
     except Exception as e:
-        print(f"✗ Token read access check failed: {e}")
+        print(f"❌ Token read access check failed: {e} - Obfuscated Token: {obfuscated}")
         sys.exit(1)
 
     return
@@ -606,18 +652,18 @@ def check_and_create_folders(base_path, subfolders):
     try:
         if not base_path.exists():
             base_path.mkdir(parents=True, exist_ok=True)
-            print(f"✓ Root folder created at {base_path.resolve()}.")
+            print(f"✅ Root folder created at {base_path.resolve()}.")
         else:
-            print(f"✓ Root folder exists at {base_path.resolve()}.")
+            print(f"✅ Root folder exists at {base_path.resolve()}.")
         
         for folder_path in subfolders.values():
             if folder_path.exists():
-                print(f"✓ Folder '{folder_path.name}' exists.")
+                print(f"✅ Folder '{folder_path.name}' exists.")
             else:
                 folder_path.mkdir(parents=True, exist_ok=True)
-                print(f"✓ Folder '{folder_path.name}' created at {folder_path.resolve()}.")
+                print(f"✅ Folder '{folder_path.name}' created at {folder_path.resolve()}.")
     except Exception as e:
-        print(f"✗ Error: Failed to create folder(s).")
+        print(f"❌ Error: Failed to create folder(s).")
         print(f"Error: {e}")
         sys.exit(1)
 
@@ -638,14 +684,14 @@ def main():
         "snippetsraw": base_dir / "snippetsraw"
     }
     check_and_create_folders(base_dir, folders)
-    print("✓ All folders created and verified.")
+    print("✅ All folders created and verified.")
     
     # Check the health of the Git repo
     if ENABLE_GIT_PULL or ENABLE_GIT_PUSH:
         if check_git_health(base_dir):
-            print("✓ Git repo is healthy.")
+            print("✅ Git repo is healthy.")
         else:
-            print("✗ Error: Git folder is not healthy.")
+            print("❌ Error: Git folder is not healthy.")
             sys.exit(1)
     else:
         print("Skipping Git health check because both pull and push are disabled.")
