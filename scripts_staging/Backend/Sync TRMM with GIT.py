@@ -93,17 +93,16 @@
     v9.0.3.2 24/04/25 SAN couple of pre-flight fixes
     v9.0.3.3 24/04/25 SAN fix commit errors
     v9.0.4.0 24/04/25 SAN New commit design, decreased importance of uncommited at git check, added emojis ✅, bugfix on git stdout
-    v9.0.4.0 24/04/25 SAN Paranoid check added to avoid random deletion, more verbose output on file deletion moved folder check after git as git require an empty folder when first cloning, couple of pre-flight fixes
-
+    v9.0.4.1 28/04/25 SAN Paranoid check added to avoid random deletion, more verbose output on file deletion, moved folder check after git as git require an empty folder when first cloning, couple of pre-flight fixes
+    v9.0.4.2 29/04/25 SAN more explicit part 2 & 3 outputs, added RW check
 
 .TODO
-    Handle rights issues when executing git commands
     Review flow of step 3 for optimisations
-
+    Review the counters for step 3
     Revamp folder structure:
-        Move raws from "scriptsraw" to Category/folder/raws/
+        Move raws from "scriptsraw" to Category_name/raws/
         add "uncategorised" folder
-        remove "scripts" top level folder while keeping snippets
+        remove "scripts" top level folder while keeping snippets and move snippets raws to snippets/raws/
 
     Move ID from json to an array like this and make sure that this array is never overwriten to keep tracks of IDs across instances only add current instance in step 2 if missing:
         "ids": [
@@ -116,6 +115,7 @@
     Delete script support from git ? (dedicated function required at the end of step 2, if json exist but no script matches mark for delete json and use the id of the json to tell the api to delete in trmm)
     Squash commit from minor update json with previous commit
     Add reporting support
+    
 
 """
 
@@ -238,7 +238,7 @@ def process_scripts(scripts, script_folder, script_raw_folder, shell_summary, is
         current.add((folder / fname).relative_to(script_folder))
         current.add((raw_folder / raw_name).relative_to(script_raw_folder))
 
-    print(f"Processed {len(current)} {'snippets' if is_snippet else 'scripts'}.")
+    print(f"Processed {len(current)} {'snippets' if is_snippet else 'scripts'}.\n")
     return current
 
 def compute_hash(file_path):
@@ -252,9 +252,9 @@ def save_file(path, content, is_json=False):
     data = json.dumps(content, indent=4, ensure_ascii=False) if is_json else content
     if ENABLE_WRITETOFILE:
         path.write_text(data, encoding="utf-8")
-        print(f"File saved: {path}")
+        print(f"File saved: {path.relative_to(base_dir) if base_dir else path}")
     else:
-        print(f"File would be saved (simulation): {path}")
+        print(f"File would be saved (simulation): {path.relative_to(base_dir) if base_dir else path}")
 
 
 def pull_from_api(url):
@@ -325,6 +325,7 @@ def update_api_if_needed(match, raw_data, is_snippet):
     
     return False
 
+
 def write_modifications_to_api(base_dir, folders):
     print("Comparing script files with JSON files...")
     mismatches = []
@@ -333,7 +334,7 @@ def write_modifications_to_api(base_dir, folders):
     total_matches = 0
     total_mismatches = 0
     total_updated = 0
-    total_skipped = 0
+    total_not_updated = 0
 
     for folder_key, folder in folders.items():
         is_snippet = folder_key == 'snippetsraw'
@@ -347,15 +348,15 @@ def write_modifications_to_api(base_dir, folders):
                               if p.is_file() and p.stem.lower() == raw_name), None)
             except Exception as e:
                 print(f"Error matching file for {raw_path}: {e}")
-                total_skipped += 1
+                total_not_updated += 1
                 continue
 
             if not match:
-                print(f"No match for {'snippet' if is_snippet else 'script'}: {raw_path}")
-                total_skipped += 1
+                print(f"No match for {'snippet' if is_snippet else 'script'}: {raw_path.relative_to(base_dir)}")
+                total_not_updated += 1 
                 continue
 
-            print(f"Matched {'snippet' if is_snippet else 'script'}: {match} <-> {raw_path}")
+            print(f"Matched {'snippet' if is_snippet else 'script'}: {match.relative_to(base_dir)} <-> {raw_path.relative_to(base_dir)}")
             total_matches += 1
 
             file_hash, code_hash, raw_data = compare_files_and_hashes(match, raw_path)
@@ -379,13 +380,24 @@ def write_modifications_to_api(base_dir, folders):
 
                 if updated:
                     total_updated += 1
+                else:
+                    total_not_updated += 1
 
-    print("\nComparison Complete:")
-    print(f"Total files checked: {total_files_checked}")
-    print(f"Total matches: {total_matches}")
-    print(f"Total mismatches: {total_mismatches}")
-    print(f"Total updates: {total_updated}")
-    print(f"Total skipped: {total_skipped}")
+    print("\n🔍 Comparison Complete:")
+
+    print(f"🧾 Total files checked: {total_files_checked}")
+    if total_matches > 0:
+        print(f"↔️ Total matches: {total_matches}")
+    if total_mismatches > 0:
+        print(f"🧩 Total mismatches to update: {total_mismatches}")
+    if total_updated > 0:
+        print(f"✅ Total updated: {total_updated}")
+    if total_not_updated > 0:
+        print(f"❌ Total errors: {total_not_updated}")
+
+    if total_matches == total_files_checked:
+        print("✅ Everything is up to date in the api")
+
 
 def update_to_api(item_id, payload, is_snippet=False):
     """Update the API with the provided item ID and payload."""
@@ -513,12 +525,21 @@ def git_push(base_dir):
             print(f"Changes pushed to branch '{git_pull_branch}'")
 
         else:
-            print("No changes to commit.")
+            print("✅ No changes to commit.")
     except subprocess.CalledProcessError as e:
         print(f"Git operation failed: {e}")
 
 def check_git_health(base_dir):
     """Check the health of the Git repository."""
+
+    # Check the rights to read/write in the directory
+    try:
+        if not os.access(base_dir, os.R_OK | os.W_OK):
+            print(f"❌ Error: No read/write permissions for the directory '{base_dir}'.")
+            return False
+    except Exception as e:
+        print(f"❌ Error: Failed to check permissions for the directory '{base_dir}'. {e}")
+        return False
 
     # Check if 'git' command is available
     try:
@@ -616,8 +637,8 @@ def check_git_health(base_dir):
         print("❌ Error: Failed to check commit history.")
         return False
 
-    print("✅ Git repository health check passed.")
     return True
+
 
 def pre_flight():
     global domain, headers, base_dir
@@ -740,13 +761,13 @@ def main():
     print("\n===== Step 3: Fetch and Process Scripts and Snippets =====")
     # Initialize counters and sets
     shell_summary, current_scripts = defaultdict(int), set()
-    print("Fetching scripts...")
+    print("Fetching script list...")
     user_defined_scripts = pull_from_api(f"{domain}/scripts/?showHiddenScripts=true")
     user_defined_scripts = [item for item in user_defined_scripts if item.get('script_type') == 'userdefined']
     current_scripts.update(process_scripts(user_defined_scripts, folders["scripts"], folders["scriptsraw"], shell_summary))
 
     # Fetch and process snippets
-    print("Fetching snippets...")
+    print("Fetching snippets list...")
     snippets = pull_from_api(f"{domain}/scripts/snippets/")
     current_scripts.update(process_scripts(snippets, folders["snippets"], folders["snippetsraw"], shell_summary, is_snippet=True))
 
