@@ -95,6 +95,7 @@
     v9.0.4.0 24/04/25 SAN New commit design, decreased importance of uncommited at git check, added emojis ✅, bugfix on git stdout
     v9.0.4.1 28/04/25 SAN Paranoid check added to avoid random deletion, more verbose output on file deletion, moved folder check after git as git require an empty folder when first cloning, couple of pre-flight fixes
     v9.0.4.2 29/04/25 SAN more explicit part 2 & 3 outputs, added RW check
+    v9.0.4.3 29/04/25 SAN more explicit outputs for git pull & fix other output
 
 .TODO
     Review flow of step 3 for optimisations
@@ -421,13 +422,26 @@ def update_to_api(item_id, payload, is_snippet=False):
     except requests.exceptions.RequestException as e:
         print(f"Request error for {'snippet' if is_snippet else 'script'} {item_id}: {e}")
 
-def git_pull(base_dir):
-    """Force pull the latest changes from the git repository, discarding local changes."""
-    
+def git_pull(base_dir, git_pull_branch='main'):
+    """Force pull latest changes from the git repository if there are changes, discarding local changes."""
+
     print("Starting pull process...", flush=True)
     try:
         print("Fetching latest changes from remote...", flush=True)
         subprocess.check_call(['git', '-C', base_dir, 'fetch', 'origin'], stdout=sys.stdout, stderr=sys.stderr)
+
+        print("Checking for incoming changes...", flush=True)
+        result = subprocess.run(
+            ['git', '-C', base_dir, 'log', f'HEAD..origin/{git_pull_branch}', '--oneline'],
+            capture_output=True, text=True
+        )
+
+        if not result.stdout.strip():
+            print("No changes to pull. Repository is up to date.", flush=True)
+            return
+
+        print("Incoming commits:")
+        print(result.stdout, flush=True)
 
         print(f"Resetting local branch to match 'origin/{git_pull_branch}'...", flush=True)
         subprocess.check_call(['git', '-C', base_dir, 'reset', '--hard', f'origin/{git_pull_branch}'], stdout=sys.stdout, stderr=sys.stderr)
@@ -773,7 +787,9 @@ def main():
 
     # Output the total number of scripts exported and provide a summary of the shell counts
     print(f"Total number of scripts exported: {len(current_scripts)}")
-    print("Shell summary:", "\n".join(f"{shell}: {count}" for shell, count in shell_summary.items()))
+    print("Shell summary:")
+    for shell, count in shell_summary.items():
+        print(f"{shell.strip()}: {count}")
 
     # Remove any obsolete files that are no longer existing in the api
     print("\nRemove any obsolete files")
