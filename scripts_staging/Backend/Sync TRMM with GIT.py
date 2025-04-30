@@ -96,8 +96,10 @@
     v9.0.4.1 28/04/25 SAN Paranoid check added to avoid random deletion, more verbose output on file deletion, moved folder check after git as git require an empty folder when first cloning, couple of pre-flight fixes
     v9.0.4.2 29/04/25 SAN more explicit part 2 & 3 outputs, added RW check
     v9.0.4.3 29/04/25 SAN more explicit outputs for git pull & fix other output
+    v9.0.4.4 30/04/25 SAN fix pull
 
 .TODO
+    move env setup to pre-flight
     Review flow of step 3 for optimisations
     Review the counters for step 3
     Revamp folder structure:
@@ -135,7 +137,6 @@ from requests.exceptions import RequestException, HTTPError
 
 # Retrieve the git pull branch or default to 'master'
 git_pull_branch = os.getenv('GIT_PULL_BRANCH', 'master')
-if git_pull_branch != 'master': print(f"Git Pull Branch: {git_pull_branch}")
 
 # Retrieve flags from environment variables (default to True unless set to 'false')
 ENABLE_GIT_PULL = os.getenv('ENABLE_GIT_PULL', 'True').lower() != 'false'
@@ -422,11 +423,12 @@ def update_to_api(item_id, payload, is_snippet=False):
     except requests.exceptions.RequestException as e:
         print(f"Request error for {'snippet' if is_snippet else 'script'} {item_id}: {e}")
 
-def git_pull(base_dir, git_pull_branch='main'):
+def git_pull(base_dir):
     """Force pull latest changes from the git repository if there are changes, discarding local changes."""
 
     print("Starting pull process...", flush=True)
     try:
+        print(f"Branch to pull: '{git_pull_branch}'")
         print("Fetching latest changes from remote...", flush=True)
         subprocess.check_call(['git', '-C', base_dir, 'fetch', 'origin'], stdout=sys.stdout, stderr=sys.stderr)
 
@@ -759,7 +761,6 @@ def main():
 
     # 1. Git Pull
     print("\n===== Step 1: Git Pull =====")
-    print(f"Branch to pull: '{git_pull_branch}'")
     if ENABLE_GIT_PULL:
         git_pull(base_dir)
     else:
