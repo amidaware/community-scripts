@@ -20,7 +20,7 @@ if (!($PSVersionTable.PSVersion.Major -ge 7)) {
     pwsh -File "`"$PSCommandPath`"" @PSBoundParameters
     exit $LASTEXITCODE
   } else {
-    Write-Output "PowerShell 7 is available"
+    Write-Output "PowerShell 7 is not available"
     exit 1
   }
 }
