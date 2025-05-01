@@ -24,7 +24,7 @@
 #>
 
 
-function Generate-Passphrase {
+function GeneratedPassphrase {
     param (
         [int] [ValidateRange(1, 20)]
         $NumWords = 3,                  # Number of words to generate in the passphrase.
@@ -97,4 +97,4 @@ function Generate-Passphrase {
     return $Passphrase
 }
 
-$GeneratedPassphrase = Generate-Passphrase
+$GeneratedPassphrase = GeneratedPassphrase
