@@ -1,4 +1,4 @@
-#public
+
 <#
 .SYNOPSIS
     This script changes the password for the user to a randomly generated passphrase.
@@ -10,6 +10,14 @@
 .NOTES
     Author         : SAN
     https://www.eff.org/deeplinks/2016/07/new-wordlists-random-passphrases
+    Date: 01.01.2024
+    #public
+
+.CHANGELOG
+    01.05.2025 SAN Increased default password length
+
+.TODO
+    Random symbol
 
 #>
 
@@ -18,7 +26,7 @@
 function GeneratedPassphrase {
     param (
         [int]$NumWords = 3,      # Number of words in the passphrase
-        [int]$MinWordLength = 4, # Minimum length of each word
+        [int]$MinWordLength = 5, # Minimum length of each word
         [int]$MaxWordLength = 10 # Maximum length of each word
     )
 
