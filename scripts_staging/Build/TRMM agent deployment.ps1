@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
-    Checks for connectivity to the rmm, when found installs Tactical RMM if not already installed.
+    Checks for connectivity to the rmm, when functional installs Tactical RMM.
 
 .DESCRIPTION
     This script is made to be packaged into a standard ISO and run with or after sysprep and not run from the RMM itself.
     It syncronise the system time to avoid SSL issues, checks for connectivity to 443 of the rmm server, 
-    installs Tactical RMM, and logs each step of the process.
+    installs Tactical RMM when the network link is up. (retries every 30 seconds)
     If Windows Defender is active, it adds exclusions for Tactical RMM-related paths.
     The log are optionals
 
@@ -17,32 +17,22 @@
 
 .EXEMPLE
     $DeploymentURL = "https://api-rmm-xxxxxxx.xxxxxxxx.xxx/clients/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/deploy/"
-    $RMM_URL = "rmm-xxxxxxxxxxxxx.xxxxxx.xxxxx"
-    $logDirectory = "C:\xxxxxxxx\logs"
 
 .CHANGELOG
     SAN 02.05.25 Cleaned the code for publication and removed sensitive data
+    SAN 02.05.25 Use only the domain of the deployement url for the network check, changed to a json query rather than tcp check, added optional max tires and lots of other tweaks
 
 .TODO
-    Querry the api with to get a "status"ok"" in json rather than a tcp check
-    Run with silent argument ?
 
 #>
 
+$DeploymentURL   = "" # Provide Deployment URL
 
-$RMM_URL     = "" # Provide the rmm URL for network check
-$DeploymentURL  = "" # Provide the Deployment URL
-$logDirectory   = "" # Provide optional log directory
-
-
-$CHECK_PORT     = 443
-$tacticalPath   = "C:\ProgramData\TacticalRMM\temp"
-$logFile        = Join-Path -Path $logDirectory -ChildPath "deploy_log_$(Get-Date -Format 'ddMMyyyy').log"
-
-# Ensure the log directory exists
-if (-not (Test-Path -Path $logDirectory)) {
-    New-Item -ItemType Directory -Path $logDirectory | Out-Null
-}
+$logDirectory    = "" # Provide OPTIONAL log directory
+$MaxTries        = $null # Set to a number for limited attempts, or leave as $null for infinite tries
+$DownloadPath    = "C:\ProgramData\TacticalRMM\temp" # This is the default recommanded folder by TRMM
+$SleepBeforeExit = 20 # Timeout to leave some time to read the terminal output on the device
+$TryEvery        = 30 # Duration between trials 
 
 # Function to log messages
 function Write-Log {
@@ -51,54 +41,106 @@ function Write-Log {
     $timestamp = Get-Date -Format "dd-MM-yyyy HH:mm:ss"
     $logMessage = "$timestamp - $message"
 
-    # If the log file is empty, use Write-Host
-    if ((Test-Path -Path $logFile) -and ((Get-Item -Path $logFile).length -eq 0)) {
-        Write-Host $logMessage
-    } else {
-        Write-Host $logMessage
+    Write-Host $logMessage
+
+    if ($logFile) {
         Add-Content -Path $logFile -Value $logMessage
     }
 }
 
-# Synchronize time
-Write-Log "Synchronizing the system time..."
-w32tm /resync
-Start-Sleep -Seconds 5
-Restart-Service w32time
-Start-Sleep -Seconds 5
+# Function to extract FQDN from Deployment URL
+function Get-FQDNFromURL {
+    param ([string]$url)
 
-# Function to check internet connectivity
-function Check-InternetConnection {
-    Write-Log "Checking connectivity to $RMM_URL on port $CHECK_PORT..."
-    $connectionTest = Test-NetConnection -ComputerName $RMM_URL -Port $CHECK_PORT
+    if (-not [System.Uri]::IsWellFormedUriString($url, [System.UriKind]::Absolute)) {
+        Write-Log "Invalid DeploymentURL: '$url'. Must be a well-formed absolute URI."
+        Start-Sleep -Seconds $SleepBeforeExit
+        exit 1
+    }
 
-    if ($connectionTest.TcpTestSucceeded) {
-        Write-Log "Connection to $RMM_URL successful."
-        return $true
-    } else {
-        Write-Log "Connection failed. Retrying in 20 seconds..."
-        Start-Sleep -Seconds 20
+    try {
+        $uri = [Uri]$url
+        $fqdn = $uri.Host
+
+        # Simple check for valid domain or IP address
+        if ($fqdn -match '^(([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}|(\d{1,3}\.){3}\d{1,3})$') {
+            return "$($uri.Scheme)://$($uri.Host)"
+        } else {
+            Write-Log "The host part of the URL ('$fqdn') is not a valid domain or IP."
+            Start-Sleep -Seconds $SleepBeforeExit
+            exit 1
+        }
+    } catch {
+        Write-Log "Failed to parse DeploymentURL '$url': $($_.Exception.Message)"
+        Start-Sleep -Seconds $SleepBeforeExit
+        exit 1
+    }
+}
+
+# Function to check the availability of the TRMM instance
+function Check-RMM-uplink {
+    $baseURL = Get-FQDNFromURL -url $DeploymentURL
+    try {
+        Write-Log "Sending GET request to $baseURL..."
+        $response = Invoke-RestMethod -Uri $baseURL -UseBasicParsing -ErrorAction Stop
+
+        if ($null -eq $response) {
+            Write-Log "ERROR Received empty response from $baseURL."
+            return $false
+        }
+
+        if ($response.PSObject.Properties.Name -contains "status") {
+            $statusValue = $response.status
+            if ($statusValue -eq "ok") {
+                Write-Log "TRMM check succeeded. Status is: $statusValue"
+                return $true
+            } else {
+                Write-Log "ERROR TRMM responded, but status is not OK: $statusValue"
+                return $false
+            }
+        } else {
+            Write-Log "ERROR Response does not contain a 'status' field."
+            return $false
+        }
+    } catch {
+        Write-Log "ERROR Error occurred during TRMM check: $($_.Exception.Message)"
         return $false
     }
 }
 
-# Retry until connection is established
+# Ensure the log directory exists if set
+if ($logDirectory -and -not (Test-Path -Path $logDirectory)) {
+    New-Item -ItemType Directory -Path $logDirectory | Out-Null
+}
+$logFile        = if ($logDirectory) { Join-Path -Path $logDirectory -ChildPath "deploy_log_$(Get-Date -Format 'ddMMyyyy').log" } else { $null }
+
+# Synchronize time
+Write-Log "Synchronizing the system time..."
+w32tm /resync
+Restart-Service w32time
+
+# Retry loop with optional max attempts
+$attempt = 0
 do {
-    $networkAvailable = Check-InternetConnection
-} until ($networkAvailable)
+    $rmmReady = Check-RMM-uplink
+    if ($rmmReady) { break }
 
-Start-Sleep -Seconds 5
+    $attempt++
+    if ($MaxTries -ne $null -and $attempt -ge $MaxTries) {
+        Write-Log "Maximum retry attempts ($MaxTries) reached. Exiting..."
+        Start-Sleep -Seconds $SleepBeforeExit
+        exit 1
+    }
 
-# Check if Tactical RMM is already installed
+    Write-Log "Retrying in $TryEvery seconds... (Attempt #$attempt)"
+    Start-Sleep -Seconds $TryEvery
+} until ($rmmReady)
+
+# Check if TRMM is already installed
 $tacticalInstalled = Get-WmiObject -Query "SELECT Name FROM Win32_Service WHERE Name LIKE 'tacticalrmm'" | Select-Object -ExpandProperty Name
 
 if (-not $tacticalInstalled) {
-    Write-Log "Tactical RMM not found. Proceeding with installation..."
-
-    if (-not (Test-Path -Path $tacticalPath)) {
-        New-Item -ItemType Directory -Path $tacticalPath | Out-Null
-    }
-
+    Write-Log "Tactical RMM agent not found. Proceeding with installation..."
     Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope Process -Force
 
     # Check if Windows Defender is active before adding exclusions
@@ -112,21 +154,22 @@ if (-not $tacticalInstalled) {
         Write-Log "Third-party antivirus detected. Skipping exclusion rules."
     }
 
-    # Download and run the installer
-    if ($DeploymentURL) {
-        Write-Log "Downloading Tactical RMM installer..."
-        Invoke-WebRequest -Uri $DeploymentURL -OutFile "$tacticalPath\tactical.exe"
-        Write-Log "Launching installer..."
-        Start-Process -FilePath "$tacticalPath\tactical.exe" -NoNewWindow -Wait
-        Write-Log "Installation completed."
-    } else {
-        Write-Log "Error: Deployment URL is not set."
+    #Create download destination
+    if (-not (Test-Path -Path $DownloadPath)) {
+        New-Item -ItemType Directory -Path $DownloadPath | Out-Null
     }
 
-    Start-Sleep -Seconds 15
+    # Download and run the installer
+    Write-Log "Downloading Tactical RMM installer..."
+    Invoke-WebRequest -Uri $DeploymentURL -OutFile "$DownloadPath\tactical.exe"
+    Write-Log "Launching installer..."
+    Start-Process -FilePath "$DownloadPath\tactical.exe" -NoNewWindow -Wait
+    Write-Log "Installation completed. Exiting..."
+    Start-Sleep -Seconds $SleepBeforeExit
     exit 0
+
 } else {
-    Write-Log "Tactical RMM already installed. Exiting..."
-    Start-Sleep -Seconds 15
+    Write-Log "Tactical RMM agent is already installed. Exiting..."
+    Start-Sleep -Seconds $SleepBeforeExit
     exit 0
 }
