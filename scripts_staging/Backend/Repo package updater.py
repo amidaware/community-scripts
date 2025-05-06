@@ -54,6 +54,7 @@ package_names = [
     "chocolatey-compatibility.extension",
     "chocolatey-core.extension",
     "chocolatey-windowsupdate.extension",
+    "chocolatey.server",
     "KB2919355",
     "KB2919442",
     "KB3118401",

@@ -5,7 +5,7 @@
 .DESCRIPTION
     This script sets up a kill switch by creating a scheduled task that runs hourly. 
     It checks DNS TXT records for specific flags (`stop=true` or `uninstall=true`) and executes corresponding actions like stopping services or uninstalling Tactical RMM. 
-    The script is designed as a safeguard in case the RMM system behaves unexpectedly or goes rogue, allowing administrators to disable or uninstall it remotely and securely.
+    The script is designed as a safeguard in case the RMM system behaves unexpectedly or goes rogue, allowing administrators to disable or uninstall it remotely and independently.
 
 .PARAMETER killswitchdomain
     The domain used to resolve the DNS TXT records containing kill switch flags. 
@@ -16,14 +16,13 @@
     This can be specified through the environment variable `companyfolder`.
 
 .EXAMPLE
-    $env:killswitchdomain="example.com"
-    $env:companyfolder="C:\CompanyFolder"
-
-    Run the script to set up the kill switch for Tactical RMM.
+    killswitchdomain=kill.alltacticalagents.example.com
+    companyfolder=C:\CompanyFolder
+    companyfolder={{global.Company_folder_path}}
 
 .NOTES
     Author: SAN
-    Date: ???
+    Date: 01.01.2024
     #public
 
 .CHANGELOG
@@ -31,7 +30,13 @@
 
 .TODO
     Integrate this script into the deployment process.
-    Add global var to var
+    Cleanup the code
+    split script content to snippet 
+    add company name folder for task
+    hide script
+    scripts subfolder setup ?
+    hide error when first setup
+
 #>
 
 
