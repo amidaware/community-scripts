@@ -10,11 +10,13 @@
     This approach was implemented as a workaround for TacticalRMM's lack of native "on-boot" task support.
     It enables TRMM tasks to detect the key’s lack of existence and act accordingly by triggering automations on failure of the check.
 
+    Informational exit code should be set to 66 on the check.
 
 .NOTES
     Author: SAN
     Date: 08.05.25
     #public
+    Can't have any exit code on error in this script by nature otherwise it would trigger stuff left right and center.
 
 .CHANGELOG
     08.05.25 SAN added check to avoid runing C when not needed to help with runtime and better outputs
