@@ -1,14 +1,14 @@
 <#
 .SYNOPSIS
-    Exits with code 1 if automation should trigger (key exists); exits with 0 otherwise.
+    Exits with code 1 if automation should trigger (key does not exist); exits with 0 otherwise.
 
 .DESCRIPTION
     This script uses a volatile registry key to determine whether it has already run in the current boot cycle.
-    If the key already exists (i.e., automation has triggered before in this boot), the script exits with code 1.
-    If the key does not exist (i.e., first run since boot), it creates the key and exits with code 0 to indicate no further action is needed.
+    If the key already exists (i.e., automation has triggered before in this boot), the script exits with code 0.
+    If the key does not exist (i.e., first run since boot), it creates the key and exits with code 1 to trigger on failure tasks.
 
     This approach was implemented as a workaround for TacticalRMM's lack of native "on-boot" task support.
-    It enables TRMM policies to detect the key’s existence and act accordingly by triggering automation.
+    It enables TRMM tasks to detect the key’s lack of existence and act accordingly by triggering automations on failure of the check.
 
 .NOTES
     Author: SAN
