@@ -99,5 +99,5 @@ try {
     }
 } catch {
     Write-Error "An unexpected error occurred: $_"
-    exit 1
+    exit 15
 }
