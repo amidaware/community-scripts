@@ -5,24 +5,36 @@
 .DESCRIPTION
     This script uses a volatile registry key to determine whether it has already run in the current boot cycle.
     If the key already exists (i.e., automation has triggered before in this boot), the script exits with code 0.
-    If the key does not exist (i.e., first run since boot), it creates the key and exits with code 1 to trigger on failure tasks.
+    If the key does not exist (i.e., first run since boot), it creates the key and exits with code 66 to trigger on failure tasks.
 
     This approach was implemented as a workaround for TacticalRMM's lack of native "on-boot" task support.
     It enables TRMM tasks to detect the key’s lack of existence and act accordingly by triggering automations on failure of the check.
+
 
 .NOTES
     Author: SAN
     Date: 08.05.25
     #public
 
-.TODO
-    Better outputs
+.CHANGELOG
+    08.05.25 SAN added check to avoid runing C when not needed to help with runtime and better outputs
 
 #>
 
+$subKey = "SOFTWARE\\TacticalRMM\\BootTrigger"
+[string]$msg = $null
+$ExitCreated = 66
 
+# Check if the registry key exists
+$regKeyExists = Test-Path "HKLM:\$subKey"
 
-Add-Type -TypeDefinition @"
+if ($regKeyExists) {
+    # Key already exists, proceed with no action
+    Write-Output "OK: Already triggered this boot"
+    exit 0
+} else {
+    # Key doesn't exist, load and execute C# code to create the volatile registry key
+    Add-Type -TypeDefinition @"
 using System;
 using System.Runtime.InteropServices;
 
@@ -63,15 +75,21 @@ public class VolatileRegistry
                 out hKey,
                 out disposition
             );
-
-            message = string.Format("RegCreateKeyEx returned: {0}, disposition: {1}", result, disposition);
+            if (result == 0)
+            {
+                message = string.Format("OK: Registry key created with disposition {0}.", disposition);
+            }
+            else
+            {
+                message = string.Format("KO: Failed to create registry key. Error code: {0}", result);
+            }
 
             if (result != 0)
             {
-                throw new System.Exception("Failed to create registry key.");
+                throw new System.Exception("KO: Failed to create registry key.");
             }
 
-            return disposition == 1; // Key was created (disposition == 1)
+            return disposition == 1;
         }
         catch (System.Exception ex)
         {
@@ -81,23 +99,22 @@ public class VolatileRegistry
     }
 }
 "@
+    try {
+        # Run the C# code to create the volatile registry key
+        $created = [VolatileRegistry]::CreateVolatileKey($subKey, [ref]$msg)
 
-$subKey = "SOFTWARE\\TacticalRMM\\BootTrigger"
-[string]$msg = $null
+        Write-Output $msg
 
-try {
-    $created = [VolatileRegistry]::CreateVolatileKey($subKey, [ref]$msg)
-
-    Write-Output $msg
-
-    if ($created) {
-        # First run since boot — trigger automation
-        exit 1
-    } else {
-        # Already triggered this boot — do nothing
+        if ($created -and ($msg -match 'OK')) {
+            # First run since boot, and the message says OK — trigger automation
+            exit $ExitCreated
+        } else {
+            # Key creation failed
+            Write-Error "Failed to create the key"
+            exit 0
+        }
+    } catch {
+        Write-Error "An unexpected error occurred: $_"
         exit 0
     }
-} catch {
-    Write-Error "An unexpected error occurred: $_"
-    exit 15
 }
