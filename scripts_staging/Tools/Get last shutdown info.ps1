@@ -8,11 +8,11 @@
     extracts detailed shutdown metadata (including reason, process, type, and user), and optionally logs the data
     to a CSV file if the 'sendtolog' environment variable is set to '1'.
 
-.PARAMETER sendtolog
-    Environment variable used to trigger logging to a CSV file when set to "1".
 
 .EXEMPLE
     sendtolog=1
+    Company_folder_path={{global.Company_folder_path}}
+    Company_folder_path=c:\folder
 
 .NOTES
     Author: SAN
@@ -23,7 +23,7 @@
 .CHANGELOG
     SAN 12.12.24 Code cleanup
     SAN 08.05.25 added detailed event property logging, added 6008 and cleanup output
-    
+
 #>
 
 
