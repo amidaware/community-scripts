@@ -25,7 +25,7 @@
 
 #>
 
-$subKey = "SOFTWARE\\TacticalRMM\\BootTrigger5"
+$subKey = "SOFTWARE\\TacticalRMM\\BootTrigger"
 [string]$msg = $null
 $ExitCreated = 66
 $ExitError = 0
