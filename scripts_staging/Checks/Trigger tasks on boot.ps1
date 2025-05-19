@@ -20,12 +20,16 @@
 
 .CHANGELOG
     08.05.25 SAN added check to avoid runing C when not needed to help with runtime and better outputs
+    11.05.25 SAN optimised C code and cleaned exit codes
+    12.05.25 SAN fix exit codes, optimised C again, added event-log support to help with errors
 
 #>
 
 $subKey = "SOFTWARE\\TacticalRMM\\BootTrigger"
 [string]$msg = $null
 $ExitCreated = 66
+$ExitError = 0
+$ExitOK = 0
 
 # Check if the registry key exists
 $regKeyExists = Test-Path "HKLM:\$subKey"
@@ -33,17 +37,19 @@ $regKeyExists = Test-Path "HKLM:\$subKey"
 if ($regKeyExists) {
     # Key already exists, proceed with no action
     Write-Output "OK: Already triggered this boot"
-    exit 0
+    $host.SetShouldExit($ExitOK)
+    exit $ExitOK 
 } else {
     # Key doesn't exist, load and execute C# code to create the volatile registry key
     Add-Type -TypeDefinition @"
 using System;
 using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
 
 public class VolatileRegistry
 {
     [DllImport("advapi32.dll", CharSet = CharSet.Unicode)]
-    public static extern int RegCreateKeyEx(
+    private static extern int RegCreateKeyEx(
         UIntPtr hKey,
         string lpSubKey,
         int Reserved,
@@ -51,56 +57,78 @@ public class VolatileRegistry
         uint dwOptions,
         int samDesired,
         IntPtr lpSecurityAttributes,
-        out IntPtr phkResult,
+        out SafeRegistryHandle phkResult,
         out int lpdwDisposition
     );
 
-    public static UIntPtr HKEY_LOCAL_MACHINE = (UIntPtr)0x80000002;
+    [DllImport("advapi32.dll")]
+    private static extern int RegCloseKey(SafeRegistryHandle hKey);
+
+    public static readonly UIntPtr HKEY_LOCAL_MACHINE = (UIntPtr)0x80000002;
+
+    [Flags]
+    public enum RegistryAccess : int
+    {
+        KEY_QUERY_VALUE = 0x0001,
+        KEY_SET_VALUE = 0x0002,
+        KEY_CREATE_SUB_KEY = 0x0004,
+        KEY_ENUMERATE_SUB_KEYS = 0x0008,
+        KEY_NOTIFY = 0x0010,
+        KEY_CREATE_LINK = 0x0020,
+        KEY_WOW64_64KEY = 0x0100,
+        KEY_ALL_ACCESS = 0xF003F
+    }
+
     public const uint REG_OPTION_VOLATILE = 0x00000001;
-    public const int KEY_ALL_ACCESS = 0xF003F;
-    public const int KEY_WOW64_64KEY = 0x0100;
 
     public static bool CreateVolatileKey(string subKey, out string message)
     {
-        IntPtr hKey;
-        int disposition;
-        try
+        message = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(subKey))
         {
-            int result = RegCreateKeyEx(
-                HKEY_LOCAL_MACHINE,
-                subKey,
-                0,
-                null,
-                REG_OPTION_VOLATILE,
-                KEY_ALL_ACCESS | KEY_WOW64_64KEY,
-                IntPtr.Zero,
-                out hKey,
-                out disposition
-            );
-            if (result == 0)
-            {
-                message = string.Format("OK: Registry key created with disposition {0}.", disposition);
-            }
-            else
-            {
-                message = string.Format("KO: Failed to create registry key. Error code: {0}", result);
-            }
-
-            if (result != 0)
-            {
-                throw new System.Exception("KO: Failed to create registry key.");
-            }
-
-            return disposition == 1;
+            message = "KO: Invalid subKey value.";
+            return false;
         }
-        catch (System.Exception ex)
+
+        SafeRegistryHandle hKey;
+        int disposition;
+
+        int result = RegCreateKeyEx(
+            HKEY_LOCAL_MACHINE,
+            subKey,
+            0,
+            null,
+            REG_OPTION_VOLATILE,
+            (int)(RegistryAccess.KEY_ALL_ACCESS | RegistryAccess.KEY_WOW64_64KEY),
+            IntPtr.Zero,
+            out hKey,
+            out disposition
+        );
+
+        if (result == 0)
         {
-            message = "Error: " + ex.Message;
+            using (hKey)
+            {
+                message = string.Format("OK: Registry key created (disposition: {0}).", disposition);
+                return true;
+            }
+        }
+        else
+        {
+            message = string.Format("KO: Failed to create registry key. Error code: {0}", result);
             return false;
         }
     }
 }
 "@
+    $EventLogName = "Application"
+    $EventSource = "VolatileRegistryScript"
+
+    if (-not [System.Diagnostics.EventLog]::SourceExists($EventSource)) {
+        New-EventLog -LogName $EventLogName -Source $EventSource
+    }
+
     try {
         # Run the C# code to create the volatile registry key
         $created = [VolatileRegistry]::CreateVolatileKey($subKey, [ref]$msg)
@@ -108,15 +136,25 @@ public class VolatileRegistry
         Write-Output $msg
 
         if ($created -and ($msg -match 'OK')) {
+            Write-EventLog -LogName $EventLogName -Source $EventSource -EventId $ExitCreated -EntryType Information -Message $msg
+
             # First run since boot, and the message says OK — trigger automation
+            $host.SetShouldExit($ExitCreated)
             exit $ExitCreated
         } else {
-            # Key creation failed
+            Write-EventLog -LogName $EventLogName -Source $EventSource -EventId 1002 -EntryType Error -Message "Registry creation failed: $msg"
             Write-Error "Failed to create the key"
-            exit 0
+            $host.SetShouldExit($ExitError)
+            exit $ExitError
         }
     } catch {
-        Write-Error "An unexpected error occurred: $_"
-        exit 0
+        $errorMsg = "An unexpected error occurred: $_"
+
+        Write-EventLog -LogName $EventLogName -Source $EventSource -EventId 1003 -EntryType Error -Message $errorMsg
+
+        Write-Error $errorMsg
+        $host.SetShouldExit($ExitError)
+        exit $ExitError
     }
+
 }
