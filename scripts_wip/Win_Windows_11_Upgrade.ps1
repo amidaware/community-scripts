@@ -10,12 +10,21 @@
     May 6, 2025
 .VERSION
     1.1 (Optimized)
+.EXAMPLE
+    .\Win_Windows_11_Upgrade.ps1
+    This command checks system compatibility and downloads the Windows 11 Installation Assistant to install Windows 11.
+.EXAMPLE
+    .\Win_Windows_11_Upgrade.ps1 -Force
+    This command forces the upgrade to Windows 11 and deletes drivers that are blocking the install.
+.EXAMPLE
+    .\Win_Windows_11_Upgrade.ps1 -Force -IsoLocation "C:\Path\To\Windows11.iso"
+    This command specifies a custom ISO location for the Windows 11 installation and forces the install.
 #>
 
 # Define parameters
 param(
     [switch]$Force,
-    [switch]$WaitForCompletion
+    [string]$IsoLocation
 )
 
 #---------------------------------
@@ -24,6 +33,10 @@ param(
 $Config = @{
     Win11SetupUrl     = "https://go.microsoft.com/fwlink/?linkid=2171764"
     SetupPath         = "$env:TEMP\Win11InstallationAssistant.exe"
+    IsoLocation       = $IsoLocation
+    IsoPath           = "$env:TEMP\Windows11.iso"
+    MountPath         = "$env:TEMP\Mount"
+    LogPath           = "C:\SetupLogs"
     LogPaths          = @{
         PantherDir    = "C:\`$WINDOWS.~BT\Sources\Panther"
         SetupAct      = "C:\`$WINDOWS.~BT\Sources\Panther\setupact.log"
@@ -200,12 +213,46 @@ function Test-Admin {
 # Core Functions
 #---------------------------------
 
+function Test-WinREStatus {
+    <#
+    .SYNOPSIS
+        Checks if Windows Recovery Environment (WinRE) is enabled and properly configured.
+    .OUTPUTS
+        Boolean indicating if WinRE is enabled and properly configured.
+    #>
+    try {
+        $reagentInfo = reagentc /info
+        $winREEnabled = $reagentInfo | Select-String "Windows RE Status:\s+Enabled"
+        
+        if ($winREEnabled) {
+            # Verify WinRE image is registered
+            $imageInfo = reagentc /info | Select-String "Windows RE location"
+            if ($imageInfo -and $imageInfo.Line -notmatch "Not found") {
+                Write-Log "WinRE: Enabled and properly configured" "INFO"
+                return $true
+            }
+            else {
+                Write-Log "WinRE: Enabled but image not properly registered" "WARNING"
+                return $false
+            }
+        }
+        else {
+            Write-Log "WinRE: Not enabled" "ERROR"
+            return $false
+        }
+    }
+    catch {
+        Handle-Error -Message "Failed to check WinRE status." -Exception $_
+        return $false
+    }
+}
+
 function Test-SystemCompatibility {
     <#
     .SYNOPSIS
-        Validates system requirements for Windows 11.
+        Validates system requirements for Windows 11, including WinRE status.
     #>
-    $results = @{ TPM = $false; SecureBoot = $false; System = $false }
+    $results = @{ TPM = $false; SecureBoot = $false; System = $false; WinRE = $false }
 
     # Check TPM
     try {
@@ -246,6 +293,14 @@ function Test-SystemCompatibility {
         Handle-Error -Message "Failed to check system requirements." -Exception $_
     }
 
+    # Check WinRE status
+    try {
+        $results.WinRE = Test-WinREStatus
+    }
+    catch {
+        Handle-Error -Message "Failed to check WinRE status." -Exception $_
+    }
+
     return $results
 }
 
@@ -266,13 +321,19 @@ function Get-DriverBlocks {
         [xml]$scanResult = Get-Content $scanResultPath -ErrorAction Stop
         $blockedDrivers = $scanResult.CompatReport.DriverPackages.DriverPackage | Where-Object { $_.BlockMigration -eq 'True' }
 
-        foreach ($driver in $blockedDriverNodes) {
+        # check if $blockedDrivers is an object or an array
+        if ($blockedDrivers -is [System.Xml.XmlNode]) {
+            $blockedDrivers = @($blockedDrivers)
+        }
+
+        foreach ($driver in $blockedDrives) {
             $blockedDrivers += [PSCustomObject]@{
                 InfFile           = $driver.Inf
                 HasSignedBinaries = $driver.HasSignedBinaries
                 BlockReason       = "Migration block"
             }
         }
+
         Write-Log "Found $($blockedDrivers.Count) driver blocks." "WARNING"
     }
     catch {
@@ -282,130 +343,6 @@ function Get-DriverBlocks {
     return $blockedDrivers
 }
 
-function Start-Upgrade {
-    <#
-    .SYNOPSIS
-        Initiates the Windows 11 upgrade process.
-    #>
-    param (
-        [switch]$WaitForCompletion
-    )
-
-    try {
-        # Check for existing driver blocks
-        Write-Log "Checking for driver compatibility issues before starting upgrade..." "INFO"
-        $blockedDrivers = Get-DriverBlocks
-        if ($blockedDrivers.Count -gt 0) {
-            Write-Log "Critical: $($blockedDrivers.Count) driver blocks detected." "ERROR"
-            if (-not $Force) {
-                Write-Log "Upgrade cannot proceed due to driver blocks. Use -Force to override after resolving issues." "ERROR"
-                return $false
-            }
-            else {
-                Write-Log "-Force specified: Proceeding despite driver blocks. Ensure drivers are resolved." "WARNING"
-            }
-        }
-
-        Write-Log "Downloading Windows 11 Installation Assistant..." "INFO"
-        $retryCount = 3
-        $success = $false
-        for ($i = 1; $i -le $retryCount; $i++) {
-            try {
-                (New-Object System.Net.WebClient).DownloadFile($Config.Win11SetupUrl, $Config.SetupPath)
-                $success = $true
-                break
-            }
-            catch {
-                Write-Log "Download attempt $i failed: $($_.Exception.Message)" "WARNING"
-                if ($i -eq $retryCount) { throw "Failed to download after $retryCount attempts." }
-                Start-Sleep -Seconds 5
-            }
-        }
-
-        if (-not $success -or -not (Test-Path $Config.SetupPath)) {
-            throw "Failed to download Installation Assistant."
-        }
-
-        Write-Log "Starting Windows 11 upgrade process..." "INFO"
-        $dir = "$($env:SystemDrive)\_Windows_FU\packages"
-        $process = Start-Process -FilePath $Config.SetupPath -ArgumentList "/quietinstall /skipeula /auto upgrade /copylogs $dir /migratedrivers all" -PassThru -ErrorAction Stop
-
-        if ($WaitForCompletion) {
-            Write-Log "Monitoring upgrade process to completion..." "INFO"
-            $success = Monitor-UpgradeProcess -Process $process
-            return $success
-        }
-        else {
-            Write-Log "Upgrade process initiated. Use -WaitForCompletion to monitor progress." "INFO"
-            return $true
-        }
-    }
-    catch {
-        Handle-Error -Message "Failed to initiate upgrade." -Exception $_
-        return $false
-    }
-}
-
-function Monitor-UpgradeProcess {
-    <#
-    .SYNOPSIS
-        Monitors the upgrade process and checks for compatibility issues.
-    #>
-    param (
-        [Parameter(Mandatory)]
-        [System.Diagnostics.Process]$Process
-    )
-
-    $timeout = (Get-Date).AddMinutes($Config.TimeoutMinutes)
-    $lastUpdate = Get-Date
-
-    Write-Progress -Activity "Monitoring Windows 11 Upgrade" -Status "Checking compatibility..."
-
-    while (-not $Process.HasExited -and (Get-Date) -lt $timeout) {
-        if ((Get-Date) -ge $lastUpdate.AddSeconds($Config.StatusIntervalSec)) {
-            Write-Log "Monitoring upgrade... (Elapsed: $((Get-Date) - $Process.StartTime).ToString('hh\:mm\:ss'))" "INFO"
-            $lastUpdate = Get-Date
-        }
-
-        Start-Sleep -Seconds 5
-    }
-
-    Write-Progress -Activity "Monitoring Windows 11 Upgrade" -Completed
-
-    if ($Process.HasExited) {
-        if ($Process.ExitCode -eq 0) {
-            # Verify OS version
-            $osInfo = Get-CimInstance Win32_OperatingSystem
-            $version = [Version]$osInfo.Version
-            $buildNumber = [int]$osInfo.BuildNumber
-            if ($version.Major -gt 10 -or ($version.Major -eq 10 -and $buildNumber -ge 22000)) {
-                Write-Log "Windows 11 detected. Upgrade completed successfully." "INFO"
-                return $true
-            }
-            else {
-                Write-Log "Upgrade process completed, but Windows 11 not detected. Checking logs for errors..." "ERROR"
-                $errorEntries = Get-UpgradeLogErrors
-                if ($errorEntries.Count -gt 0) {
-                    Show-UpgradeFailureInfo -ErrorEntries $errorEntries
-                }
-
-                return $false
-            }
-        }
-        else {
-            Write-Log "Upgrade process failed with exit code $($Process.ExitCode)." "ERROR"
-            $errorEntries = Get-UpgradeLogErrors
-            if ($errorEntries.Count -gt 0) {
-                Show-UpgradeFailureInfo -ErrorEntries $errorEntries
-            }
-
-            return $false
-        }
-    }
-
-    Write-Log "Upgrade monitoring timed out after $($Config.TimeoutMinutes) minutes." "ERROR"
-    return $false
-}
 
 function Check-PreviousUpgradeAttempt {
     <#
@@ -514,9 +451,11 @@ function Show-PreviousUpgradeAttemptInfo {
         if ($PreviousAttempt.BlockedDrivers.Count -gt 0) {
             Show-BlockedDriverInfo -BlockedDrivers $PreviousAttempt.BlockedDrivers
         }
+
         if ($PreviousAttempt.ErrorEntries.Count -gt 0) {
             Show-UpgradeFailureInfo -ErrorEntries $PreviousAttempt.ErrorEntries
         }
+
         Write-Log "Action: Address issues above. Use -Force to retry." "INFO"
     }
     else {
@@ -860,11 +799,178 @@ function Parse-PnpUtilDrivers {
     }
 }
 
+function Start-IsoUpgrade {
+    try {
+        # Check for existing driver blocks
+        Write-Log "Checking for driver compatibility issues before starting ISO upgrade..." "INFO"
+        $blockedDrivers = Get-DriverBlocks
+        if ($blockedDrivers.Count -gt 0) {
+            Write-Log "Critical: $($blockedDrivers.Count) driver blocks detected." "ERROR"
+            if (-not $Force) {
+                Write-Log "Upgrade cannot proceed due to driver blocks. Use -Force to override after resolving issues." "ERROR"
+                return $false
+            }
+            else {
+                Write-Log "-Force specified: Proceeding despite driver blocks. Ensure drivers are resolved." "WARNING"
+            }
+        }
+
+        # Ensure directories exist
+        $dirs = @($Config.IsoPath, $Config.MountPath, $Config.LogPath)
+        foreach ($dir in $dirs) {
+            New-Item -Path $dir -ItemType Directory -Force | Out-Null
+        }
+
+        # Download the ISO
+        Write-Log "Downloading Windows 11 ISO from $IsoLocation..." "INFO"
+        $retryCount = 3
+        $success = $false
+        for ($i = 1; $i -le $retryCount; $i++) {
+            try {
+                (New-Object System.Net.WebClient).DownloadFile($IsoLocation, $Config.IsoPath)
+                $success = $true
+                break
+            }
+            catch {
+                Write-Log "Download attempt $i failed: $($_.Exception.Message)" "WARNING"
+                if ($i -eq $retryCount) {
+                    Write-Log "Failed to download ISO after $retryCount attempts." "ERROR"
+                    return $false
+                }
+
+                Start-Sleep -Seconds 5
+            }
+        }
+
+        if (-not $success -or -not (Test-Path $Config.IsoPath)) {
+            Write-Log "Failed to download ISO." "ERROR"
+            return $false
+        }
+
+        Write-Log "Download completed: $($Config.IsoPath)" "INFO"
+        # Mount the ISO
+        Write-Log "Mounting ISO at $($Config.MountPath)..." "INFO"
+        if (-not (Test-Path $Config.MountPath)) {
+            New-Item -Path $Config.MountPath -ItemType Directory -Force | Out-Null
+        }
+
+        Mount-DiskImage -ImagePath $Config.IsoPath -ErrorAction Stop
+        $driveLetter = (Get-DiskImage -ImagePath $Config.IsoPath | Get-Volume).DriveLetter
+        if (-not $driveLetter) {
+            Write-Log "Failed to mount ISO. No drive letter assigned." "ERROR"
+            return $false
+        }
+
+        Write-Log "ISO mounted at drive $driveLetter" "INFO"
+        $systemDrive = $env:SystemDrive
+        Write-Log "Checking BitLocker status for $systemDrive..." "INFO"
+        try {
+            $bitLockerVolume = Get-BitLockerVolume -MountPoint $systemDrive -ErrorAction Stop
+            $protectionStatus = $bitLockerVolume.ProtectionStatus
+            Write-Log "BitLocker Protection Status: $protectionStatus" "INFO"
+        }
+        catch {
+            Write-Log "Error checking BitLocker status: $_" "ERROR"
+        }
+
+        if ($protectionStatus -eq 'On') {
+            try {
+                Write-Log "Suspending BitLocker protection for $systemDrive..." "WARNING"
+                Suspend-BitLocker -MountPoint $systemDrive -ErrorAction Stop
+                # Verify suspension
+                $newStatus = (Get-BitLockerVolume -MountPoint $systemDrive).ProtectionStatus
+                if ($newStatus -eq 'Off') {
+                    Write-Log "BitLocker protection successfully suspended for $systemDrive." "WARNING"
+                }
+                else {
+                    Write-Log "Failed to confirm BitLocker suspension. Please check manually with 'Get-BitLockerVolume -MountPoint $systemDrive'." "WARNING"
+                }
+            }
+            catch {
+                Write-Log "Error suspending BitLocker: $_" "ERROR"
+                return $false
+            }
+        }
+
+
+        $isoRoot = "${driveLetter}:\"
+        # Run setup.exe 
+        $setupExe = Join-Path $isoRoot "setup.exe"
+        $setupArgs = "/auto upgrade /compat ignorewarning /eula accept /dynamicupdate disable /bitlocker alwayssuspend /migratedrivers none /copylogs $($Config.LogPath)"
+        Write-Log "Starting Windows 11 ISO upgrade..." "INFO"
+        $process = Start-Process -FilePath $setupExe -ArgumentList $setupArgs -PassThru -ErrorAction Stop
+        $process.WaitForExit()
+        Write-Log "Upgrade process completed with exit code: $($process.ExitCode)" "INFO"
+
+        # Dismount ISO
+        Write-Log "Dismounting ISO..." "INFO"
+        Dismount-DiskImage -ImagePath $Config.IsoPath -ErrorAction SilentlyContinue
+
+        return $process.ExitCode -eq 0
+    }
+    catch {
+        Handle-Error -Message "Failed to initiate ISO upgrade." -Exception $_
+        if (Get-DiskImage -ImagePath $Config.IsoPath -ErrorAction SilentlyContinue) {
+            Dismount-DiskImage -ImagePath $Config.IsoPath -ErrorAction SilentlyContinue
+        }
+        return $false
+    }
+}
+
+function Start-Upgrade {
+    try {
+        # Check for existing driver blocks
+        Write-Log "Checking for driver compatibility issues before starting upgrade..." "INFO"
+        $blockedDrivers = Get-DriverBlocks
+        if ($blockedDrivers.Count -gt 0) {
+            Write-Log "Critical: $($blockedDrivers.Count) driver blocks detected." "ERROR"
+            if (-not $Force) {
+                Write-Log "Upgrade cannot proceed due to driver blocks. Use -Force to override after resolving issues." "ERROR"
+                return $false
+            }
+            else {
+                Write-Log "-Force specified: Proceeding despite driver blocks. Ensure drivers are resolved." "WARNING"
+            }
+        }
+
+        Write-Log "Downloading Windows 11 Installation Assistant..." "INFO"
+        $retryCount = 3
+        $success = $false
+        for ($i = 1; $i -le $retryCount; $i++) {
+            try {
+                (New-Object System.Net.WebClient).DownloadFile($Config.Win11SetupUrl, $Config.SetupPath)
+                $success = $true
+                break
+            }
+            catch {
+                Write-Log "Download attempt $i failed: $($_.Exception.Message)" "WARNING"
+                if ($i -eq $retryCount) { throw "Failed to download after $retryCount attempts." }
+                Start-Sleep -Seconds 5
+            }
+        }
+
+        if (-not $success -or -not (Test-Path $Config.SetupPath)) {
+            throw "Failed to download Installation Assistant."
+        }
+
+        Write-Log "Starting Windows 11 upgrade process..." "INFO"
+        $dir = "$($env:SystemDrive)\_Windows_FU\packages"
+        $process = Start-Process -FilePath $Config.SetupPath -ArgumentList "/quietinstall /skipeula /skipcompatcheck /skipselfupdate /auto upgrade /copylogs $dir" -PassThru -ErrorAction Stop
+        $process.WaitForExit()
+        Write-Log "Upgrade process completed with exit code: $($process.ExitCode)" "INFO"
+        return $process.ExitCode -eq 0
+    }
+    catch {
+        Handle-Error -Message "Failed to initiate upgrade." -Exception $_
+        return $false
+    }
+}
+
 #---------------------------------
 # Main Execution
 #---------------------------------
 
-Write-Log "Starting Windows 11 Upgrade Assistant..." "INFO"
+Write-Log "Starting Windows 11 Script..." "INFO"
 Test-Admin
 
 # Check for previous upgrade attempts
@@ -874,22 +980,49 @@ if ($previousAttempt.PreviousAttemptFound -and -not $Force) {
     if ($previousAttempt.FailureDetected) {
         Get-LastSetupError
         Write-Log "Previous upgrade failure detected. Use -Force to retry." "ERROR"
+        Write-Log "Attempting to download SetupDiag for further analysis..." "INFO"
+        $setupDiagUrl = "https://go.microsoft.com/fwlink/?linkid=870142"
+        $setupDiagPath = "$PSScriptRoot\SetupDiag.exe"
+        Invoke-WebRequest -Uri $setupDiagUrl -OutFile $setupDiagPath
+        Write-Log "SetupDiag downloaded to $setupDiagPath, executing SetupDiag" "INFO"
+        Start-Process -FilePath $setupDiagPath -ArgumentList "/Output:$PSScriptRoot\SetupDiagResults.log" -Wait
+        Get-Content "$PSScriptRoot\SetupDiagResults.log"
         exit 1
+    }
+}
+elseif ($previousAttempt.PreviousAttemptFound -and $Force) {
+    Show-PreviousUpgradeAttemptInfo -PreviousAttempt $previousAttempt
+    if ($previousAttempt.FailureDetected) {
+        Write-Log "Force specified: Attempting auto remediation" "WARNING"
+        if ($previousAttempt.BlockedDrivers.Count -gt 0) {
+            $previousAttempt.BlockedDrivers | ForEach-Object {
+                Write-Log "Attempting to remove driver: $($_.Inf)" "INFO"
+                pnputil /delete-driver $_.Inf /force
+            }
+        }
     }
 }
 
 # Validate system compatibility
 $compat = Test-SystemCompatibility
-if (-not ($compat.TPM -and $compat.SecureBoot -and $compat.System)) {
+if (-not ($compat.TPM -and $compat.SecureBoot -and $compat.System -and $compat.WinRE)) {
     Write-Log "System does not meet Windows 11 requirements." "ERROR"
     exit 1
 }
 
 # Start upgrade
-$upgradeSuccess = Start-Upgrade -WaitForCompletion:$WaitForCompletion
+$upgradeSuccess = if ($IsoLocation) {
+    Write-Log "IsoLocation specified ($IsoLocation). Using ISO-based upgrade." "INFO"
+    Start-IsoUpgrade
+}
+else {
+    Write-Log "No IsoLocation specified. Using Windows 11 Installation Assistant." "INFO"
+    Start-Upgrade
+}
+
 if (-not $upgradeSuccess) {
     Write-Log "Upgrade failed. Check logs for details." "ERROR"
     exit 1
 }
 
-Write-Log "Upgrade process completed successfully." "INFO"
+Write-Log "Upgrade started successfully." "INFO"
