@@ -1,5 +1,3 @@
-#public
-
 <#
 .SYNOPSIS
     Script to ensure PowerShell 7+ is installed and set up properly.
@@ -10,6 +8,11 @@
 
 .NOTES
     Author: SAN
+    #public
+    Date: 01.01.24
+
+.CHANGELOG
+    22.05.25 SAN Added UTF8 to fix encoding issue with russian & french chars
 
 #>
 
@@ -53,3 +56,4 @@ if (!($PSVersionTable.PSVersion.Major -ge 7)) {
 
 #Set the correct rendering for pwsh
 $PSStyle.OutputRendering = "plaintext"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
