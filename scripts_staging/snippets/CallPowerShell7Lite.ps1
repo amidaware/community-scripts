@@ -12,6 +12,9 @@
     Author: SAN
     Date: 29/04/2025
     #public
+
+.CHANGELOG
+  22.05.25 SAN Added UTF8 to fix encoding issue with russian & french chars
 #>
 
 
@@ -24,4 +27,5 @@ if (!($PSVersionTable.PSVersion.Major -ge 7)) {
     exit 1
   }
 }
+[Console]::OutputEncoding = [Text.Encoding]::UTF8
 $PSStyle.OutputRendering = "plaintext"
