@@ -41,6 +41,7 @@ $SmtpServer         = $env:SMTP_SERVER
 $SmtpPort           = [int]$env:SMTP_PORT
 $AdminEmail         = $env:ADMIN_EMAIL
 $FromEmail          = $env:FROM_EMAIL
+$signmail           = $env:SIGNMAIL
 $WarningThreshold   = [int]$env:WARNING_THRESHOLD
 $CriticalThreshold  = [int]$env:CRITICAL_THRESHOLD
 
@@ -434,8 +435,7 @@ foreach ($user in $reportData | Where-Object { $_.Status -in @("Warning", "Criti
     <p>Votre mot de passe est dans un état <strong class='$($user.Status.ToLower())'>$($user.Status)</strong>.</p>
     <p><strong>Date d'expiration:</strong> $expirationDate</p>
     <p>Veuillez mettre à jour votre mot de passe dès que possible pour éviter tout problème d'accès.</p>
-    <p>Cordialement,</p>
-    <p>Équipe IT</p>
+    <p>$signmail</p>
 </body>
 </html>
 "@
