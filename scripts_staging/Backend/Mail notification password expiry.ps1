@@ -44,6 +44,7 @@ $FromEmail          = $env:FROM_EMAIL
 $signmail           = $env:SIGNMAIL
 $WarningThreshold   = [int]$env:WARNING_THRESHOLD
 $CriticalThreshold  = [int]$env:CRITICAL_THRESHOLD
+$EmailSignature     = $env:EMAIL_SIGNATURE
 
 function Convert-ToBoolean($value) {
     return $value -match '^(1|true|yes)$'
@@ -257,6 +258,22 @@ function ConvertTo-HtmlReport {
 
     return $html
 }
+function Get-EmailSignature {
+    if ($EmailSignature) {
+        return $EmailSignature
+    }
+
+        return @"
+<div style="margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px;">
+    <p style="color: #666; font-size: 12px;">
+        <strong>Service Informatique</strong><br>
+        Téléphone : +33 (0)1 XX XX XX XX<br>
+        Email : support@domain.com<br>
+        <em>Ce message est généré automatiquement, merci de ne pas y répondre directement.</em>
+    </p>
+</div>
+"@
+}
 
 function Send-EmailReport {
     param(
@@ -299,7 +316,6 @@ function Send-UserNotification {
         [string]$Recipient,
         [string]$Subject,
         [string]$Body,
-        [string]$signmail,
         [string]$SmtpServer,
         [int]$Port = 25,
         [string]$FromAddress
@@ -437,7 +453,7 @@ foreach ($user in $reportData | Where-Object { $_.Status -in @("Warning", "Criti
     <p>Votre mot de passe est dans un état <strong class='$($user.Status.ToLower())'>$($user.Status)</strong>.</p>
     <p><strong>Date d'expiration:</strong> $expirationDate</p>
     <p>Veuillez mettre à jour votre mot de passe dès que possible pour éviter tout problème d'accès.</p>
-    <p>$signmail</p>
+    
 </body>
 </html>
 "@
