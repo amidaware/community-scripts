@@ -299,6 +299,7 @@ function Send-UserNotification {
         [string]$Recipient,
         [string]$Subject,
         [string]$Body,
+        [string]$signmail,
         [string]$SmtpServer,
         [int]$Port = 25,
         [string]$FromAddress
@@ -308,6 +309,7 @@ function Send-UserNotification {
     $mailMessage.To.Add($Recipient)
     $mailMessage.Subject = $Subject
     $mailMessage.Body = $Body
+    $mailMessage.signmail= $signmail
     $mailMessage.IsBodyHtml = $true
     $smtpClient = New-Object System.Net.Mail.SmtpClient($SmtpServer, $Port)
     try {
