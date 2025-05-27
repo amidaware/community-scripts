@@ -290,6 +290,7 @@ function Send-EmailReport {
         Write-Host "Les emails ne sont envoyés que le lundi. Arrêt de l'envoi."
         return
     }
+    $signature = Get-EmailSignature
     $mailMessage = New-Object System.Net.Mail.MailMessage
     $mailMessage.From = $FromAddress
     foreach ($recipient in $Recipients) { $mailMessage.To.Add($recipient) }
@@ -320,6 +321,11 @@ function Send-UserNotification {
         [int]$Port = 25,
         [string]$FromAddress
     )
+    $signature = Get-EmailSignature
+    if ($Body -match '</body>') {
+        } else {
+        $bodyWithSignature = "$Body$signature"
+    }
     $mailMessage = New-Object System.Net.Mail.MailMessage
     $mailMessage.From = $FromAddress
     $mailMessage.To.Add($Recipient)
