@@ -36,9 +36,11 @@
     13.12.24 SAN Split logging from parser.
     30.01.25 SAN Changed output for troubleshooting
     14.04.25 SAN Added validation for KB format and warnings for invalid KBs.
+    03.06.25 SAN move PS7 call at the start
 #>
 
-
+# Call the pwsh snippet
+{{CallPowerShell7}}
 
 # Name will be used for both the name of the log file and what line of the Schedules to parse
 $PartName = "WindowsUpdate"
@@ -48,9 +50,6 @@ $PartName = "WindowsUpdate"
 
 # Call the logging snippet env Company_folder_path will be passed
 {{Logging}}
-
-# Call the pwsh snippet
-{{CallPowerShell7}}
 
 # Set TLS version to 1.2
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
