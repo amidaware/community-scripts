@@ -1,4 +1,13 @@
-# Uses MDM features of windows to perform a Windows Reset clearing all data
+<#
+.SYNOPSIS
+    Trigger a remote wipe via MDM.
+
+.DESCRIPTION
+    Invokes the 'doWipeMethod' in Windows equivalent to the Reset function in the Settings app.
+
+.NOTES
+    v1.0 7/2024 bbrendon Initial version
+#>
 
 $namespaceName = "root\cimv2\mdm\dmmap"
 $className = "MDM_RemoteWipe"
