@@ -12,8 +12,10 @@
         GeneratedPassphrase snippet
     #public
     
+.CHANGELOG
+    06.06.25 SAN added not allow to change the password on non primary DC it causes conflicts if run on multiple DC
+    
 .TODO
-    Do not allow to change the password on non primary DC it causes conflicts
     move param to env
 #>
 
@@ -22,17 +24,38 @@ param(
     [string]$username
 )
 
-#Call snippet
+# Check if the machine is not a Primary Domain Controller
+# this script should not run on multiple DC as it would cause syncronisation issues so for the sake of simplicity it's only allowed to run on PDC
+$domainRole = (Get-WmiObject Win32_ComputerSystem).DomainRole
+$isDomainController = $domainRole -ge 4  # 4 = Backup DC, 5 = Primary DC
+if ($isDomainController) {
+    try {
+        Write-Host "Domain Controller detected"
+        $domain = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
+        $pdc = $domain.PdcRoleOwner.Name.Split('.')[0]
+        $localComputer = $env:COMPUTERNAME
+
+        if ($pdc -ine $localComputer) {
+            Write-Host "Not the Primary DC"
+            exit 0
+        }
+        Write-Host "Primary DC detected"
+    } catch {
+        Write-Host "Error determining PDC role. Aborting."
+        exit 1
+    }
+}
+
+# Snippet for passphrase
 {{GeneratedPassphrase}}
-$newPassword = $GeneratedPassphrase
 
 # Set the new password for the user
-net user $username $newPassword
+net user $username $GeneratedPassphrase
 
 # Check if the password change was successful
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "$newPassword"
+    Write-Host "$GeneratedPassphrase"
 } else {
-    Write-Host "Password change for $username failed. Please check for errors."
+    Write-Host "Password change for $username failed."
     exit 1
 }
