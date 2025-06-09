@@ -139,11 +139,12 @@ function ConvertTo-HtmlReport {
         $warningThreshold,
         $criticalThreshold
     )
-
     $html = @"
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rapport d'expiration des mots de passe</title>
     <style>
         body {
@@ -274,7 +275,6 @@ function ConvertTo-HtmlReport {
 
     <div class="footer">
         <p>Généré le : $(Get-Date -Format "dd/MM/yyyy HH:mm")</p>
-        <p>© 2025 Service Informatique</p>
     </div>
 </div>
 </body>
@@ -363,10 +363,57 @@ function Send-UserNotification {
 <html>
 <head>
     <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .status {
+            font-weight: bold;
+            margin-top: 15px;
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 5px;
+        }
+        .expired { background-color: #dc3545; color: white; }
+        .critical { background-color: #ffc107; color: #333; }
+        .warning { background-color: #fd7e14; color: white; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+    </style>
 </head>
 <body>
+<div class="container">
 $body
-$signature
+</div>
 </body>
 </html>
 "@
@@ -536,12 +583,6 @@ foreach ($user in $reportData | Where-Object { $_.Status -in @("Warning", "Criti
             background-color: #3498db;
             color: white;
         }
-        .footer {
-            margin-top: 40px;
-            font-size: 0.9em;
-            color: #777;
-            text-align: center;
-        }
     </style>
 </head>
 <body>
@@ -574,9 +615,6 @@ foreach ($user in $reportData | Where-Object { $_.Status -in @("Warning", "Criti
             <td>$($user.DaysLeft)</td>
         </tr>
     </table>
-
-    <p>Cordialement,<br/>
-    Service Informatique</p>
 </div>
 </body>
 </html>
