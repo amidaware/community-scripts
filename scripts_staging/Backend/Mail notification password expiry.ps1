@@ -551,6 +551,7 @@ function Send-UserNotification {
             text-align: left;
             font-size: 14px;
             line-height: 0.8;  /* Hauteur de ligne réduite pour correspondre à la taille de la police */
+            height: 18px;      // fixed row height regardless of font size
         }
         th {
             background-color: #3498db;
