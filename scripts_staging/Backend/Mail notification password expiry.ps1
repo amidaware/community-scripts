@@ -546,11 +546,11 @@ function Send-UserNotification {
             margin-top: 2px;  // espace vertical réduit
         }
         th, td {
-            padding: 0px 2px;  /* Padding réduit pour correspondre à la police */
+            padding: 0px 2px;  /* Padding réduit pour minimiser la hauteur des lignes */
             border-bottom: 1px solid #ddd;
             text-align: left;
             font-size: 14px;
-            line-height: 1.0;  /* Hauteur de ligne réduite */
+            line-height: 0.8;  /* Hauteur de ligne réduite pour correspondre à la taille de la police */
         }
         th {
             background-color: #3498db;
