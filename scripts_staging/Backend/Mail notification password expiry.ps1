@@ -231,45 +231,173 @@ function ConvertTo-HtmlReport {
         </p>
     </div>
 
-    @if ($expiredUsers) {
+    @if ($expiredUsers.Count -gt 0) {
         <div class="section">
             <h2>Comptes expirés</h2>
-            $expiredUsers | Select-Object Name, SamAccountName, Email, @{Name="ExpirationDate";Expression={$_.ExpirationDate.ToString("dd/MM/yyyy")}}, DaysLeft, Enabled | ConvertTo-Html -Fragment
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>SAM Account Name</th>
+                        <th>Email</th>
+                        <th>Date d'expiration</th>
+                        <th>Jours restants</th>
+                        <th>Activé</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    $($expiredUsers | ForEach-Object {
+                        "<tr>
+                            <td>$($_.Name)</td>
+                            <td>$($_.SamAccountName)</td>
+                            <td>$($_.Email)</td>
+                            <td>$($_.ExpirationDate.ToString('dd/MM/yyyy'))</td>
+                            <td>$($_.DaysLeft)</td>
+                            <td>$($_.Enabled)</td>
+                        </tr>"
+                    })
+                </tbody>
+            </table>
         </div>
     }
 
-    @if ($criticalUsers) {
+    @if ($criticalUsers.Count -gt 0) {
         <div class="section">
             <h2>Comptes critiques</h2>
-            $criticalUsers | Select-Object Name, SamAccountName, Email, @{Name="ExpirationDate";Expression={$_.ExpirationDate.ToString("dd/MM/yyyy")}}, DaysLeft, Enabled | ConvertTo-Html -Fragment
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>SAM Account Name</th>
+                        <th>Email</th>
+                        <th>Date d'expiration</th>
+                        <th>Jours restants</th>
+                        <th>Activé</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    $($criticalUsers | ForEach-Object {
+                        "<tr>
+                            <td>$($_.Name)</td>
+                            <td>$($_.SamAccountName)</td>
+                            <td>$($_.Email)</td>
+                            <td>$($_.ExpirationDate.ToString('dd/MM/yyyy'))</td>
+                            <td>$($_.DaysLeft)</td>
+                            <td>$($_.Enabled)</td>
+                        </tr>"
+                    })
+                </tbody>
+            </table>
         </div>
     }
 
-    @if ($warningUsers) {
+    @if ($warningUsers.Count -gt 0) {
         <div class="section">
             <h2>Comptes en avertissement</h2>
-            $warningUsers | Select-Object Name, SamAccountName, Email, @{Name="ExpirationDate";Expression={$_.ExpirationDate.ToString("dd/MM/yyyy")}}, DaysLeft, Enabled | ConvertTo-Html -Fragment
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>SAM Account Name</th>
+                        <th>Email</th>
+                        <th>Date d'expiration</th>
+                        <th>Jours restants</th>
+                        <th>Activé</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    $($warningUsers | ForEach-Object {
+                        "<tr>
+                            <td>$($_.Name)</td>
+                            <td>$($_.SamAccountName)</td>
+                            <td>$($_.Email)</td>
+                            <td>$($_.ExpirationDate.ToString('dd/MM/yyyy'))</td>
+                            <td>$($_.DaysLeft)</td>
+                            <td>$($_.Enabled)</td>
+                        </tr>"
+                    })
+                </tbody>
+            </table>
         </div>
     }
 
-    @if ($IncludeNeverExpires -and $neverExpiresUsers) {
+    @if ($IncludeNeverExpires -and $neverExpiresUsers.Count -gt 0) {
         <div class="section">
             <h2>Comptes avec mot de passe n'expirant jamais</h2>
-            $neverExpiresUsers | Select-Object Name, SamAccountName, Email, Enabled | ConvertTo-Html -Fragment
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>SAM Account Name</th>
+                        <th>Email</th>
+                        <th>Activé</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    $($neverExpiresUsers | ForEach-Object {
+                        "<tr>
+                            <td>$($_.Name)</td>
+                            <td>$($_.SamAccountName)</td>
+                            <td>$($_.Email)</td>
+                            <td>$($_.Enabled)</td>
+                        </tr>"
+                    })
+                </tbody>
+            </table>
         </div>
     }
 
-    @if ($neverLoggedInUsers) {
+    @if ($neverLoggedInUsers.Count -gt 0) {
         <div class="section">
             <h2>Comptes jamais connectés</h2>
-            $neverLoggedInUsers | Select-Object Name, SamAccountName, Email, Enabled | ConvertTo-Html -Fragment
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>SAM Account Name</th>
+                        <th>Email</th>
+                        <th>Activé</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    $($neverLoggedInUsers | ForEach-Object {
+                        "<tr>
+                            <td>$($_.Name)</td>
+                            <td>$($_.SamAccountName)</td>
+                            <td>$($_.Email)</td>
+                            <td>$($_.Enabled)</td>
+                        </tr>"
+                    })
+                </tbody>
+            </table>
         </div>
     }
 
-    @if ($IncludeDisabled -and $disabledUsers) {
+    @if ($IncludeDisabled -and $disabledUsers.Count -gt 0) {
         <div class="section">
             <h2>Comptes désactivés</h2>
-            $disabledUsers | Select-Object Name, SamAccountName, Email, @{Name="ExpirationDate";Expression={if($_.ExpirationDate){$_.ExpirationDate.ToString("dd/MM/yyyy")}else{"N/A"}}}, DaysLeft | ConvertTo-Html -Fragment
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>SAM Account Name</th>
+                        <th>Email</th>
+                        <th>Date d'expiration</th>
+                        <th>Jours restants</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    $($disabledUsers | ForEach-Object {
+                        "<tr>
+                            <td>$($_.Name)</td>
+                            <td>$($_.SamAccountName)</td>
+                            <td>$($_.Email)</td>
+                            <td>$($_.ExpirationDate.ToString('dd/MM/yyyy'))</td>
+                            <td>$($_.DaysLeft)</td>
+                        </tr>"
+                    })
+                </tbody>
+            </table>
         </div>
     }
 
