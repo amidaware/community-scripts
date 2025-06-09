@@ -520,7 +520,7 @@ function Send-UserNotification {
         .container {
             max-width: 700px;
             margin: 0 auto;
-            padding: 15px;  // reduced from 30px to 15px
+            padding: 15px;  // réduit par rapport à 30px
             background-color: #fff;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.05);
@@ -528,11 +528,11 @@ function Send-UserNotification {
         h1 {
             color: #2c3e50;
             border-bottom: 2px solid #3498db;
-            padding-bottom: 5px;  // reduced from 10px to 5px
+            padding-bottom: 5px;  // réduit par rapport à 10px
         }
         .status {
             font-weight: bold;
-            margin-top: 5px;   // reduced from 15px to 5px
+            margin-top: 5px;   // réduit par rapport à 15px
             display: inline-block;
             padding: 6px 12px;
             border-radius: 5px;
@@ -543,13 +543,14 @@ function Send-UserNotification {
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 5px;  // reduced from 10px to 5px
+            margin-top: 2px;  // espace vertical réduit
         }
         th, td {
-            padding: 2px;  /* reduced from 4px to 2px */
+            padding: 0px 2px;  /* Padding réduit pour correspondre à la police */
             border-bottom: 1px solid #ddd;
             text-align: left;
             font-size: 14px;
+            line-height: 1.0;  /* Hauteur de ligne réduite */
         }
         th {
             background-color: #3498db;
