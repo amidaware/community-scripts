@@ -139,92 +139,146 @@ function ConvertTo-HtmlReport {
         $warningThreshold,
         $criticalThreshold
     )
+
     $html = @"
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rapport d'expiration des mots de passe</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        h1 { color: #2c3e50; }
-        h2 { color: #333; margin-top: 30px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th { background-color: #3498db; color: white; padding: 10px; text-align: left; }
-        td { padding: 10px; border-bottom: 1px solid #ddd; }
-        .expired { background-color: #ffdddd; }
-        .critical { background-color: #fff3cd; }
-        .warning { background-color: #ffe8cc; }
-        .never-expires { background-color: #e7f3fe; }
-        .never-logged { background-color: #f1f1f1; }
-        .disabled { background-color: #f8f9fa; }
-        .summary { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
-        .policy { background-color: #e8f4f8; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
-        .badge { padding: 3px 8px; border-radius: 3px; font-weight: bold; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
         .badge-expired { background-color: #dc3545; color: white; }
-        .badge-critical { background-color: #ffc107; }
+        .badge-critical { background-color: #ffc107; color: #333; }
         .badge-warning { background-color: #fd7e14; color: white; }
         .badge-never { background-color: #17a2b8; color: white; }
-        .badge-disabled { background-color: #6c757d; color: white; }
         .badge-neverlogged { background-color: #adb5bd; }
+        .badge-disabled { background-color: #6c757d; color: white; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        .footer {
+            margin-top: 40px;
+            font-size: 0.9em;
+            color: #777;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
+<div class="container">
     <h1>Rapport d'expiration des mots de passe</h1>
-    <div class="policy">
+
+    <div class="section">
         <h2>Politique de mot de passe du domaine</h2>
-        <p><strong>Durée maximale du mot de passe:</strong> $($passwordPolicy.MaxPasswordAge.Days) jours</p>
-        <p><strong>Durée minimale du mot de passe:</strong> $($passwordPolicy.MinPasswordAge.Days) jours</p>
+        <p><strong>Durée maximale:</strong> $($passwordPolicy.MaxPasswordAge.Days) jours</p>
+        <p><strong>Durée minimale:</strong> $($passwordPolicy.MinPasswordAge.Days) jours</p>
         <p><strong>Longueur minimale:</strong> $($passwordPolicy.MinPasswordLength) caractères</p>
         <p><strong>Complexité requise:</strong> $($passwordPolicy.ComplexityEnabled)</p>
-        <p><strong>Historique du mot de passe:</strong> $($passwordPolicy.PasswordHistoryCount) mots de passe</p>
-        <p><strong>Verrouillage de compte:</strong> $($passwordPolicy.LockoutThreshold) tentatives (durée: $($passwordPolicy.LockoutDuration.Minutes) minutes, observation: $($passwordPolicy.LockoutObservationWindow.Minutes) minutes)</p>
+        <p><strong>Historique:</strong> $($passwordPolicy.PasswordHistoryCount) mots de passe</p>
+        <p><strong>Verrouillage:</strong> $($passwordPolicy.LockoutThreshold) tentatives (durée: $($passwordPolicy.LockoutDuration.Minutes) min)</p>
     </div>
-    <div class="summary">
-        <p><strong>Seuil d'avertissement :</strong> $warningThreshold jours</p>
-        <p><strong>Seuil critique :</strong> $criticalThreshold jours</p>
-        <p><strong>Statistiques :</strong>
+
+    <div class="section">
+        <h2>Statistiques globales</h2>
+        <p>
             <span class="badge badge-expired">Expirés: $($expiredUsers.Count)</span>
             <span class="badge badge-critical">Critiques: $($criticalUsers.Count)</span>
-            <span class="badge badge-warning">Avertissement: $($warningUsers.Count)</span>
+            <span class="badge badge-warning">Avertissements: $($warningUsers.Count)</span>
             <span class="badge badge-never">Expirent jamais: $($neverExpiresUsers.Count)</span>
             <span class="badge badge-neverlogged">Jamais connectés: $($neverLoggedInUsers.Count)</span>
             <span class="badge badge-disabled">Désactivés: $($disabledUsers.Count)</span>
         </p>
     </div>
-"@
 
-    if ($expiredUsers) {
-        $html += "<h2>Comptes expirés <span class='badge badge-expired'>$($expiredUsers.Count)</span></h2>"
-        $html += $expiredUsers | Select-Object Name, SamAccountName, Email, @{Name="ExpirationDate";Expression={$_.ExpirationDate.ToString("dd/MM/yyyy")}}, DaysLeft, Enabled | ConvertTo-Html -Fragment
+    @if ($expiredUsers) {
+        <div class="section">
+            <h2>Comptes expirés</h2>
+            $expiredUsers | Select-Object Name, SamAccountName, Email, @{Name="ExpirationDate";Expression={$_.ExpirationDate.ToString("dd/MM/yyyy")}}, DaysLeft, Enabled | ConvertTo-Html -Fragment
+        </div>
     }
 
-    if ($criticalUsers) {
-        $html += "<h2>Comptes critiques <span class='badge badge-critical'>$($criticalUsers.Count)</span></h2>"
-        $html += $criticalUsers | Select-Object Name, SamAccountName, Email, @{Name="ExpirationDate";Expression={$_.ExpirationDate.ToString("dd/MM/yyyy")}}, DaysLeft, Enabled | ConvertTo-Html -Fragment
+    @if ($criticalUsers) {
+        <div class="section">
+            <h2>Comptes critiques</h2>
+            $criticalUsers | Select-Object Name, SamAccountName, Email, @{Name="ExpirationDate";Expression={$_.ExpirationDate.ToString("dd/MM/yyyy")}}, DaysLeft, Enabled | ConvertTo-Html -Fragment
+        </div>
     }
 
-    if ($warningUsers) {
-        $html += "<h2>Comptes en avertissement <span class='badge badge-warning'>$($warningUsers.Count)</span></h2>"
-        $html += $warningUsers | Select-Object Name, SamAccountName, Email, @{Name="ExpirationDate";Expression={$_.ExpirationDate.ToString("dd/MM/yyyy")}}, DaysLeft, Enabled | ConvertTo-Html -Fragment
+    @if ($warningUsers) {
+        <div class="section">
+            <h2>Comptes en avertissement</h2>
+            $warningUsers | Select-Object Name, SamAccountName, Email, @{Name="ExpirationDate";Expression={$_.ExpirationDate.ToString("dd/MM/yyyy")}}, DaysLeft, Enabled | ConvertTo-Html -Fragment
+        </div>
     }
 
-    if ($IncludeNeverExpires -and $neverExpiresUsers) {
-        $html += "<h2>Comptes avec mot de passe n'expirant jamais <span class='badge badge-never'>$($neverExpiresUsers.Count)</span></h2>"
-        $html += $neverExpiresUsers | Select-Object Name, SamAccountName, Email, Enabled | ConvertTo-Html -Fragment
+    @if ($IncludeNeverExpires -and $neverExpiresUsers) {
+        <div class="section">
+            <h2>Comptes avec mot de passe n'expirant jamais</h2>
+            $neverExpiresUsers | Select-Object Name, SamAccountName, Email, Enabled | ConvertTo-Html -Fragment
+        </div>
     }
 
-    if ($neverLoggedInUsers) {
-        $html += "<h2>Comptes jamais connectés <span class='badge badge-neverlogged'>$($neverLoggedInUsers.Count)</span></h2>"
-        $html += $neverLoggedInUsers | Select-Object Name, SamAccountName, Email, Enabled | ConvertTo-Html -Fragment
+    @if ($neverLoggedInUsers) {
+        <div class="section">
+            <h2>Comptes jamais connectés</h2>
+            $neverLoggedInUsers | Select-Object Name, SamAccountName, Email, Enabled | ConvertTo-Html -Fragment
+        </div>
     }
 
-    if ($IncludeDisabled -and $disabledUsers) {
-        $html += "<h2>Comptes désactivés <span class='badge badge-disabled'>$($disabledUsers.Count)</span></h2>"
-        $html += $disabledUsers | Select-Object Name, SamAccountName, Email, @{Name="ExpirationDate";Expression={if($_.ExpirationDate){$_.ExpirationDate.ToString("dd/MM/yyyy")}else{"N/A"}}}, DaysLeft | ConvertTo-Html -Fragment
+    @if ($IncludeDisabled -and $disabledUsers) {
+        <div class="section">
+            <h2>Comptes désactivés</h2>
+            $disabledUsers | Select-Object Name, SamAccountName, Email, @{Name="ExpirationDate";Expression={if($_.ExpirationDate){$_.ExpirationDate.ToString("dd/MM/yyyy")}else{"N/A"}}}, DaysLeft | ConvertTo-Html -Fragment
+        </div>
     }
 
-    $html += @"
-    <p style="margin-top: 30px; font-size: 0.9em; color: #666;">Généré le : $(Get-Date -Format "dd/MM/yyyy HH:mm")</p>
+    <div class="footer">
+        <p>Généré le : $(Get-Date -Format "dd/MM/yyyy HH:mm")</p>
+        <p>© 2025 Service Informatique</p>
+    </div>
+</div>
 </body>
 </html>
 "@
@@ -440,18 +494,92 @@ foreach ($user in $reportData | Where-Object { $_.Status -in @("Warning", "Criti
 <head>
     <meta charset="UTF-8">
     <style>
-        body { font-family: Arial, sans-serif; }
-        .warning { color: #fd7e14; }
-        .critical { color: #dc3545; }
-        .expired { color: #6c757d; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .status {
+            font-weight: bold;
+            margin-top: 15px;
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 5px;
+        }
+        .expired { background-color: #dc3545; color: white; }
+        .critical { background-color: #ffc107; color: #333; }
+        .warning { background-color: #fd7e14; color: white; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        .footer {
+            margin-top: 40px;
+            font-size: 0.9em;
+            color: #777;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
+<div class="container">
+    <h1>⚠️ Avertissement : Expiration de votre mot de passe</h1>
     <p>Bonjour $($user.Name),</p>
-    <p>Votre mot de passe est dans un état <strong class='$($user.Status.ToLower())'>$($user.Status)</strong>.</p>
+    <p>Votre mot de passe est dans un état <span class='status $user.Status.ToLower()'>$($user.Status)</span>.</p>
     <p><strong>Date d'expiration:</strong> $expirationDate</p>
     <p>Veuillez mettre à jour votre mot de passe dès que possible pour éviter tout problème d'accès.</p>
-    <p>Cordialement,</p>
+
+    <table>
+        <tr>
+            <th>Nom</th>
+            <td>$($user.Name)</td>
+        </tr>
+        <tr>
+            <th>SAM Account Name</th>
+            <td>$($user.SamAccountName)</td>
+        </tr>
+        <tr>
+            <th>Email</th>
+            <td>$($user.Email)</td>
+        </tr>
+        <tr>
+            <th>Date d'expiration</th>
+            <td>$expirationDate</td>
+        </tr>
+        <tr>
+            <th>Jours restants</th>
+            <td>$($user.DaysLeft)</td>
+        </tr>
+    </table>
+
+    <p>Cordialement,<br/>
+    Service Informatique</p>
+</div>
 </body>
 </html>
 "@
