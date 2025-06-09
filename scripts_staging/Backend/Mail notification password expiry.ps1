@@ -520,7 +520,7 @@ function Send-UserNotification {
         .container {
             max-width: 700px;
             margin: 0 auto;
-            padding: 30px;
+            padding: 15px;  // reduced from 30px to 15px
             background-color: #fff;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.05);
@@ -528,11 +528,11 @@ function Send-UserNotification {
         h1 {
             color: #2c3e50;
             border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
+            padding-bottom: 5px;  // reduced from 10px to 5px
         }
         .status {
             font-weight: bold;
-            margin-top: 15px;
+            margin-top: 5px;   // reduced from 15px to 5px
             display: inline-block;
             padding: 6px 12px;
             border-radius: 5px;
@@ -543,18 +543,18 @@ function Send-UserNotification {
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin-top: 5px;  // reduced from 10px to 5px
         }
         th, td {
-            padding: 8px; /* Réduit l'espace */
+            padding: 2px;  /* reduced from 4px to 2px */
             border-bottom: 1px solid #ddd;
             text-align: left;
-            font-size: 14px; /* Police compacte */
+            font-size: 14px;
         }
         th {
             background-color: #3498db;
             color: white;
-            font-size: 14px; /* Police compacte */
+            font-size: 14px;
         }
     </style>
 </head>
