@@ -400,13 +400,15 @@ function Send-UserNotification {
             margin-top: 20px;
         }
         th, td {
-            padding: 12px;
+            padding: 8px; /* Réduit l'espace */
             border-bottom: 1px solid #ddd;
             text-align: left;
+            font-size: 14px; /* Police compacte */
         }
         th {
             background-color: #3498db;
             color: white;
+            font-size: 14px; /* Police compacte */
         }
     </style>
 </head>
@@ -421,7 +423,7 @@ $body
     $mailMessage = New-Object System.Net.Mail.MailMessage
     $mailMessage.From = $FromAddress
     $mailMessage.To.Add($Recipient)
-    $mailMessage.Subject = $Subject
+    $mailMessage.Subject = $subject
     $mailMessage.Body = $bodyWithSignature
     $mailMessage.IsBodyHtml = $true
     $smtpClient = New-Object System.Net.Mail.SmtpClient($SmtpServer, $Port)
@@ -575,13 +577,15 @@ foreach ($user in $reportData | Where-Object { $_.Status -in @("Warning", "Criti
             margin-top: 20px;
         }
         th, td {
-            padding: 12px;
+            padding: 8px; /* Réduit l'espace */
             border-bottom: 1px solid #ddd;
             text-align: left;
+            font-size: 14px; /* Police compacte */
         }
         th {
             background-color: #3498db;
             color: white;
+            font-size: 14px; /* Police compacte */
         }
     </style>
 </head>
