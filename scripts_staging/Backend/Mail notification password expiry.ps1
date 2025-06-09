@@ -144,8 +144,6 @@ function ConvertTo-HtmlReport {
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rapport d'expiration des mots de passe</title>
     <style>
         body {
