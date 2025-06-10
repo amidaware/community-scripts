@@ -13,6 +13,7 @@
 .CHANGELOG
   22.05.25 SAN Added UTF8 to fix encoding issue with russian & french chars
   06.06.25 PQU Added support for multiple admin emails
+  10.06.25 PQU Modification of the visual of the email
 #>
 if (!($PSVersionTable.PSVersion.Major -ge 7)) {
     if (Get-Command pwsh -ErrorAction SilentlyContinue) {
@@ -139,7 +140,7 @@ function ConvertTo-HtmlReport {
         $warningThreshold,
         $criticalThreshold
     )
-    # Génération des sections conditionnelles
+
     $expiredSection = ""
     if ($expiredUsers.Count -gt 0) {
         $rows = $expiredUsers | ForEach-Object {
@@ -328,7 +329,7 @@ function ConvertTo-HtmlReport {
         </div>
 "@
     }
-    # Assemblage du rapport HTML final
+
     $html = @"
 <!DOCTYPE html>
 <html>
