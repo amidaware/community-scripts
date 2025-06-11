@@ -1,31 +1,49 @@
 <#
 .SYNOPSIS
-    Ensures the script is executed using PowerShell 7 or higher.
+    Analyse et notification avancée des utilisateurs dont le mot de passe Active Directory approche de l’expiration.
 .DESCRIPTION
-    This script verifies whether it is running in a PowerShell 7+ environment. 
-    If not, and if PowerShell 7 (pwsh) is available on the system, it re-invokes itself using pwsh, passing along any parameters.
-    If pwsh is not found, the script outputs a message and exits with an error code.
-    Once running in PowerShell 7 or higher, it sets the output rendering mode to plaintext for consistent formatting.
+    Ce script interroge Active Directory pour lister les utilisateurs d’une OU cible et calcule la date d’expiration de leur mot de passe selon la politique du domaine.
+    Les comptes sont classés selon l’urgence :
+        - Expiré : mot de passe déjà expiré
+        - Critique : expiration imminente (seuil critique)
+        - Avertissement : expiration proche (seuil d’avertissement)
+    Notifications automatiques :
+        • Email pour tous les utilisateurs concernés
+    Un rapport HTML détaillé est généré :
+        • Politique de mot de passe du domaine
+        • Statistiques par catégorie
+        • Liste détaillée des comptes par statut
+.PARAMETER TargetOU
+    OU cible pour la recherche des utilisateurs (ex : "OU=Utilisateurs,DC=domaine,DC=local")
+.PARAMETER WarningThreshold
+    Jours avant expiration pour déclencher un avertissement (défaut : 15)
+.PARAMETER CriticalThreshold
+    Jours avant expiration pour déclencher une alerte critique (défaut : 7)
+.PARAMETER IncludeDisabled
+    Inclure les comptes désactivés dans le rapport (défaut : false)
+.PARAMETER IncludeNeverExpires
+    Inclure les comptes dont le mot de passe n’expire jamais (défaut : false)
+.PARAMETER EmailSignature
+    Signature personnalisée pour les emails (optionnel)
 .NOTES
+    Prérequis :
+        - Module ActiveDirectory
+        - Accès SMTP pour l’envoi d’emails
+        - Droits d’administration pour les tâches planifiées
     Author: PQU
     Date: 29/04/2025
     #public
 .CHANGELOG
-  22.05.25 SAN Added UTF8 to fix encoding issue with russian & french chars
-  06.06.25 PQU Added support for multiple admin emails
-  10.06.25 PQU Modification of the visual of the email
+  22.05.25 SAN – Added UTF8 encoding to resolve issues with Russian and French characters.
+  06.06.25 PQU – Added support for multiple admin emails and centralized config.
 #>
-if (!($PSVersionTable.PSVersion.Major -ge 7)) {
-    if (Get-Command pwsh -ErrorAction SilentlyContinue) {
-        pwsh -File "`"$PSCommandPath`"" @PSBoundParameters
-        exit $LASTEXITCODE
-    } else {
-        Write-Output "ERROR: PowerShell 7 is not available. Exiting."
-        exit 1
-    }
+
+
+{{CallPowerShell7}}
+
+function Convert-ToBoolean($value) {
+    return $value -match '^(1|true|yes)$'
 }
-[Console]::OutputEncoding = [Text.Encoding]::UTF8
-$PSStyle.OutputRendering = "plaintext"
 
 $TargetOU           = $env:TARGET_OU
 $SmtpServer         = $env:SMTP_SERVER
@@ -35,14 +53,12 @@ $FromEmail          = $env:FROM_EMAIL
 $WarningThreshold   = [int]$env:WARNING_THRESHOLD
 $CriticalThreshold  = [int]$env:CRITICAL_THRESHOLD
 $EmailSignature     = $env:EMAIL_SIGNATURE
-
-function Convert-ToBoolean($value) {
-    return $value -match '^(1|true|yes)$'
-}
-
 $IncludeDisabled       = Convert-ToBoolean $env:INCLUDE_DISABLED
 $IncludeNeverExpires   = Convert-ToBoolean $env:INCLUDE_NEVER_EXPIRES
 $GenerateReportOnly    = Convert-ToBoolean $env:GENERATE_REPORT_ONLY
+
+
+
 
 if ($env:SMTP_CREDENTIAL_USERNAME -and $env:SMTP_CREDENTIAL_PASSWORD) {
     try {
@@ -438,7 +454,7 @@ function Get-EmailSignature {
 <div class='email-signature' style='margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px;'>
     <p style='color: #666; font-size: 12px; margin: 0;'>
         <strong>Service Informatique</strong><br>
-        Téléphone : +33 (0)1 XX XX XX XX<br>
+        Téléphone : +00 (0)1 XX XX XX XX<br>
         Email : support@domain.com<br>
         <em>Ce message est généré automatiquement, merci de ne pas y répondre directement.</em>
     </p>
