@@ -26,7 +26,7 @@
     #public
 
 .CHANGELOG
-    12.06.25 SAN Fixed var passtrough issue and hidden the file
+    12.06.25 SAN Fixed var passtrough issue 
     
 .TODO
     Integrate this script into the deployment process.
@@ -34,9 +34,7 @@
     split script content to snippet 
     add company name folder for task
     hide script
-    scripts subfolder setup ?
     hide error when first setup
-
 #>
 
 
