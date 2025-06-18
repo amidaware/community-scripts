@@ -1,11 +1,12 @@
 <#
 Requires global variables for serviceName "ScreenConnectService" and url "ScreenConnectInstaller"
-serviceName is the name of the ScreenConnect Service once it is installed EG: "ScreenConnect Client (1327465grctq84yrtocq)"
-url is the path the download the exe version of the ScreenConnect Access installer
+serviceName is the name of the ScreenConnect Service once it is installed EG: "ScreenConnect Client (1327465grctq84yrtocq)" or "ConnectWise Control Client (xxxxxx)"
+url is the path to download the MSI version of the ScreenConnect Access installer
 Both variables values must start and end with "
 Also accepts uninstall variable to remove the installed instance if required.
 2022-10-12: Added -action start and -action stop variables
 2024-3-19 silversword411 - Adding debug. Fixing uninstall when .exe not running.
+2024-06-18: Bomb - Updated for MSI-only support (.exe deprecated)
 #>
 
 param (
@@ -39,19 +40,24 @@ if (!$serviceName) {
     $ErrorCount += 1
 }
 if (!$url) {
-    write-output "Variable not specified ScreenConnectInstaller, please create a global custom field under Client called ScreenConnectInstaller, Example Value: `"https://myinstance.screenconnect.com/Bin/ConnectWiseControl.ClientSetup.exe?h=stupidlylongurlhere`" `n"
+    write-output "Variable not specified ScreenConnectInstaller, please create a global custom field under Client called ScreenConnectInstaller, Example Value: `"https://myinstance.screenconnect.com/Bin/ScreenConnect.ClientSetup.msi?h=stupidlylongurlhere`" `n"
     $ErrorCount += 1
 }
 
-if (!$ErrorCount -eq 0) {
+if ($ErrorCount -ne 0) {
     exit 1
 }
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 if ($action -eq "uninstall") {
     $MyApp = Get-WmiObject -Class Win32_Product | Where-Object { $_.Name -eq "$serviceName" }
     Write-Debug "MyApp: $MyApp"
-    $MyApp.Uninstall()
+    if ($MyApp) {
+        $MyApp.Uninstall()
+    } else {
+        Write-Output "No matching ScreenConnect product found to uninstall."
+    }
 }
 elseif ($action -eq "stop") {
     If ((Get-Service $serviceName).Status -eq 'Running') {
@@ -66,9 +72,6 @@ elseif ($action -eq "stop") {
             Write-Error -Message "$ErrorMessage $FailedItem"
             exit 1
         }
-        Finally {
-        }
-
     }
 }
 elseif ($action -eq "start") {
@@ -84,9 +87,6 @@ elseif ($action -eq "start") {
             Write-Error -Message "$ErrorMessage $FailedItem"
             exit 1
         }
-        Finally {
-        }
-
     }
 }
 else {
@@ -104,12 +104,8 @@ else {
                 Write-Error -Message "$ErrorMessage $FailedItem"
                 exit 1
             }
-            Finally {
-            }
-
         }
         Else {
-
             Try {
                 Write-Host "Starting $serviceName"
                 Set-Service -Name $serviceName -Status running -StartupType automatic
@@ -121,28 +117,31 @@ else {
                 Write-Error -Message "$ErrorMessage $FailedItem"
                 exit 1
             }
-            Finally {
-            }
-
         }
 
     }
     Else {
 
         $OutPath = $env:TMP
-        $output = "screenconnect.exe"
+        $output = "ScreenConnect.ClientSetup.msi"
 
         Try {
             $start_time = Get-Date
             $wc = New-Object System.Net.WebClient
             $wc.DownloadFile("$url", "$OutPath\$output")
             Write-Debug "Time taken to download: $((Get-Date).Subtract($start_time).Seconds) second(s)"
-			    
+            
             $start_time = Get-Date
-            $wc = New-Object System.Net.WebClient 
-            Start-Process -FilePath $OutPath\$output -Wait
+            # Install MSI silently
+            $proc = Start-Process -FilePath "msiexec.exe" -ArgumentList "/i `"$OutPath\$output`" /qn /norestart" -Wait -PassThru
             Write-Debug "Time taken to install: $((Get-Date).Subtract($start_time).Seconds) second(s)"           
-            exit 0
+            if ($proc.ExitCode -eq 0) {
+                Write-Host "ScreenConnect installed successfully."
+                exit 0
+            } else {
+                Write-Error "ScreenConnect install failed with exit code $($proc.ExitCode)."
+                exit $proc.ExitCode
+            }
         }
         Catch {
             $ErrorMessage = $_.Exception.Message
@@ -151,7 +150,7 @@ else {
             exit 1
         }
         Finally {
-            Remove-Item -Path $OutPath\$output
+            Remove-Item -Path "$OutPath\$output" -Force -ErrorAction SilentlyContinue
         }
 
     }
