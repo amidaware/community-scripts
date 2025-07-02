@@ -43,7 +43,7 @@ $ignoreFolders = @(
     "\Mozilla\",
     "\Microsoft\Office\",
     "\Microsoft\Windows\",
-    "\MySQL\Installer\",
+    "\MySQL\Installer\"
 )
 
 # If it exists and is not empty, add it to the ignore list
