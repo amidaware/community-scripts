@@ -15,7 +15,9 @@
     #public
 
 .CHANGELOG
+    02.07.25 SAN optimisation 
 
+    
 #>
 
 
@@ -47,19 +49,13 @@ if (Get-Module -ListAvailable -Name PSWindowsUpdate) {
     }
 }
 
-# Function to start the update process
-function StartUpdateProcess {
-    Write-Host "Start updates:"
-    Get-WindowsUpdate -Verbose -Install -AcceptAll -AutoReboot
-}
-
 # Check updates
 Write-Host "Check for available updates:"
 Get-WindowsUpdate
 
 # Start update process
 Write-Host "Updating Windows"
-StartUpdateProcess
+Get-WindowsUpdate -Verbose -Install -AcceptAll -AutoReboot
 
 Write-Host "Output of the last updates results:"
 $results = Get-WULastResults
