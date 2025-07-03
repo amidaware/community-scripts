@@ -62,8 +62,8 @@ $ignoreNames = @(
     "edgeupdate",
     "OneDrive Reporting Task",
     "ZoomUpdateTaskUser",
-    "OneDrive Standalone Update Task"
-    "OneDrive Startup Task"
+    "OneDrive Standalone Update Task",
+    "OneDrive Startup Task",
     "CreateExplorerShellUnelevatedTask"
 )
 $ignoreUsers = @(
