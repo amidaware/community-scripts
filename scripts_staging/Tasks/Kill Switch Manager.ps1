@@ -26,17 +26,15 @@
     #public
 
 .CHANGELOG
-
-
+    12.06.25 SAN Fixed var passtrough issue 
+    
 .TODO
     Integrate this script into the deployment process.
     Cleanup the code
     split script content to snippet 
     add company name folder for task
     hide script
-    scripts subfolder setup ?
     hide error when first setup
-
 #>
 
 
@@ -61,58 +59,45 @@ $taskName = "RMM_Kill_Switch"
 # Delete the existing task if it exists
 Unregister-ScheduledTask -TaskName $taskName -Confirm:$false
 
-# Script content to save in the file
-$scriptContent = @"
-# Function to execute the stop branch
+$scriptContent = @'
 function ExecuteStopBranch {
-    # Stop Service name: tacticalrmm
     Stop-Service -Name "tacticalrmm" -Force
-    
-    # Kill all tacticalrmm.exe processes
-    Get-Process -Name "tacticalrmm" | Stop-Process -Force
-    
-    # Stop Service name: Mesh Agent
+    Get-Process -Name "tacticalrmm" -ErrorAction SilentlyContinue | Stop-Process -Force
     Stop-Service -Name "Mesh Agent" -Force
-    
-    # Kill all MeshAgent.exe processes
-    Get-Process -Name "MeshAgent" | Stop-Process -Force
+    Get-Process -Name "MeshAgent" -ErrorAction SilentlyContinue | Stop-Process -Force
 }
 
-# Function to execute the uninstall branch
 function ExecuteUninstallBranch {
-    # Execute the uninstall command silently
-    #Start-Process -FilePath "C:\Program Files\TacticalAgent\unins000.exe" -ArgumentList "/VERYSILENT" -Wait
+    Start-Process -FilePath "C:\Program Files\TacticalAgent\unins000.exe" -ArgumentList "/VERYSILENT" -Wait
 }
 
-# Resolve the TXT record
-\$record = Resolve-DnsName -Name "$domain" -Type "TXT"
+$record = Resolve-DnsName -Name "__DOMAIN_PLACEHOLDER__" -Type "TXT" -ErrorAction SilentlyContinue
+if ($record) {
+    $txtData = $record | Select-Object -ExpandProperty Strings
+    $foundStop = $txtData -match "stop=true"
+    $foundUninstall = $txtData -match "uninstall=true"
 
-# Check if the record was found
-if (\$record) {
-    \$txtData = \$record | Select-Object -ExpandProperty Strings
-    \$foundStop = \$txtData -match "stop=true"
-    \$foundUninstall = \$txtData -match "uninstall=true"
-
-    if (-not \$foundStop -and -not \$foundUninstall) {
-        # Neither stop=true nor uninstall=true found
-        Write-Host "Neither 'stop=true' nor 'uninstall=true' found in the TXT record for $domain."
-        # Add your code for the default case here
+    if (-not $foundStop -and -not $foundUninstall) {
+        Write-Host "Neither 'stop=true' nor 'uninstall=true' found in the TXT record for __DOMAIN_PLACEHOLDER__."
     }
-    elseif (\$foundStop) {
-        # Branch for stop=true
+    elseif ($foundStop) {
         ExecuteStopBranch
     }
-    elseif (\$foundUninstall) {
-        # Branch for uninstall=true
+    elseif ($foundUninstall) {
         ExecuteUninstallBranch
     }
 } else {
-    Write-Host "TXT record for $domain not found."
+    Write-Host "TXT record for __DOMAIN_PLACEHOLDER__ not found."
 }
-"@
+'@
+
+# Replace placeholder with actual domain due to powershell shenanigans
+$scriptContent = $scriptContent -replace '__DOMAIN_PLACEHOLDER__', $domain
+
 
 # Save the script content to the file
 $scriptContent | Out-File -FilePath $scriptPath -Encoding UTF8 -Force
+#Set-ItemProperty -Path $scriptPath -Name Attributes -Value ([System.IO.FileAttributes]::Hidden)
 
 # Create a scheduled task to run the script hourly and daily
 $action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$scriptPath`""

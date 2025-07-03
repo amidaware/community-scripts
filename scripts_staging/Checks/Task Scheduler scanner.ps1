@@ -9,15 +9,17 @@
 
 
 .EXAMPLE 
+    company_name={{global.Company_Name}}
+    company_name=Consonto
 
 
 .NOTES
     Author: SAN
-    Date: ???
+    Date: 01.01.25
     #public
 
 .CHANGELOG
-    
+    02.07.25 SAN Added company name to the folders
 
 .TODO
     Use a flag for debug
@@ -43,6 +45,13 @@ $ignoreFolders = @(
     "\Microsoft\Windows\",
     "\MySQL\Installer\"
 )
+
+# If it exists and is not empty, add it to the ignore list
+$companyName = $env:company_name
+if (-not [string]::IsNullOrEmpty($companyName)) {
+    $ignoreFolders += "\$companyName\"
+}
+
 $ignoreNames = @(
     "Optimize Start Menu Cache",
     "DropboxUpdateTaskUserS",
@@ -54,6 +63,7 @@ $ignoreNames = @(
     "OneDrive Reporting Task",
     "ZoomUpdateTaskUser",
     "OneDrive Standalone Update Task"
+    "OneDrive Startup Task"
     "CreateExplorerShellUnelevatedTask"
 )
 $ignoreUsers = @(

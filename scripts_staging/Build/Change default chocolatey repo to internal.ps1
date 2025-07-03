@@ -19,7 +19,8 @@
 .CHANGELOG
     SAN 11.12.24 Moved new info to env
     SAN 03.05.25 Added a flag to keep or not the default repo
-
+    SAN 18.06.25 Added outputs
+    
 #>
 
 $newUrl = $env:NEW_URL
@@ -34,13 +35,20 @@ $defaultName = "chocolatey"
 $keepDefaultRepo = ($env:keepDefaultRepo -ne '0')
 
 # Always remove both sources to ensure clean state and updated priority
+Write-Output "Removing Chocolatey source: $newName (if exists)"
 choco source remove -n $newName -y
+
+Write-Output "Removing Chocolatey source: $defaultName (if exists)"
 choco source remove -n $defaultName -y
 
 # Add the new internal Chocolatey repository
+Write-Output "Adding new Chocolatey source: $newName with URL $newUrl and priority $newPriority"
 choco source add -n $newName -s $newUrl --priority $newPriority
 
 # Conditionally re-add the default repository
 if ($keepDefaultRepo) {
+    Write-Output "Re-adding default Chocolatey source: $defaultName with priority $defaultPriority"
     choco source add -n $defaultName -s $defaultUrl --priority $defaultPriority
+} else {
+    Write-Output "Skipping re-adding default Chocolatey source"
 }

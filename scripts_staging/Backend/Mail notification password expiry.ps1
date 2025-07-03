@@ -1,58 +1,64 @@
-<# 
+<#
 .SYNOPSIS
-    Script permettant de récupérer et analyser les utilisateurs dont le mot de passe est sur le point d'expirer dans Active Directory.
+    Analyse et notification avancée des utilisateurs dont le mot de passe Active Directory approche de l’expiration.
 .DESCRIPTION
-    Ce script se connecte à Active Directory pour rechercher les utilisateurs dans une unité organisationnelle spécifiée.
-    Il récupère la date de dernière mise à jour du mot de passe pour chaque utilisateur et la compare à la politique de mot de passe du domaine.
-    En fonction du nombre de jours restant avant l'expiration, les comptes sont classés en trois catégories :
-        - Expiré : Le mot de passe a déjà expiré.
-        - Critique : Le mot de passe est très proche de l'expiration, selon le seuil critique configuré.
-        - Avertissement : Le mot de passe approche de l'expiration, selon le seuil d'avertissement configuré.
-    Le script génère un rapport HTML contenant :
-        • Les détails de la politique de mot de passe du domaine (durée maximale, durée minimale, longueur minimale, complexité, historique et seuils de verrouillage).
-        • Un résumé statistique indiquant le nombre d'utilisateurs par catégorie.
-        • Une liste détaillée des comptes répartis par catégorie.
-    Les options de test ont été supprimées.
+    Ce script interroge Active Directory pour lister les utilisateurs d’une OU cible et calcule la date d’expiration de leur mot de passe selon la politique du domaine.
+    Les comptes sont classés selon l’urgence :
+        - Expiré : mot de passe déjà expiré
+        - Critique : expiration imminente (seuil critique)
+        - Avertissement : expiration proche (seuil d’avertissement)
+    Notifications automatiques :
+        • Email pour tous les utilisateurs concernés
+    Un rapport HTML détaillé est généré :
+        • Politique de mot de passe du domaine
+        • Statistiques par catégorie
+        • Liste détaillée des comptes par statut
 .PARAMETER TargetOU
-    Spécifie l'OU dans laquelle rechercher les utilisateurs. Exemple : "OU=Utilisateurs,DC=domaine,DC=local".
+    OU cible pour la recherche des utilisateurs (ex : "OU=Utilisateurs,DC=domaine,DC=local")
 .PARAMETER WarningThreshold
-    Nombre de jours avant expiration déclenchant un avertissement (par défaut : 15).
+    Jours avant expiration pour déclencher un avertissement (défaut : 15)
 .PARAMETER CriticalThreshold
-    Nombre de jours avant expiration déclenchant une alerte critique (par défaut : 7).
+    Jours avant expiration pour déclencher une alerte critique (défaut : 7)
 .PARAMETER IncludeDisabled
-    Indique si les comptes désactivés doivent être inclus dans le rapport (false par défaut).
+    Inclure les comptes désactivés dans le rapport (défaut : false)
 .PARAMETER IncludeNeverExpires
-    Indique si les comptes dont le mot de passe n'expire jamais doivent être inclus dans le rapport (false par défaut).
-.EXAMPLE
-    .\Check-PasswordExpiration.ps1 -TargetOU "OU=Utilisateurs,DC=domaine,DC=local"
-    Exécute le script avec l'OU spécifiée et les seuils par défaut.
-.EXAMPLE
-    .\Check-PasswordExpiration.ps1 -TargetOU "OU=Utilisateurs,DC=domaine,DC=local" -WarningThreshold 20 -CriticalThreshold 10
-    Exécute le script avec des seuils personnalisés pour les alertes d’avertissement et critiques.
+    Inclure les comptes dont le mot de passe n’expire jamais (défaut : false)
+.PARAMETER EmailSignature
+    Signature personnalisée pour les emails (optionnel)
 .NOTES
-    Author: Peter Quellennec
-    Date: 27/05/25
+    Prérequis :
+        - Module ActiveDirectory
+        - Accès SMTP pour l’envoi d’emails
+        - Droits d’administration pour les tâches planifiées
+    Author: PQU
+    Date: 29/04/2025
     #public
+.CHANGELOG
+  22.05.25 SAN – Added UTF8 encoding to resolve issues with Russian and French characters.
+  06.06.25 PQU – Added support for multiple admin emails and centralized config.
 #>
-{{CallPowerShell7Lite}}
 
-$TargetOU           = $env:TARGET_OU
-$SmtpServer         = $env:SMTP_SERVER
-$SmtpPort           = [int]$env:SMTP_PORT
-$AdminEmail         = $env:ADMIN_EMAIL
-$FromEmail          = $env:FROM_EMAIL
-$signmail           = $env:SIGNMAIL
-$WarningThreshold   = [int]$env:WARNING_THRESHOLD
-$CriticalThreshold  = [int]$env:CRITICAL_THRESHOLD
-$EmailSignature     = $env:EMAIL_SIGNATURE
+
+{{CallPowerShell7}}
 
 function Convert-ToBoolean($value) {
     return $value -match '^(1|true|yes)$'
 }
 
+$TargetOU           = $env:TARGET_OU
+$SmtpServer         = $env:SMTP_SERVER
+$SmtpPort           = [int]$env:SMTP_PORT
+$AdminEmails        = $env:ADMIN_EMAIL -split '[,;]' | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+$FromEmail          = $env:FROM_EMAIL
+$WarningThreshold   = [int]$env:WARNING_THRESHOLD
+$CriticalThreshold  = [int]$env:CRITICAL_THRESHOLD
+$EmailSignature     = $env:EMAIL_SIGNATURE
 $IncludeDisabled       = Convert-ToBoolean $env:INCLUDE_DISABLED
 $IncludeNeverExpires   = Convert-ToBoolean $env:INCLUDE_NEVER_EXPIRES
 $GenerateReportOnly    = Convert-ToBoolean $env:GENERATE_REPORT_ONLY
+
+
+
 
 if ($env:SMTP_CREDENTIAL_USERNAME -and $env:SMTP_CREDENTIAL_PASSWORD) {
     try {
@@ -64,25 +70,20 @@ if ($env:SMTP_CREDENTIAL_USERNAME -and $env:SMTP_CREDENTIAL_PASSWORD) {
 }
 
 function Test-Prerequisites {
-    
     $adFeature = Get-WindowsFeature -Name AD-Domain-Services -ErrorAction Stop
     if ($adFeature.InstallState -ne 'Installed') {
         Write-Error "AD Domain Services ne sont pas installés. Arrêt du script."
         exit 1
     }
-    
     if (-not $SmtpServer -or -not $SmtpPort) {
         Write-Error "Les variables `$SmtpServer et `$SmtpPort doivent être définies avant d'appeler cette fonction."
         exit 1
     }
-
     if (-not (Get-Module -ListAvailable -Name ActiveDirectory)) {
         Write-Error "Module ActiveDirectory non trouvé. Arrêt du script."
         exit 1
     }
-
     Import-Module ActiveDirectory -ErrorAction Stop
-
     try {
         $dc = Get-ADDomainController -Discover -ErrorAction Stop
         Write-Host "Connexion réussie au contrôleur de domaine : $($dc.HostName)"
@@ -91,7 +92,6 @@ function Test-Prerequisites {
         Write-Error "Impossible de se connecter au contrôleur de domaine. Arrêt du script."
         exit 1
     }
-
     try {
         $tcpClient = New-Object System.Net.Sockets.TcpClient
         $tcpClient.Connect($SmtpServer, $SmtpPort)
@@ -109,7 +109,6 @@ function Get-UserPasswordExpirationInfo {
         $user,
         $maxPasswordAge
     )
-
     $result = [PSCustomObject]@{
         Name            = $user.Name
         SamAccountName  = $user.SamAccountName
@@ -120,23 +119,18 @@ function Get-UserPasswordExpirationInfo {
         Enabled         = $user.Enabled
         PasswordNeverExpires = $user.PasswordNeverExpires
     }
-
     if ($user.PasswordLastSet -eq $null) {
         $result.Status = "NeverLoggedIn"
         return $result
     }
-
     if ($user.PasswordNeverExpires) {
         $result.Status = "NeverExpires"
         return $result
     }
-
     $passwordExpirationDate = $user.PasswordLastSet + $maxPasswordAge
     $daysLeft = ($passwordExpirationDate - (Get-Date)).Days
-
     $result.ExpirationDate = $passwordExpirationDate
     $result.DaysLeft = $daysLeft
-
     if ($daysLeft -lt 0) {
         $result.Status = "Expired"
     }
@@ -146,7 +140,6 @@ function Get-UserPasswordExpirationInfo {
     elseif ($daysLeft -le $WarningThreshold) {
         $result.Status = "Warning"
     }
-
     return $result
 }
 
@@ -164,110 +157,304 @@ function ConvertTo-HtmlReport {
         $criticalThreshold
     )
 
+    $expiredSection = ""
+    if ($expiredUsers.Count -gt 0) {
+        $rows = $expiredUsers | ForEach-Object {
+            "<tr>
+                <td>$($_.Name)</td>
+                <td>$($_.SamAccountName)</td>
+                <td>$($_.Email)</td>
+                <td>$($_.ExpirationDate.ToString('dd/MM/yyyy'))</td>
+                <td>$($_.DaysLeft)</td>
+                <td>$($_.Enabled)</td>
+            </tr>"
+        } | Out-String
+        $expiredSection = @"
+        <div class='section'>
+            <h2>Comptes expirés</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>SAM Account Name</th>
+                        <th>Email</th>
+                        <th>Date d'expiration</th>
+                        <th>Jours restants</th>
+                        <th>Activé</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    $rows
+                </tbody>
+            </table>
+        </div>
+"@
+    }
+    $criticalSection = ""
+    if ($criticalUsers.Count -gt 0) {
+        $rows = $criticalUsers | ForEach-Object {
+            "<tr>
+                <td>$($_.Name)</td>
+                <td>$($_.SamAccountName)</td>
+                <td>$($_.Email)</td>
+                <td>$($_.ExpirationDate.ToString('dd/MM/yyyy'))</td>
+                <td>$($_.DaysLeft)</td>
+                <td>$($_.Enabled)</td>
+            </tr>"
+        } | Out-String
+        $criticalSection = @"
+        <div class='section'>
+            <h2>Comptes critiques</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>SAM Account Name</th>
+                        <th>Email</th>
+                        <th>Date d'expiration</th>
+                        <th>Jours restants</th>
+                        <th>Activé</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    $rows
+                </tbody>
+            </table>
+        </div>
+"@
+    }
+    $warningSection = ""
+    if ($warningUsers.Count -gt 0) {
+        $rows = $warningUsers | ForEach-Object {
+            "<tr>
+                <td>$($_.Name)</td>
+                <td>$($_.SamAccountName)</td>
+                <td>$($_.Email)</td>
+                <td>$($_.ExpirationDate.ToString('dd/MM/yyyy'))</td>
+                <td>$($_.DaysLeft)</td>
+                <td>$($_.Enabled)</td>
+            </tr>"
+        } | Out-String
+        $warningSection = @"
+        <div class='section'>
+            <h2>Comptes en avertissement</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>SAM Account Name</th>
+                        <th>Email</th>
+                        <th>Date d'expiration</th>
+                        <th>Jours restants</th>
+                        <th>Activé</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    $rows
+                </tbody>
+            </table>
+        </div>
+"@
+    }
+    $neverExpiresSection = ""
+    if ($IncludeNeverExpires -and $neverExpiresUsers.Count -gt 0) {
+        $rows = $neverExpiresUsers | ForEach-Object {
+            "<tr>
+                <td>$($_.Name)</td>
+                <td>$($_.SamAccountName)</td>
+                <td>$($_.Email)</td>
+                <td>$($_.Enabled)</td>
+            </tr>"
+        } | Out-String
+        $neverExpiresSection = @"
+        <div class='section'>
+            <h2>Comptes avec mot de passe n'expirant jamais</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>SAM Account Name</th>
+                        <th>Email</th>
+                        <th>Activé</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    $rows
+                </tbody>
+            </table>
+        </div>
+"@
+    }
+    $neverLoggedInSection = ""
+    if ($neverLoggedInUsers.Count -gt 0) {
+        $rows = $neverLoggedInUsers | ForEach-Object {
+            "<tr>
+                <td>$($_.Name)</td>
+                <td>$($_.SamAccountName)</td>
+                <td>$($_.Email)</td>
+                <td>$($_.Enabled)</td>
+            </tr>"
+        } | Out-String
+        $neverLoggedInSection = @"
+        <div class='section'>
+            <h2>Comptes jamais connectés</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>SAM Account Name</th>
+                        <th>Email</th>
+                        <th>Activé</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    $rows
+                </tbody>
+            </table>
+        </div>
+"@
+    }
+    $disabledSection = ""
+    if ($IncludeDisabled -and $disabledUsers.Count -gt 0) {
+        $rows = $disabledUsers | ForEach-Object {
+            "<tr>
+                <td>$($_.Name)</td>
+                <td>$($_.SamAccountName)</td>
+                <td>$($_.Email)</td>
+                <td>$($_.ExpirationDate.ToString('dd/MM/yyyy'))</td>
+                <td>$($_.DaysLeft)</td>
+            </tr>"
+        } | Out-String
+        $disabledSection = @"
+        <div class='section'>
+            <h2>Comptes désactivés</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>SAM Account Name</th>
+                        <th>Email</th>
+                        <th>Date d'expiration</th>
+                        <th>Jours restants</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    $rows
+                </tbody>
+            </table>
+        </div>
+"@
+    }
+
     $html = @"
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rapport d'expiration des mots de passe</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        h1 { color: #2c3e50; }
-        h2 { color: #333; margin-top: 30px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th { background-color: #3498db; color: white; padding: 10px; text-align: left; }
-        td { padding: 10px; border-bottom: 1px solid #ddd; }
-        .expired { background-color: #ffdddd; }
-        .critical { background-color: #fff3cd; }
-        .warning { background-color: #ffe8cc; }
-        .never-expires { background-color: #e7f3fe; }
-        .never-logged { background-color: #f1f1f1; }
-        .disabled { background-color: #f8f9fa; }
-        .summary { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
-        .policy { background-color: #e8f4f8; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
-        .badge { padding: 3px 8px; border-radius: 3px; font-weight: bold; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .section { margin-bottom: 30px; }
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
         .badge-expired { background-color: #dc3545; color: white; }
-        .badge-critical { background-color: #ffc107; }
+        .badge-critical { background-color: #ffc107; color: #333; }
         .badge-warning { background-color: #fd7e14; color: white; }
         .badge-never { background-color: #17a2b8; color: white; }
-        .badge-disabled { background-color: #6c757d; color: white; }
         .badge-neverlogged { background-color: #adb5bd; }
+        .badge-disabled { background-color: #6c757d; color: white; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+        th { background-color: #3498db; color: white; }
+        .footer {
+            margin-top: 40px;
+            font-size: 0.9em;
+            color: #777;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
+<div class="container">
     <h1>Rapport d'expiration des mots de passe</h1>
-    
-    <div class="policy">
+    <div class="section">
         <h2>Politique de mot de passe du domaine</h2>
-        <p><strong>Durée maximale du mot de passe:</strong> $($passwordPolicy.MaxPasswordAge.Days) jours</p>
-        <p><strong>Durée minimale du mot de passe:</strong> $($passwordPolicy.MinPasswordAge.Days) jours</p>
+        <p><strong>Durée maximale:</strong> $($passwordPolicy.MaxPasswordAge.Days) jours</p>
+        <p><strong>Durée minimale:</strong> $($passwordPolicy.MinPasswordAge.Days) jours</p>
         <p><strong>Longueur minimale:</strong> $($passwordPolicy.MinPasswordLength) caractères</p>
         <p><strong>Complexité requise:</strong> $($passwordPolicy.ComplexityEnabled)</p>
-        <p><strong>Historique du mot de passe:</strong> $($passwordPolicy.PasswordHistoryCount) mots de passe</p>
-        <p><strong>Verrouillage de compte:</strong> $($passwordPolicy.LockoutThreshold) tentatives (durée: $($passwordPolicy.LockoutDuration.Minutes) minutes, observation: $($passwordPolicy.LockoutObservationWindow.Minutes) minutes)</p>
+        <p><strong>Historique:</strong> $($passwordPolicy.PasswordHistoryCount) mots de passe</p>
+        <p><strong>Verrouillage:</strong> $($passwordPolicy.LockoutThreshold) tentatives (durée: $($passwordPolicy.LockoutDuration.Minutes) min)</p>
     </div>
-    
-    <div class="summary">
-        <p><strong>Seuil d'avertissement :</strong> $warningThreshold jours</p>
-        <p><strong>Seuil critique :</strong> $criticalThreshold jours</p>
-        <p><strong>Statistiques :</strong>
+    <div class="section">
+        <h2>Statistiques globales</h2>
+        <p>
             <span class="badge badge-expired">Expirés: $($expiredUsers.Count)</span>
             <span class="badge badge-critical">Critiques: $($criticalUsers.Count)</span>
-            <span class="badge badge-warning">Avertissement: $($warningUsers.Count)</span>
+            <span class="badge badge-warning">Avertissements: $($warningUsers.Count)</span>
             <span class="badge badge-never">Expirent jamais: $($neverExpiresUsers.Count)</span>
             <span class="badge badge-neverlogged">Jamais connectés: $($neverLoggedInUsers.Count)</span>
             <span class="badge badge-disabled">Désactivés: $($disabledUsers.Count)</span>
         </p>
     </div>
-"@
-
-    if ($expiredUsers) {
-        $html += "<h2>Comptes expirés <span class='badge badge-expired'>$($expiredUsers.Count)</span></h2>"
-        $html += $expiredUsers | Select-Object Name, SamAccountName, Email, @{Name="ExpirationDate";Expression={$_.ExpirationDate.ToString("dd/MM/yyyy")}}, DaysLeft, Enabled | ConvertTo-Html -Fragment
-    }
-
-    if ($criticalUsers) {
-        $html += "<h2>Comptes critiques <span class='badge badge-critical'>$($criticalUsers.Count)</span></h2>"
-        $html += $criticalUsers | Select-Object Name, SamAccountName, Email,  @{Name="ExpirationDate";Expression={$_.ExpirationDate.ToString("dd/MM/yyyy")}}, DaysLeft, Enabled | ConvertTo-Html -Fragment
-    }
-
-    if ($warningUsers) {
-        $html += "<h2>Comptes en avertissement <span class='badge badge-warning'>$($warningUsers.Count)</span></h2>"
-        $html += $warningUsers | Select-Object Name, SamAccountName, Email,  @{Name="ExpirationDate";Expression={$_.ExpirationDate.ToString("dd/MM/yyyy")}}, DaysLeft, Enabled | ConvertTo-Html -Fragment
-    }
-
-    if ($IncludeNeverExpires -and $neverExpiresUsers) {
-        $html += "<h2>Comptes avec mot de passe n expirant jamais <span class='badge badge-never'>$($neverExpiresUsers.Count)</span></h2>"
-        $html += $neverExpiresUsers | Select-Object Name, SamAccountName, Email, Enabled | ConvertTo-Html -Fragment
-    }
-
-    if ($neverLoggedInUsers) {
-        $html += "<h2>Comptes jamais connectés <span class='badge badge-neverlogged'>$($neverLoggedInUsers.Count)</span></h2>"
-        $html += $neverLoggedInUsers | Select-Object Name, SamAccountName, Email, Enabled | ConvertTo-Html -Fragment
-    }
-
-    if ($IncludeDisabled -and $disabledUsers) {
-        $html += "<h2>Comptes désactivés <span class='badge badge-disabled'>$($disabledUsers.Count)</span></h2>"
-        $html += $disabledUsers | Select-Object Name, SamAccountName, Email,  @{Name="ExpirationDate";Expression={if($_.ExpirationDate){$_.ExpirationDate.ToString("dd/MM/yyyy")}else{"N/A"}}}, DaysLeft | ConvertTo-Html -Fragment
-    }
-
-    $html += @"
-    <p style="margin-top: 30px; font-size: 0.9em; color: #666;">Généré le : $(Get-Date -Format "dd/MM/yyyy HH:mm")</p>
+    $expiredSection
+    $criticalSection
+    $warningSection
+    $neverExpiresSection
+    $neverLoggedInSection
+    $disabledSection
+    <div class="footer">
+        <p>Généré le : $(Get-Date -Format "dd/MM/yyyy HH:mm")</p>
+    </div>
+</div>
 </body>
 </html>
 "@
-
     return $html
 }
+
 function Get-EmailSignature {
     if ($EmailSignature) {
-        return $EmailSignature
+        return "<div class='email-signature'>$EmailSignature</div>"
     }
-
-        return @"
-<div style="margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px;">
-    <p style="color: #666; font-size: 12px;">
+    return @"
+<div class='email-signature' style='margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px;'>
+    <p style='color: #666; font-size: 12px; margin: 0;'>
         <strong>Service Informatique</strong><br>
-        Téléphone : +33 (0)1 XX XX XX XX<br>
+        Téléphone : +00 (0)1 XX XX XX XX<br>
         Email : support@domain.com<br>
         <em>Ce message est généré automatiquement, merci de ne pas y répondre directement.</em>
     </p>
@@ -285,24 +472,32 @@ function Send-EmailReport {
         [string]$FromAddress,
         [string[]]$Attachments
     )
-
     if ((Get-Date).DayOfWeek -ne 'Monday') {
         Write-Host "Les emails ne sont envoyés que le lundi. Arrêt de l'envoi."
         return
     }
     $signature = Get-EmailSignature
+    $bodyWithSignature = $Body
+    if ($Body -match '(?i)</body>') {
+        $bodyWithSignature = $Body -replace '(?i)</body>', "$signature</body>"
+    } else {
+        $bodyWithSignature = "$Body$signature"
+    }
     $mailMessage = New-Object System.Net.Mail.MailMessage
     $mailMessage.From = $FromAddress
     foreach ($recipient in $Recipients) { $mailMessage.To.Add($recipient) }
     $mailMessage.Subject = $Subject
-    $mailMessage.Body = $Body
+    $mailMessage.Body = $bodyWithSignature
     $mailMessage.IsBodyHtml = $true
-     if ($Attachments) {
+    if ($Attachments) {
         foreach ($att in $Attachments) {
             $mailMessage.Attachments.Add((New-Object System.Net.Mail.Attachment($att)))
         }
     }
     $smtpClient = New-Object System.Net.Mail.SmtpClient($SmtpServer, $Port)
+    if ($SmtpCredential) {
+        $smtpClient.Credentials = $SmtpCredential
+    }
     try {
         $smtpClient.Send($mailMessage)
         Write-Host "Email sent successfully."
@@ -322,18 +517,84 @@ function Send-UserNotification {
         [string]$FromAddress
     )
     $signature = Get-EmailSignature
-    if ($Body -match '</body>') {
-        } else {
-        $bodyWithSignature = "$Body$signature"
+    $bodyWithSignature = $Body
+    if ($Body -match '(?i)</body>') {
+        $bodyWithSignature = $Body -replace '(?i)</body>', "$signature</body>"
+    } else {
+        $bodyWithSignature = @"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 15px;  // réduit par rapport à 30px
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;  // réduit par rapport à 10px
+        }
+        .status {
+            font-weight: bold;
+            margin-top: 5px;   // réduit par rapport à 15px
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 5px;
+        }
+        .expired { background-color: #dc3545; color: white; }
+        .critical { background-color: #ffc107; color: #333; }
+        .warning { background-color: #fd7e14; color: white; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2px;  // espace vertical réduit
+        }
+        th, td {
+            padding: 0px 2px;  /* Padding réduit pour minimiser la hauteur des lignes */
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+            font-size: 14px;
+            line-height: 0.8;  /* Hauteur de ligne réduite pour correspondre à la taille de la police */
+            height: 18px;      // fixed row height regardless of font size
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+$body
+</div>
+</body>
+</html>
+"@
     }
     $mailMessage = New-Object System.Net.Mail.MailMessage
     $mailMessage.From = $FromAddress
     $mailMessage.To.Add($Recipient)
-    $mailMessage.Subject = $Subject
-    $mailMessage.Body = $Body
-    $mailMessage.signmail= $signmail
+    $mailMessage.Subject = $subject
+    $mailMessage.Body = $bodyWithSignature
     $mailMessage.IsBodyHtml = $true
     $smtpClient = New-Object System.Net.Mail.SmtpClient($SmtpServer, $Port)
+    if ($SmtpCredential) {
+        $smtpClient.Credentials = $SmtpCredential
+    }
     try {
         $smtpClient.Send($mailMessage)
         Write-Host "Notification sent to $Recipient."
@@ -346,7 +607,6 @@ function Send-UserNotification {
 try {
     $passwordPolicy = Get-ADDefaultDomainPasswordPolicy
     $maxPasswordAge = $passwordPolicy.MaxPasswordAge
-    
     Write-Host "Politique de mot de passe du domaine:"
     Write-Host "  - Durée maximale: $($maxPasswordAge.Days) jours"
     Write-Host "  - Durée minimale: $($passwordPolicy.MinPasswordAge.Days) jours"
@@ -382,7 +642,6 @@ try {
         elseif ($IncludeNeverExpires) { $_.Enabled }
         else { $_.Enabled -and (-not $_.PasswordNeverExpires) }
     }
-    
     Write-Host "Nombre d'utilisateurs trouvés: $($users.Count)"
 }
 catch {
@@ -423,7 +682,6 @@ $disabledUsers = $reportData | Where-Object { $_.Enabled -eq $false }
 $reportFileName = "PasswordExpirationReport_$(Get-Date -Format 'yyyyMMdd_HHmm').html"
 $htmlReport = ConvertTo-HtmlReport -expiredUsers $expiredUsers -criticalUsers $criticalUsers -warningUsers $warningUsers -neverExpiresUsers $neverExpiresUsers -neverLoggedInUsers $neverLoggedInUsers -disabledUsers $disabledUsers -targetOU $TargetOU -passwordPolicy $passwordPolicy -warningThreshold $WarningThreshold -criticalThreshold $CriticalThreshold
 $htmlReport | Out-File $reportFileName -Encoding UTF8
-
 Write-Host "Rapport généré avec succès : $reportFileName"
 Write-Host "Résumé :"
 Write-Host "  - Comptes expirés: $($expiredUsers.Count)"
@@ -448,18 +706,85 @@ foreach ($user in $reportData | Where-Object { $_.Status -in @("Warning", "Criti
 <head>
     <meta charset="UTF-8">
     <style>
-        body { font-family: Arial, sans-serif; }
-        .warning { color: #fd7e14; }
-        .critical { color: #dc3545; }
-        .expired { color: #6c757d; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .status {
+            font-weight: bold;
+            margin-top: 15px;
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 5px;
+        }
+        .expired { background-color: #dc3545; color: white; }
+        .critical { background-color: #ffc107; color: #333; }
+        .warning { background-color: #fd7e14; color: white; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 8px; /* Réduit l'espace */
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+            font-size: 14px; /* Police compacte */
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            font-size: 14px; /* Police compacte */
+        }
     </style>
 </head>
 <body>
+<div class="container">
+    <h1>⚠️ Avertissement : Expiration de votre mot de passe</h1>
     <p>Bonjour $($user.Name),</p>
-    <p>Votre mot de passe est dans un état <strong class='$($user.Status.ToLower())'>$($user.Status)</strong>.</p>
+    <p>Votre mot de passe est dans un état <span class='status $user.Status.ToLower()'>$($user.Status)</span>.</p>
     <p><strong>Date d'expiration:</strong> $expirationDate</p>
     <p>Veuillez mettre à jour votre mot de passe dès que possible pour éviter tout problème d'accès.</p>
-    
+
+    <table>
+        <tr>
+            <th>Nom</th>
+            <td>$($user.Name)</td>
+        </tr>
+        <tr>
+            <th>SAM Account Name</th>
+            <td>$($user.SamAccountName)</td>
+        </tr>
+        <tr>
+            <th>Email</th>
+            <td>$($user.Email)</td>
+        </tr>
+        <tr>
+            <th>Date d'expiration</th>
+            <td>$expirationDate</td>
+        </tr>
+        <tr>
+            <th>Jours restants</th>
+            <td>$($user.DaysLeft)</td>
+        </tr>
+    </table>
+</div>
 </body>
 </html>
 "@
@@ -470,13 +795,15 @@ foreach ($user in $reportData | Where-Object { $_.Status -in @("Warning", "Criti
     }
 }
 
-if ($reportData.Count -gt 0) {
-    $adminEmails = $AdminEmail      
-    $smtpServer = $SmtpServer          
-    $smtpPort = $SmtpPort              
-    $fromAddress = $FromEmail          
-    $subject = "Rapport hebdomadaire d'expiration des mots de passe"
-    $body = $htmlReport                
-    Send-EmailReport -Recipients $adminEmails -Subject $subject -Body $body -SmtpServer $smtpServer -Port $smtpPort -FromAddress $fromAddress -Attachments @()
+if ($AdminEmails) {
+    if ($reportData.Count -gt 0) {
+        $smtpServer = $SmtpServer          
+        $smtpPort = $SmtpPort              
+        $fromAddress = $FromEmail          
+        $subject = "Rapport hebdomadaire d'expiration des mots de passe"
+        $body = $htmlReport                
+        Send-EmailReport -Recipients $AdminEmails -Subject $subject -Body $body -SmtpServer $smtpServer -Port $smtpPort -FromAddress $fromAddress -Attachments @()
+    }
+} else {
+    Write-Warning "ADMIN_EMAIL n'est pas défini. Aucun email administrateur ne sera envoyé."
 }
-
