@@ -1,41 +1,48 @@
 <#
 .SYNOPSIS
-    Analyse et notification avancée des utilisateurs dont le mot de passe Active Directory approche de l’expiration.
+    Analyzes Active Directory user accounts for upcoming password expiration and optionally sends notifications.
+
 .DESCRIPTION
-    Ce script interroge Active Directory pour lister les utilisateurs d’une OU cible et calcule la date d’expiration de leur mot de passe selon la politique du domaine.
-    Les comptes sont classés selon l’urgence :
-        - Expiré : mot de passe déjà expiré
-        - Critique : expiration imminente (seuil critique)
-        - Avertissement : expiration proche (seuil d’avertissement)
-    Notifications automatiques :
-        • Email pour tous les utilisateurs concernés
-    Un rapport HTML détaillé est généré :
-        • Politique de mot de passe du domaine
-        • Statistiques par catégorie
-        • Liste détaillée des comptes par statut
-.PARAMETER TargetOU
-    OU cible pour la recherche des utilisateurs (ex : "OU=Utilisateurs,DC=domaine,DC=local")
-.PARAMETER WarningThreshold
-    Jours avant expiration pour déclencher un avertissement (défaut : 15)
-.PARAMETER CriticalThreshold
-    Jours avant expiration pour déclencher une alerte critique (défaut : 7)
-.PARAMETER IncludeDisabled
-    Inclure les comptes désactivés dans le rapport (défaut : false)
-.PARAMETER IncludeNeverExpires
-    Inclure les comptes dont le mot de passe n’expire jamais (défaut : false)
-.PARAMETER EmailSignature
-    Signature personnalisée pour les emails (optionnel)
+    This script is configured entirely through environment variables and performs the following:
+        - Targets a specific Organizational Unit (OU) for user account analysis
+        - Uses configurable thresholds to classify accounts as warning or critical
+        - Optionally includes disabled accounts and accounts with passwords set to never expire
+        - Sends email reports to a list of administrator recipients or can generate reports only
+        - Supports customizable email signature and SMTP configuration for email delivery
+
+    Accounts are classified based on password expiration:
+        - Warning: password is approaching expiration (WarningThreshold)
+        - Critical: password is close to expiring (CriticalThreshold)
+
 .NOTES
-    Prérequis :
-        - Module ActiveDirectory
-        - Accès SMTP pour l’envoi d’emails
-        - Droits d’administration pour les tâches planifiées
+    Dependency:
+        CallPowerShell7 snippet
     Author: PQU
     Date: 29/04/2025
     #public
+
+.EXAMPLE
+    # Example usage with environment variables set before running the script:
+
+    TARGET_OU="OU=Employees,DC=example,DC=local"
+    SMTP_SERVER="smtp.example.com"
+    SMTP_PORT=587
+    ADMIN_EMAIL="admin1@example.com,admin2@example.com"
+    FROM_EMAIL="noreply@example.com"
+    WARNING_THRESHOLD=14
+    CRITICAL_THRESHOLD=7
+    EMAIL_SIGNATURE="Best regards,<br>IT Department"
+    INCLUDE_DISABLED=true
+    INCLUDE_NEVER_EXPIRES=false
+    GENERATE_REPORT_ONLY=false
+
 .CHANGELOG
   22.05.25 SAN – Added UTF8 encoding to resolve issues with Russian and French characters.
   06.06.25 PQU – Added support for multiple admin emails and centralized config.
+
+.TODO
+    Multiple Locale support
+    
 #>
 
 
