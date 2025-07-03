@@ -24,14 +24,14 @@
 .EXAMPLE
     # Example usage with environment variables set before running the script:
 
-    TARGET_OU="OU=Employees,DC=example,DC=local"
-    SMTP_SERVER="smtp.example.com"
+    TARGET_OU=OU=Employees,DC=example,DC=local
+    SMTP_SERVER=smtp.example.com
     SMTP_PORT=587
-    ADMIN_EMAIL="admin1@example.com,admin2@example.com"
-    FROM_EMAIL="noreply@example.com"
+    ADMIN_EMAIL=admin1@example.com,admin2@example.com
+    FROM_EMAIL=noreply@example.com
     WARNING_THRESHOLD=14
     CRITICAL_THRESHOLD=7
-    EMAIL_SIGNATURE="Best regards,<br>IT Department"
+    EMAIL_SIGNATURE=Best regards,<br>IT Department
     INCLUDE_DISABLED=true
     INCLUDE_NEVER_EXPIRES=false
     GENERATE_REPORT_ONLY=false
@@ -39,6 +39,7 @@
 .CHANGELOG
   22.05.25 SAN – Added UTF8 encoding to resolve issues with Russian and French characters.
   06.06.25 PQU – Added support for multiple admin emails and centralized config.
+  03.07.25 SAN - Update docs
 
 .TODO
     Multiple Locale support
