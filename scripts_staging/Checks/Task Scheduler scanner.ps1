@@ -20,6 +20,7 @@
 
 .CHANGELOG
     02.07.25 SAN Added company name to the folders
+    17.07.25 SAN added powertoys
 
 .TODO
     Use a flag for debug
@@ -43,7 +44,8 @@ $ignoreFolders = @(
     "\Mozilla\",
     "\Microsoft\Office\",
     "\Microsoft\Windows\",
-    "\MySQL\Installer\"
+    "\MySQL\Installer\",
+    "\PowerToys\"
 )
 
 # If it exists and is not empty, add it to the ignore list
