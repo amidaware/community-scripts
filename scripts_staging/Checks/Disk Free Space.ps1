@@ -29,18 +29,19 @@
     #public
 
 .CHANGELOG
-    
+    17.07.25 SAN Added debug flag, taken into account cases where all drives are ignored.
+
+
 .TODO
-    Add debug flag
     move flags to env 
 
 #>
 
-
 param(
     [int]$warningThreshold = 10,
     [int]$errorThreshold = 5,
-    [string[]]$ignoreDisks = @()
+    [string[]]$ignoreDisks = @(),
+    [bool]$DebugOutput = $false
 )
 
 function CheckDiskSpace {
@@ -48,7 +49,18 @@ function CheckDiskSpace {
     param()
 
     # Get all local drives excluding network drives and the ones specified to ignore
-    $drives = Get-WmiObject Win32_LogicalDisk | Where-Object { $_.DriveType -eq 3 -and $_.DeviceID -notin $ignoreDisks }
+    $allDrives = Get-WmiObject Win32_LogicalDisk | Where-Object { $_.DriveType -eq 3 }
+    $drives = $allDrives | Where-Object { $_.DeviceID -notin $ignoreDisks }
+
+    if ($drives.Count -eq 0) {
+        Write-Host "OK: disks $($ignoreDisks -join ', ') are ignored"
+        if ($DebugOutput) {
+            Write-Host "[DEBUG] Total drives found: $($allDrives.Count)"
+            Write-Host "[DEBUG] Ignored drives: $($ignoreDisks -join ', ')"
+        }
+        $host.SetShouldExit(0)
+        return
+    }
 
     $failedDrives = @()
     $warningDrives = @()
@@ -77,20 +89,35 @@ function CheckDiskSpace {
             Write-Host "OK: $($drive.DeviceID) has $($freeSpacePercent)% free space."
         }
     }
+
+    if ($DebugOutput) {
+        if ($failedDrives.Count -gt 0) {
+            Write-Host "DEBUG: The following drives failed:"
+            $failedDrives | ForEach-Object {
+                $p = [math]::Round(($_.FreeSpace / $_.Size) * 100, 2)
+                Write-Host "DEBUG: $($_.DeviceID): $p%"
+            }
+        } elseif ($warningDrives.Count -gt 0) {
+            Write-Host "DEBUG: The following drives are in warning:"
+            $warningDrives | ForEach-Object {
+                $p = [math]::Round(($_.FreeSpace / $_.Size) * 100, 2)
+                Write-Host "DEBUG: $($_.DeviceID): $p%"
+            }
+        } else {
+            Write-Host "DEBUG: All drives have sufficient free space."
+        }
+    }
+
     if ($failedDrives.Count -gt 0) {
-    #    Write-Host "ERROR: The following drives have less than $($errorThreshold)% free space:"
-    #    $failedDrives | ForEach-Object { Write-Host "$($_.DeviceID): $([math]::Round(($_.FreeSpace / $_.Size) * 100, 2))%" }
-    #    Write-Host "ERROR: exit 2"
+        if ($DebugOutput) { Write-Host "DEBUG: exit code 2" }
         $host.SetShouldExit(2)
     }
     elseif ($warningDrives.Count -gt 0) {
-    #    Write-Host "WARNING: The following drives have less than $($warningThreshold)% free space:"
-    #    $warningDrives | ForEach-Object { Write-Host "$($_.DeviceID): $([math]::Round(($_.FreeSpace / $_.Size) * 100, 2))%" }
-    #    Write-Host "Warning: exit 1"
+        if ($DebugOutput) { Write-Host "DEBUG: exit code 1" }
         $host.SetShouldExit(1)
     }
     else {
-    #    Write-Host "OK: All drives have sufficient free space."
+        if ($DebugOutput) { Write-Host "DEBUG: exit code 0" }
         $host.SetShouldExit(0)
     }
 }

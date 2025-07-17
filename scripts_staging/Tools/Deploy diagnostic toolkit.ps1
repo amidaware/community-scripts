@@ -30,10 +30,12 @@ if ($uninstall -eq "1") {
     Write-Host "Start uninstall"
     choco uninstall sysinternals -y
     choco uninstall nirlauncher -y
+    choco uninstall powertoys -y
 } else {
     Write-Host "Start install"
     choco install sysinternals -y --ignore-checksums --no-progress --force
     choco install nirlauncher -y --package-parameters="/Sysinternals" --no-progress --force
+    choco install powertoys -y --no-progress --force
 
     Write-Host "Launcher available at C:\tools\NirLauncher"
 }
