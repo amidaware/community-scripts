@@ -13,43 +13,110 @@
     #public
 
 .CHANGELOG
-    
+    17.07.25 SAN Big cleanup of bug fixes for the dcdiag function, fixes of error codes, output in stderr of all errors for readability
+
 #>
 
 # Initialize exit code
-$exitCode = 0
+$global:exitCode = 0
 
 # Function to perform Active Directory tests
 function CheckAD {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory=$true, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true)]
-        [string[]]$Tests
+        [Parameter(Mandatory = $true, ValueFromPipeline = $true, ValueFromPipelineByPropertyName = $true)]
+        [string[]]$Tests,
+
+        [Parameter()]
+        [hashtable]$SuccessPatterns = @{
+            'en' = @('passed test')
+            'fr' = @('a réussi', 'a reussi', 'a russi', 'ussi')
+        },
+
+        [Parameter()]
+        [int]$MinimumMatches = 2
     )
 
-    process {
-        $results = @{}
+    $DebugMode = $false
+    $global:exitCode = 0
 
-        foreach ($test in $Tests) {
-            $output = dcdiag /test:$test
+    # Combine all success patterns from all languages into a single list
+    $allPatterns = @()
+    foreach ($lang in $SuccessPatterns.Keys) {
+        $allPatterns += $SuccessPatterns[$lang]
+    }
 
-            if ($output -notmatch "chou") {
-                $results[$test] = "OK"
-            } else {
-                $results[$test] = "Failed!"
-                $global:exitCode++
-            }
+    if ($DebugMode) {
+        Write-Host "`n[DEBUG] Loaded Success Patterns:"
+        foreach ($p in $allPatterns) {
+            Write-Host " - $p"
+        }
+        Write-Host ""
+    }
 
-            # Output individual test result
-            Write-Host "DCDIAG Test: $test Result: $($results[$test])"
+    $results = @{}
+
+    foreach ($test in $Tests) {
+        Write-Host "`nRunning DCDIAG test: $test"
+
+        # Start dcdiag process and redirect output
+        $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+        $startInfo.FileName = "dcdiag.exe"
+        $startInfo.Arguments = "/test:$test"
+        $startInfo.RedirectStandardOutput = $true
+        $startInfo.RedirectStandardError = $true
+        $startInfo.UseShellExecute = $false
+        $startInfo.CreateNoWindow = $true
+        $process = New-Object System.Diagnostics.Process
+        $process.StartInfo = $startInfo
+        $process.Start() | Out-Null
+        $stream = $process.StandardOutput.BaseStream
+        $memoryStream = New-Object System.IO.MemoryStream
+        $buffer = New-Object byte[] 4096
+        while (($read = $stream.Read($buffer, 0, $buffer.Length)) -gt 0) {
+            $memoryStream.Write($buffer, 0, $read)
+        }
+        $process.WaitForExit()
+
+        $bytes = $memoryStream.ToArray()
+        $output = [System.Text.Encoding]::GetEncoding(1252).GetString($bytes)
+
+        if ($DebugMode) {
+            $preview = if ($output.Length -gt 800) { $output.Substring(0,800) + "`n..." } else { $output }
+            Write-Host "[DEBUG] DCDIAG Output Preview:"
+            Write-Host $preview
+            Write-Host ""
         }
 
-        $results
+        $matchCount = 0
+        foreach ($pattern in $allPatterns) {
+            $count = ([regex]::Matches($output, [regex]::Escape($pattern))).Count
+            $matchCount += $count
+
+            if ($DebugMode) {
+                Write-Host "[DEBUG] Pattern '$pattern' matched $count time(s)."
+            }
+        }
+
+        if ($DebugMode) {
+            Write-Host "[DEBUG] Total success match count: $matchCount`n"
+        }
+
+        if ($matchCount -ge $MinimumMatches) {
+            $results[$test] = "OK"
+        } else {
+            $results[$test] = "Failed!"
+            Write-Error "$results[$test] = Failed!"
+            $global:exitCode++
+        }
+
+        Write-Host "DCDIAG Test: $test Result: $($results[$test])"
     }
+
+    return $results
 }
 
 # Function to compare GPO version numbers
-
 function Compare-GPOVersions {
     [CmdletBinding()]
     param ()
@@ -72,34 +139,36 @@ function Compare-GPOVersions {
 
             # USER - Compare version numbers
             if ($NumUserSysvol -ne $NumUserAD) {
-                Write-Host "$GPOName ($GPOId) : USER Versions différentes (Sysvol : $NumUserSysvol | AD : $NumUserAD)" -ForegroundColor Red
+                Write-Host "$GPOName ($GPOId) : USER Versions différentes (Sysvol : $NumUserSysvol | AD : $NumUserAD)" 
+                Write-Error "$GPOName ($GPOId) : USER Versions différentes (Sysvol : $NumUserSysvol | AD : $NumUserAD)"
                 $global:exitCode++
             } else {
-                Write-Host "$GPOName : USER Versions identiques" -ForegroundColor Green
+                Write-Host "$GPOName : USER Versions identiques" 
             }
 
             # COMPUTER - Compare version numbers
-            if ($NumComputerSysvol -ne $NumComputerAD) {
-                Write-Host "$GPOName ($GPOId) : COMPUTER Versions différentes (Sysvol : $NumComputerSysvol | AD : $NumComputerAD)" -ForegroundColor Red
+            if ($NumComputerSysvol -ne $NumComputerAD) {Health
+                Write-Host "$GPOName ($GPOId) : COMPUTER Versions différentes (Sysvol : $NumComputerSysvol | AD : $NumComputerAD)" 
+                Write-Error "$GPOName ($GPOId) : COMPUTER Versions différentes (Sysvol : $NumComputerSysvol | AD : $NumComputerAD)" 
                 $global:exitCode++
             } else {
-                Write-Host "$GPOName : COMPUTER Versions identiques" -ForegroundColor Green
+                Write-Host "$GPOName : COMPUTER Versions identiques" 
             }
         }
-        Write-Host "GPO USER/COMPUTER Version OK" -ForegroundColor Green
+        Write-Host "GPO USER/COMPUTER Version OK"
     }
 }
 
 # Function to check if the Recycle Bin in enabled
-
 function Check-ADRecycleBin {
     $recycleFeatures = Get-ADOptionalFeature -Filter {name -like "recycle bin feature"}
 
     foreach ($feature in $recycleFeatures) {
         if ($null -ne $feature.EnabledScopes) {
-            Write-Output "OK: Recycle Bin enabled"
+            Write-Host "OK: Recycle Bin enabled"
         } else {
-            Write-Output "KO: Recycle Bin disabled"
+            Write-Host "KO: Recycle Bin disabled"
+            Write-Error "KO: Recycle Bin disabled"
             $global:exitCode++ 
         }
     }
@@ -110,31 +179,29 @@ try {
     $adFeature = Get-WindowsFeature -Name AD-Domain-Services -ErrorAction Stop
 
     if ($adFeature.InstallState -eq "Installed") {
-        # Specify your AD tests
+        
+        # function with the AD tests
         $tests = ("Advertising", "FrsSysVol", "MachineAccount", "Replications", "RidManager", "Services", "FsmoCheck", "SysVolCheck")
-        # Call the function with the AD tests
         Write-Host "DCDIAG"
         $testResults = CheckAD -Tests $tests
-
         $failedTests = $testResults.GetEnumerator() | Where-Object { $_.Value -eq "Failed!" }
-
         if ($failedTests) {
             Write-Error "Some Active Directory tests failed."
-            $failedTests | ForEach-Object { Write-Error "$($_.Key) test failed." }
-            $global:exitCode += $failedTests.Count
         } else {
             Write-Host "All Active Directory tests passed successfully."
         }
         Write-Host ""
-        Write-Host "GPO Versions checks"
-        # Call the function to compare GPO versions
-        Compare-GPOVersions
 
+        # function to compare GPO versions
+        Write-Host "GPO Versions checks"
+        Compare-GPOVersions
         Write-Host ""
+
+        # function to check the Recycle Bin
         Write-Host "Recycle Bin checks"
-        # Call the function to check the Recycle Bin
         Check-ADRecycleBin
-        
+        Write-Host ""
+
     } else {
         Write-Host "Active Directory Domain Services feature is not installed or not in the 'Installed' state."
         exit
@@ -144,4 +211,5 @@ try {
     $global:exitCode++
 }
 
-exit $exitCode
+$host.SetShouldExit($global:exitCode)
+exit $global:exitCode
