@@ -15,6 +15,9 @@
 .CHANGELOG
     17.07.25 SAN Big cleanup of bug fixes for the dcdiag function, fixes of error codes, output in stderr of all errors for readability
 
+.TODO
+    Do a breakdown at the top of the output for easy read with ok/ko returns from functions
+    
 #>
 
 # Initialize exit code
@@ -182,7 +185,7 @@ try {
         
         # function with the AD tests
         $tests = ("Advertising", "FrsSysVol", "MachineAccount", "Replications", "RidManager", "Services", "FsmoCheck", "SysVolCheck")
-        Write-Host "DCDIAG"
+        Write-Host "DCDIAG tests: $tests"
         $testResults = CheckAD -Tests $tests
         $failedTests = $testResults.GetEnumerator() | Where-Object { $_.Value -eq "Failed!" }
         if ($failedTests) {
