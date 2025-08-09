@@ -10,7 +10,7 @@ $Paths = @(foreach ($TeamViewerVersionsNum in $TeamViewerVersionsNums) {
 
 foreach ($Path in $Paths) {
     If (Test-Path $Path) {
-        $GoodPath = $Path
+        $GoodPath += $Path
     }
 }
 
