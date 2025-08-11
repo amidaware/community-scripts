@@ -24,6 +24,7 @@
     19.11.24 SAN added cleanup of search index
     17.12.24 SAN Full code refactoring, set a single value for file expiration
     14.01.25 SAN More verbose output for the deletion of items
+    11.08.25 SAN Run cleanmgr in the background
     
 .TODO
     Integrate bleachbit this would help avoid having to update this script too often.
@@ -41,50 +42,7 @@ $Starters = Get-Date
 
 # Function to retrieve and display disk space info
 function Get-DiskInfo {
-    $DiskInfo = Get-WmiObject Win32_LogicalDisk | Where-Object { $_.DriveType -eq 3 } | 
-        Select-Object SystemName,
-            @{ Name = "Drive"; Expression = { $_.DeviceID } },
-            @{ Name = "Size (GB)"; Expression = { "{0:N1}" -f ($_.Size / 1GB) } },
-            @{ Name = "FreeSpace (GB)"; Expression = { "{0:N1}" -f ($_.FreeSpace / 1GB) } },
-            @{ Name = "PercentFree"; Expression = { "{0:P1}" -f ($_.FreeSpace / $_.Size) } }
-    return $DiskInfo
-}
-
-function Remove-Items {
-    param (
-        [string]$Path,
-        [int]$Days
-    )
-
-    if (Test-Path $Path) {
-        # Check if the Path is a file
-        if ((Get-Item $Path).PSIsContainer -eq $false) {
-            try {
-                # Remove the single file if it meets the age condition
-                if ((Get-Item $Path).CreationTime -lt (Get-Date).AddDays(-$Days)) {
-                    Remove-Item -Path $Path -Force -Verbose -Confirm:$false
-                    Write-Host "[DONE] Removed single item: $Path"
-                } else {
-                    Write-Host "[INFO] $Path does not meet the age condition, skipping removal."
-                }
-            } catch {
-                Write-Host "[ERROR] Failed to remove item: $Path. $_"
-            }
-        } else {
-            try {
-                # Get all items in the folder
-                $items = Get-ChildItem -Path $Path -Recurse -Force |
-                    Where-Object { $_.CreationTime -lt (Get-Date).AddDays(-$Days) } |
-                    Sort-Object { $_.Name.Length } -Descending
-
-                if ($items.Count -gt 0) {
-                    Write-Host "[INFO] Listing items for removal in order of name length:"
-                    foreach ($item in $items) {
-                        Write-Host " - $($item.FullName)"
-                    }
-
-                    # Remove items from longest name to shortest
-                    $items | Remove-Item -Force -Recurse -Verbose -Confirm:$false
+    $DiskInfo = Get-WmiObject Win32_LogicalDisk | Where-Object { $_.DriveTypCleaner
                     Write-Host "[DONE] Cleaned up directory: $Path"
                 } else {
                     Write-Host "[INFO] No items met the age condition in directory: $Path"
@@ -207,7 +165,13 @@ foreach ($Path in $UserPathsToClean.Values) {
 Add-RegistryKeys-CleanMGR
 
 # Run Disk Cleanup with custom settings
-Start-Process -FilePath "cleanmgr.exe" -ArgumentList "/sagerun:1" -Wait
+$processStartInfo = New-Object System.Diagnostics.ProcessStartInfo
+$processStartInfo.FileName = "cleanmgr.exe"
+$processStartInfo.Arguments = "/sagerun:1"
+$processStartInfo.UseShellExecute = $true  # Allows the executable to run independently
+$processStartInfo.CreateNoWindow = $true   # Prevents a new window from being created
+# Start the process (no wait)
+[System.Diagnostics.Process]::Start($processStartInfo) | Out-Null
 
 # Gather disk usage after cleanup
 $After = Get-DiskInfo | Format-Table -AutoSize | Out-String
