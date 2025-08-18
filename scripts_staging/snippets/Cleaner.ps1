@@ -25,6 +25,7 @@
     17.12.24 SAN Full code refactoring, set a single value for file expiration
     14.01.25 SAN More verbose output for the deletion of items
     11.08.25 SAN Run cleanmgr in the background
+    18.18.25 SAN fix disk info error
     
 .TODO
     Integrate bleachbit this would help avoid having to update this script too often.
@@ -42,19 +43,22 @@ $Starters = Get-Date
 
 # Function to retrieve and display disk space info
 function Get-DiskInfo {
-    $DiskInfo = Get-WmiObject Win32_LogicalDisk | Where-Object { $_.DriveTypCleaner
-                    Write-Host "[DONE] Cleaned up directory: $Path"
-                } else {
-                    Write-Host "[INFO] No items met the age condition in directory: $Path"
-                }
-            } catch {
-                Write-Host "[ERROR] Failed to clean up directory: $Path. $_"
+    try {
+        $DiskInfo = Get-WmiObject Win32_LogicalDisk | Where-Object { $_.DriveType -eq 3 } # 3 = Local Disk
+        foreach ($disk in $DiskInfo) {
+            [PSCustomObject]@{
+                DeviceID     = $disk.DeviceID
+                VolumeName   = $disk.VolumeName
+                FileSystem   = $disk.FileSystem
+                FreeSpaceGB  = [math]::Round($disk.FreeSpace / 1GB, 2)
+                SizeGB       = [math]::Round($disk.Size / 1GB, 2)
             }
         }
-    } else {
-        Write-Host "[WARNING] $Path does not exist, skipping cleanup."
+    } catch {
+        Write-Host "[ERROR] Failed to retrieve disk information. $_"
     }
 }
+
 
 
 # Function to add or update registry keys for Disk Cleanup
