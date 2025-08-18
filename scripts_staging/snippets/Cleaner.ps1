@@ -25,7 +25,7 @@
     17.12.24 SAN Full code refactoring, set a single value for file expiration
     14.01.25 SAN More verbose output for the deletion of items
     11.08.25 SAN Run cleanmgr in the background
-    18.18.25 SAN fix disk info error
+    18.18.25 SAN fix disk info error, missing function, sccm condition and made it move verbose.
     
 .TODO
     Integrate bleachbit this would help avoid having to update this script too often.
@@ -37,8 +37,7 @@ $DaysToDelete = if ([string]::IsNullOrEmpty($env:DaysToDelete)) { 30 } else { [i
 
 Write-Host "Days to delete set to: $DaysToDelete"
 
-$VerbosePreference = "Continue"
-$ErrorActionPreference = "SilentlyContinue"
+
 $Starters = Get-Date  
 
 # Function to retrieve and display disk space info
@@ -59,7 +58,17 @@ function Get-DiskInfo {
     }
 }
 
-
+function Remove-Items {
+    param(
+        [string]$Path,
+        [int]$Days
+    )
+    if (Test-Path $Path) {
+        Get-ChildItem -Path $Path -Recurse -Force -ErrorAction SilentlyContinue |
+        Where-Object { -not $_.PSIsContainer -and $_.LastWriteTime -lt (Get-Date).AddDays(-$Days) } |
+        Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
+    }
+}
 
 # Function to add or update registry keys for Disk Cleanup
 function Add-RegistryKeys-CleanMGR {
@@ -119,12 +128,18 @@ $Before = Get-DiskInfo | Format-Table -AutoSize | Out-String
 Stop-Service -Name wuauserv -Force -ErrorAction SilentlyContinue -Verbose
 
 # Adjust SCCM cache size if configured
-$cache = Get-WmiObject -Namespace root\ccm\SoftMgmtAgent -Class CacheConfig
-if ($cache) {
-    $cache.size = 1024
-    $cache.Put() | Out-Null
-    Restart-Service ccmexec -ErrorAction SilentlyContinue
+try {
+    $cache = Get-WmiObject -Namespace root\ccm\SoftMgmtAgent -Class CacheConfig -ErrorAction Stop
+    if ($cache) {
+        $cache.size = 1024
+        $cache.Put() | Out-Null
+        Restart-Service ccmexec -ErrorAction SilentlyContinue
+        Write-Host "[INFO] SCCM cache size adjusted and ccmexec service restarted."
+    }
+} catch {
+    Write-Host "[INFO] SCCM client not detected. Skipping cache configuration."
 }
+
 
 # Compaction of Windows.edb
 $windowsEdbPath = "$env:ALLUSERSPROFILE\\Microsoft\\Search\\Data\\Applications\\Windows\\Windows.edb"
