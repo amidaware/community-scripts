@@ -19,15 +19,16 @@
 
     .NOTES
     Version 1.0 4/7/2021 silversword
-    https://mcpforlife.com/2020/04/14/how-to-resolve-this-state-value-of-av-providers/
-    https://github.com/wortell/PSHelpers/blob/main/src/Public/Add-ProductStates.ps1
-    Call with optional parameter "-antivirusName AntivirusNameHere" in order to check for a specific antivirus
-    antivirusName must match the "displayName" exactly
-    If no antivirusName parameter is specified, the tool returns success if there is any active up to date antivirus on the system
+        https://mcpforlife.com/2020/04/14/how-to-resolve-this-state-value-of-av-providers/
+        https://github.com/wortell/PSHelpers/blob/main/src/Public/Add-ProductStates.ps1
+        Call with optional parameter "-antivirusName AntivirusNameHere" in order to check for a specific antivirus
+        antivirusName must match the "displayName" exactly
+        If no antivirusName parameter is specified, the tool returns success if there is any active up to date antivirus on the system
 	Version 1.1 10/15/2023 dinger1986
-	Added in -customfield to write AV name to a customfield
+        Added in -customfield to write AV name to a customfield
 
-    OS Build must be greater than 14393 to support this script. If it's not it returns exit code 2
+        OS Build must be greater than 14393 to support this script. If it's not it returns exit code 2
+    Version 1.2 7/31/2025 silversword Removing extra text in -customField mode
 #>
 
 param($antivirusName = "*", [switch]$customField)
@@ -58,7 +59,7 @@ param($antivirusName = "*", [switch]$customField)
 function Add-ProductStates {
     [CmdletBinding()]
     param (
-       # This parameter can be passed from pipeline and can contain and array of collections that contain State or productstate members
+        # This parameter can be passed from pipeline and can contain and array of collections that contain State or productstate members
         [Parameter(ValueFromPipeline)]
         [Microsoft.Management.Infrastructure.CimInstance[]]
         $Products,
@@ -120,18 +121,19 @@ if ([environment]::OSVersion.Version.Build -le 14393) {
 
 $return = Get-CimInstance -Namespace root/SecurityCenter2 -className AntivirusProduct | 
 Where-Object { 
-         ($_.displayName -like $antivirusName) -and
-         (($_.productState -band [ProductFlags]::ProductState) -eq [ProductState]::On) -and 
-         (($_.productState -band [ProductFlags]::SignatureStatus) -eq [SignatureStatus]::UpToDate) 
+    ($_.displayName -like $antivirusName) -and
+    (($_.productState -band [ProductFlags]::ProductState) -eq [ProductState]::On) -and 
+    (($_.productState -band [ProductFlags]::SignatureStatus) -eq [SignatureStatus]::UpToDate) 
 } 
 
-Write-Host "Antivirus selection: $antivirusName"
 if ($return) {
     if ($customField) {
         # Only output the name of the first antivirus
         $return[0].displayName
         exit 0
-    } else {
+    }
+    else {
+        Write-Host "Antivirus selection: $antivirusName"
         Write-Host "Antivirus active and up to date"      
         $return
     }
