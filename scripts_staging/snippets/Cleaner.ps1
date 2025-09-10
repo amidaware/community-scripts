@@ -25,7 +25,8 @@
     17.12.24 SAN Full code refactoring, set a single value for file expiration
     14.01.25 SAN More verbose output for the deletion of items
     11.08.25 SAN Run cleanmgr in the background
-    18.18.25 SAN fix disk info error, missing function, sccm condition and made it move verbose.
+    18.08.25 SAN fix disk info error, missing function, sccm condition and made it move verbose.
+    10.09.25 SAN added output for to check if cleanmgr is running
     
 .TODO
     Integrate bleachbit this would help avoid having to update this script too often.
@@ -182,7 +183,6 @@ foreach ($Path in $UserPathsToClean.Values) {
 
 # Add registry keys for Disk Cleanup
 Add-RegistryKeys-CleanMGR
-
 # Run Disk Cleanup with custom settings
 $processStartInfo = New-Object System.Diagnostics.ProcessStartInfo
 $processStartInfo.FileName = "cleanmgr.exe"
@@ -191,6 +191,14 @@ $processStartInfo.UseShellExecute = $true  # Allows the executable to run indepe
 $processStartInfo.CreateNoWindow = $true   # Prevents a new window from being created
 # Start the process (no wait)
 [System.Diagnostics.Process]::Start($processStartInfo) | Out-Null
+Start-Sleep -Seconds 5
+$process = Get-Process -Name "cleanmgr" -ErrorAction SilentlyContinue
+if ($null -ne $process) {
+    Write-Output "[DONE] Disk Cleanup is running."
+} else {
+    Write-Output "[ERR] Disk Cleanup is NOT running."
+}
+
 
 # Gather disk usage after cleanup
 $After = Get-DiskInfo | Format-Table -AutoSize | Out-String
