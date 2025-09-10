@@ -26,15 +26,18 @@
         Logging snippet for logging
         Updater P3.5 Schedules parser snippet for parsing the date
         Cleaner & VHDXCleaner snippet to run the actual cleans
+        Ps7 snippnet
     #public
 
 
 .CHANGELOG 
     28.11.24 SAN Incorporated VHDX cleaner.
     13.12.24 SAN Split logging from parser.
+    06.08.25 SAN upgrade to ps7
+
 #>
 
-
+{{CallPowerShell7}}
 
 # Name will be used for both the name of the log file and what line of the Schedules to parse
 $PartName = "TempFileCleanup"

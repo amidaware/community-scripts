@@ -24,6 +24,9 @@
     19.11.24 SAN added cleanup of search index
     17.12.24 SAN Full code refactoring, set a single value for file expiration
     14.01.25 SAN More verbose output for the deletion of items
+    11.08.25 SAN Run cleanmgr in the background
+    18.08.25 SAN fix disk info error, missing function, sccm condition and made it move verbose.
+    10.09.25 SAN added output for to check if cleanmgr is running
     
 .TODO
     Integrate bleachbit this would help avoid having to update this script too often.
@@ -35,69 +38,38 @@ $DaysToDelete = if ([string]::IsNullOrEmpty($env:DaysToDelete)) { 30 } else { [i
 
 Write-Host "Days to delete set to: $DaysToDelete"
 
-$VerbosePreference = "Continue"
-$ErrorActionPreference = "SilentlyContinue"
+
 $Starters = Get-Date  
 
 # Function to retrieve and display disk space info
 function Get-DiskInfo {
-    $DiskInfo = Get-WmiObject Win32_LogicalDisk | Where-Object { $_.DriveType -eq 3 } | 
-        Select-Object SystemName,
-            @{ Name = "Drive"; Expression = { $_.DeviceID } },
-            @{ Name = "Size (GB)"; Expression = { "{0:N1}" -f ($_.Size / 1GB) } },
-            @{ Name = "FreeSpace (GB)"; Expression = { "{0:N1}" -f ($_.FreeSpace / 1GB) } },
-            @{ Name = "PercentFree"; Expression = { "{0:P1}" -f ($_.FreeSpace / $_.Size) } }
-    return $DiskInfo
-}
-
-function Remove-Items {
-    param (
-        [string]$Path,
-        [int]$Days
-    )
-
-    if (Test-Path $Path) {
-        # Check if the Path is a file
-        if ((Get-Item $Path).PSIsContainer -eq $false) {
-            try {
-                # Remove the single file if it meets the age condition
-                if ((Get-Item $Path).CreationTime -lt (Get-Date).AddDays(-$Days)) {
-                    Remove-Item -Path $Path -Force -Verbose -Confirm:$false
-                    Write-Host "[DONE] Removed single item: $Path"
-                } else {
-                    Write-Host "[INFO] $Path does not meet the age condition, skipping removal."
-                }
-            } catch {
-                Write-Host "[ERROR] Failed to remove item: $Path. $_"
-            }
-        } else {
-            try {
-                # Get all items in the folder
-                $items = Get-ChildItem -Path $Path -Recurse -Force |
-                    Where-Object { $_.CreationTime -lt (Get-Date).AddDays(-$Days) } |
-                    Sort-Object { $_.Name.Length } -Descending
-
-                if ($items.Count -gt 0) {
-                    Write-Host "[INFO] Listing items for removal in order of name length:"
-                    foreach ($item in $items) {
-                        Write-Host " - $($item.FullName)"
-                    }
-
-                    # Remove items from longest name to shortest
-                    $items | Remove-Item -Force -Recurse -Verbose -Confirm:$false
-                    Write-Host "[DONE] Cleaned up directory: $Path"
-                } else {
-                    Write-Host "[INFO] No items met the age condition in directory: $Path"
-                }
-            } catch {
-                Write-Host "[ERROR] Failed to clean up directory: $Path. $_"
+    try {
+        $DiskInfo = Get-WmiObject Win32_LogicalDisk | Where-Object { $_.DriveType -eq 3 } # 3 = Local Disk
+        foreach ($disk in $DiskInfo) {
+            [PSCustomObject]@{
+                DeviceID     = $disk.DeviceID
+                VolumeName   = $disk.VolumeName
+                FileSystem   = $disk.FileSystem
+                FreeSpaceGB  = [math]::Round($disk.FreeSpace / 1GB, 2)
+                SizeGB       = [math]::Round($disk.Size / 1GB, 2)
             }
         }
-    } else {
-        Write-Host "[WARNING] $Path does not exist, skipping cleanup."
+    } catch {
+        Write-Host "[ERROR] Failed to retrieve disk information. $_"
     }
 }
 
+function Remove-Items {
+    param(
+        [string]$Path,
+        [int]$Days
+    )
+    if (Test-Path $Path) {
+        Get-ChildItem -Path $Path -Recurse -Force -ErrorAction SilentlyContinue |
+        Where-Object { -not $_.PSIsContainer -and $_.LastWriteTime -lt (Get-Date).AddDays(-$Days) } |
+        Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
+    }
+}
 
 # Function to add or update registry keys for Disk Cleanup
 function Add-RegistryKeys-CleanMGR {
@@ -157,12 +129,18 @@ $Before = Get-DiskInfo | Format-Table -AutoSize | Out-String
 Stop-Service -Name wuauserv -Force -ErrorAction SilentlyContinue -Verbose
 
 # Adjust SCCM cache size if configured
-$cache = Get-WmiObject -Namespace root\ccm\SoftMgmtAgent -Class CacheConfig
-if ($cache) {
-    $cache.size = 1024
-    $cache.Put() | Out-Null
-    Restart-Service ccmexec -ErrorAction SilentlyContinue
+try {
+    $cache = Get-WmiObject -Namespace root\ccm\SoftMgmtAgent -Class CacheConfig -ErrorAction Stop
+    if ($cache) {
+        $cache.size = 1024
+        $cache.Put() | Out-Null
+        Restart-Service ccmexec -ErrorAction SilentlyContinue
+        Write-Host "[INFO] SCCM cache size adjusted and ccmexec service restarted."
+    }
+} catch {
+    Write-Host "[INFO] SCCM client not detected. Skipping cache configuration."
 }
+
 
 # Compaction of Windows.edb
 $windowsEdbPath = "$env:ALLUSERSPROFILE\\Microsoft\\Search\\Data\\Applications\\Windows\\Windows.edb"
@@ -205,9 +183,22 @@ foreach ($Path in $UserPathsToClean.Values) {
 
 # Add registry keys for Disk Cleanup
 Add-RegistryKeys-CleanMGR
-
 # Run Disk Cleanup with custom settings
-Start-Process -FilePath "cleanmgr.exe" -ArgumentList "/sagerun:1" -Wait
+$processStartInfo = New-Object System.Diagnostics.ProcessStartInfo
+$processStartInfo.FileName = "cleanmgr.exe"
+$processStartInfo.Arguments = "/sagerun:1"
+$processStartInfo.UseShellExecute = $true  # Allows the executable to run independently
+$processStartInfo.CreateNoWindow = $true   # Prevents a new window from being created
+# Start the process (no wait)
+[System.Diagnostics.Process]::Start($processStartInfo) | Out-Null
+Start-Sleep -Seconds 5
+$process = Get-Process -Name "cleanmgr" -ErrorAction SilentlyContinue
+if ($null -ne $process) {
+    Write-Output "[DONE] Disk Cleanup is running."
+} else {
+    Write-Output "[ERR] Disk Cleanup is NOT running."
+}
+
 
 # Gather disk usage after cleanup
 $After = Get-DiskInfo | Format-Table -AutoSize | Out-String
