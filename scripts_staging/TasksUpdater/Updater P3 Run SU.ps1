@@ -38,6 +38,7 @@
     27.11.24 SAN Disabled file rename check due to issues.
     13.12.24 SAN Split logging from parser.
     06.03.25 SAN added TRMM agent updater.
+    11.09.25 SAN disabled choco download progress output to shrink log size
 
 .TODO
     Fix rename?
@@ -129,7 +130,7 @@ if ($result.RebootRequired) {
 # List outdated packages and capture output
 $outdatedPackages = choco outdated | Out-String
 # Upgrade all packages and capture output
-$upgradeResult = choco upgrade all -y | Out-String
+$upgradeResult = choco upgrade all -y --no-progress| Out-String
 
 Write-Host ""
 Write-Host "------------------------------------------------------------"
