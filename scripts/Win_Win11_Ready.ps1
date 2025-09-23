@@ -4,11 +4,20 @@
 #Returns 'Not Windows 11 Ready' if any of the checks fail, and returns 'Windows 11 Ready' if they all pass.
 #Useful if running in an automation policy and want to populate a custom field of all agents with their readiness.
 #This is a modified version of the official Microsoft script here: https://aka.ms/HWReadinessScript
+#9/10/2025 silversword411 v1.2 Adding server output
 #
 #=============================================================================================================================
 
-# Check Windows Version
 $osInfo = Get-WmiObject -Class Win32_OperatingSystem
+
+# Check if the OS is a server version
+# ProductType=1 is Workstation, 2 is Domain Controller, 3 is Server.
+if ($osInfo.ProductType -ne 1) {
+    Write-Output "$($osInfo.Caption)"
+    Exit 0
+}
+
+# Check Windows Version
 $winVersion = [System.Version]$osInfo.Version
 
 if ($winVersion -ge [System.Version]::new(10, 0, 22000)) {
