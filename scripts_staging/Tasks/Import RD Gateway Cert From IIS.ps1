@@ -46,6 +46,7 @@ ignore the fail-safe checks and force the replacement of rds certs and restart t
     for referance: C:\tools\win-acme\wacs.exe --source iis --verbose --siteid 1 --commonname $RDSURL --installation iis --installationsiteid 1 --script "C:\tools\win-acme\Scripts\ImportRDGateway.ps1" --scriptparameters '{CertThumbprint}'
     change pathing based on folder for both .json and .exe
     better way than calling iis 0 for the change ? probably possible if called from -script
+    replace win-acme with simpleacme and migration path
 #>
 param (
     [string]$settingsJsonPath = "C:\tools\win-acme\settings.json",
