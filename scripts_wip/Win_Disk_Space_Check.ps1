@@ -22,7 +22,7 @@ Param(
    [switch]$Percent
 )
 
-function Win_Disk_Space_Check {
+function Confirm-DiskSpaceAvailable {
    [CmdletBinding()]
    Param(
       [Parameter(Mandatory)]
@@ -39,11 +39,12 @@ function Win_Disk_Space_Check {
          $errors = 0
          $drives = Get-PSDrive | Where-Object { $_.Provider.Name -eq "FileSystem" -and $_.Used -gt 0 }
          foreach ($drive in $drives) {
+            $name = $drive.Name
             if ($Percent) {
                #Percent flag is set
                #Calculate percent of space left on drive
                $remainingPercent = [math]::Round($drive.Used / ($drive.Free + $drive.Used))
-               $name = $drive.Name
+               
                if ($Size -gt $remainingPercent) {
                   Write-Output "$remainingPercent% space remaining on $name."
                   $errors += 1
@@ -76,7 +77,7 @@ function Win_Disk_Space_Check {
    }
 }
 
-if (-not(Get-Command 'Win_Disk_Space_Check' -errorAction SilentlyContinue)) {
+if (-not(Get-Command 'Confirm-DiskSpaceAvailable' -errorAction SilentlyContinue)) {
    . $MyInvocation.MyCommand.Path
 }
 
@@ -85,4 +86,4 @@ $scriptArgs = @{
    Percent = $Percent
 }
 
-Win_Disk_Space_Check @scriptArgs
+Confirm-DiskSpaceAvailable @scriptArgs
