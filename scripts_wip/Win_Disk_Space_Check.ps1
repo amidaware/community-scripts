@@ -17,10 +17,16 @@
 
 Param(
    [Parameter(Mandatory)]
-   [int]$Size,
+   [int]#The minimum amount of GB that should be available
+   $Size,
 
    [Parameter(Mandatory = $false)]
-   [switch]$Percent
+   [switch]#Switches the Size to be a percentage instead of GB
+   $Percent,
+
+   [Parameter(Mandatory = $false)]
+   [switch]#Writes a message out even when the drive has more than the minimum available amount.  In other words, logs *every* time.
+   $outputSuccess
 )
 
 function Confirm-DiskSpaceAvailable {
@@ -92,6 +98,7 @@ if (-not(Get-Command 'Confirm-DiskSpaceAvailable' -errorAction SilentlyContinue)
 $scriptArgs = @{
    Size    = $Size
    Percent = $Percent
+   outputSuccess = $outputSuccess
 }
 
 Confirm-DiskSpaceAvailable @scriptArgs
