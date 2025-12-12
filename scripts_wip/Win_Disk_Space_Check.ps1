@@ -5,9 +5,9 @@
    Long description
    Checks all FileSystem drives for an amount of space specified (amount is converted to Gigabytes).
 .EXAMPLE
-    Win_Disk_Space_Check -Size 10
+    Confirm-DiskSpaceAvailable -Size 10
 .EXAMPLE
-    Win_Disk_Space_Check -Size 10 -Percent
+    Confirm-DiskSpaceAvailable -Size 10 -Percent
 .NOTES
    Version: 1.0
    Author: redanthrax
@@ -37,26 +37,23 @@ function Confirm-DiskSpaceAvailable {
    Process {
       Try {
          $errors = 0
-         $drives = Get-PSDrive | Where-Object { $_.Provider.Name -eq "FileSystem" -and $_.Used -gt 0 }
+         $drives = Get-PSDrive | Where-Object { $_.Provider.Name -eq "FileSystem" -and $_.Used -gt 0 -and $_.Name.ToLower() -ne "temp" }
          foreach ($drive in $drives) {
-            $name = $drive.Name
+            [string]$label = "GB"
+            [double]$available = 0
             if ($Percent) {
                #Percent flag is set
-               #Calculate percent of space left on drive
-               $remainingPercent = [math]::Round($drive.Used / ($drive.Free + $drive.Used))
-               
-               if ($Size -gt $remainingPercent) {
-                  Write-Output "$remainingPercent% space remaining on $name."
-                  $errors += 1
-               }
+               #Calculate percent of free space left on drive
+               $available = [math]::Round(($drive.Free / ($drive.Free + $drive.Used)) * 100,2)
+               $label = "%"
             }
             else {
-               $free = [math]::Round($drive.Free / 1Gb, 2)
-               $name = $drive.Name
-               if ($Size -gt $free) {
-                  Write-Output "${free}GB of space on $name."
-                  $errors += 1
-               }
+               $available = [math]::Round($drive.Free / 1Gb, 2)
+            }
+
+            if ($Size -gt $available) {
+               Write-Output "$available $label space remaining on $($drive.Name)."
+               $errors += 1
             }
          }
       }
@@ -72,7 +69,7 @@ function Confirm-DiskSpaceAvailable {
          Exit 1
       }
 
-      Write-Output "All disk space checked and clear."
+      Write-Output "All disks have been checked and have more than or equal to $size $label space available."
       Exit 0
    }
 }
