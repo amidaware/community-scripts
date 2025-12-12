@@ -22,9 +22,6 @@ Param(
    [switch]$Percent
 )
 
-#Script Version
-$sScriptVersion = "1.0"
-
 function Win_Disk_Space_Check {
    [CmdletBinding()]
    Param(
