@@ -12,6 +12,7 @@
    Version: 1.0
    Author: redanthrax
    Creation Date: 2022-04-05
+   Updated: Owen Conti 2025-12-12
 #>
 
 Param(
@@ -26,10 +27,16 @@ function Confirm-DiskSpaceAvailable {
    [CmdletBinding()]
    Param(
       [Parameter(Mandatory)]
-      [int]$Size,
+      [int]#The minimum amount of GB that should be available
+      $Size,
 
       [Parameter(Mandatory = $false)]
-      [switch]$Percent
+      [switch]#Switches the Size to be a percentage instead of GB
+      $Percent,
+
+      [Parameter(Mandatory = $false)]
+      [switch]#Writes a message out even when the drive has more than the minimum available amount.  In other words, logs *every* time.
+      $outputSuccess
    )
 
    Begin {}
@@ -51,8 +58,12 @@ function Confirm-DiskSpaceAvailable {
                $available = [math]::Round($drive.Free / 1Gb, 2)
             }
 
-            if ($Size -gt $available) {
+            If($outputSuccess){
                Write-Output "$available $label space remaining on $($drive.Name)."
+            }
+
+            if ($Size -gt $available) {
+               Write-Output "ERROR: $($drive.Name) is below the threshold of $size $label ($available available)."
                $errors += 1
             }
          }
