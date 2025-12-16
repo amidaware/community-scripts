@@ -18,7 +18,7 @@
 Param(
     [Parameter(Mandatory = $false)]
     [int]#Warn if the temperature (in degrees C) is over this limit
-    $TemperatureWarningLimit = 45,
+    $TemperatureWarningLimit = 55,
 
     [Parameter(Mandatory = $false)]
     [int]#Warn if the "wear" of the drive (as a percentage) is above this
