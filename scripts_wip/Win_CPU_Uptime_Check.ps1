@@ -9,6 +9,7 @@
 .NOTES
     Learing taken from "Win_Disk_SMART2.ps1" by nullzilla, and modified by: redanthrax
 #>
+
 [cmdletbinding()]
 Param(
     [Parameter(Mandatory = $false)]
@@ -16,7 +17,10 @@ Param(
     $maximumUptimeHoursWarningLimit = 60
 )
 
-If((Get-Uptime).TotalHours -ge $maximumUptimeHoursWarningLimit){
+$uptime = (get-Date) - (Get-CimInstance -ClassName Win32_OperatingSystem | Select-Object -ExpandProperty LastBootUpTime)
+    #v7 introduces Get-Uptime, but using WMI is backwards compatiable with v5
+
+If($uptime.TotalHours -ge $maximumUptimeHoursWarningLimit){
     return 1
     exit
 }
