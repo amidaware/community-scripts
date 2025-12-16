@@ -25,7 +25,7 @@ $available = [math]::Round(($os.FreePhysicalMemory * 1KB) / 1GB, 2)
 $label = "GB"
 if ($Percent) {
     #Percent flag is set
-    #Calculate percent of free space left on drive
+    #Calculate percent of free available RAM
     $available = [math]::Round(($os.FreePhysicalMemory / $os.TotalVisibleMemorySize) * 100, 1)
     $label = "%"
 }
