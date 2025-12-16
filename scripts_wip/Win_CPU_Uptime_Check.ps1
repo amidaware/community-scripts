@@ -21,8 +21,9 @@ $uptime = (get-Date) - (Get-CimInstance -ClassName Win32_OperatingSystem | Selec
     #v7 introduces Get-Uptime, but using WMI is backwards compatiable with v5
 
 If($uptime.TotalHours -ge $maximumUptimeHoursWarningLimit){
-    return 1
-    exit
+    "Uptime is over threshold ($($uptime.TotalHours)/$maximumUptimeHoursWarningLimit)"    
+    Exit 1
 }
 
-return 0
+"Uptime is below threshold ($($uptime.TotalHours)/$maximumUptimeHoursWarningLimit)"
+Exit 0
