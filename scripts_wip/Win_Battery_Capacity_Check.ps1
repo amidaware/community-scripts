@@ -10,8 +10,8 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $false)]
-	[int]#The minimum battery full charge capacity (as a percentage of design capacity by default).  Defaults to 70 percent.
-    $minimumBatteryCapacity = 70,
+	[int]#The minimum battery full charge capacity (as a percentage of design capacity by default).  Defaults to 85 percent.
+    $minimumBatteryCapacity = 85,
 
     [Parameter(Mandatory = $false)]
     [switch]#Set the check condition to absolute mWh values instead of a percentage
