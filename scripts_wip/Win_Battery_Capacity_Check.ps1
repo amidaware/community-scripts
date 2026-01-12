@@ -43,11 +43,7 @@ if ($absoluteValues) {
     $label = "mWh"
 }
 
-If($available -le $minimumBatteryCapacity)
-{
-    Write-Output "The battery needs investigating.  Full charge capacity is below the threshold of $minimumBatteryCapacity $label ($available $label available of design capacity $designCapacity mWh."
-    Exit 1
-} else {
-    Write-Output "The battery is reporting ok. Full charge capacity is above the threshold of $minimumBatteryCapacity $label ($available $label available of design capacity $designCapacity mWh."
-    Exit 0
-}
+"Full charge capacity $available$label of $designCapacity mWh."
+
+If($available -le $minimumBatteryCapacity){ Exit 1 }
+Exit 0

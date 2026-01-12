@@ -17,10 +17,10 @@ Param(
 $uptime = (get-Date) - (Get-CimInstance -ClassName Win32_OperatingSystem | Select-Object -ExpandProperty LastBootUpTime)
     #v7 introduces Get-Uptime, but using WMI is backwards compatiable with v5
 
-If($uptime.TotalHours -ge $maximumUptimeHoursWarningLimit){
-    "Uptime is over threshold ($($uptime.TotalHours)/$maximumUptimeHoursWarningLimit)"    
-    Exit 1
-}
+$hiberbootEnabled = (Get-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Power' -Name 'HiberbootEnabled' -ErrorAction Stop).HiberbootEnabled
+[bool]$FastStartupEnabled = ($hiberbootEnabled -eq 1)
 
-"Uptime is below threshold ($($uptime.TotalHours)/$maximumUptimeHoursWarningLimit)"
+"CPU Uptime $([math]::Round($uptime.TotalHours,2)) hours. Fast Startup enabled: $FastStartupEnabled"
+
+If($uptime.TotalHours -ge $maximumUptimeHoursWarningLimit){ Exit 1 }
 Exit 0

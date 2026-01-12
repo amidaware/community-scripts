@@ -16,89 +16,49 @@
 #>
 
 Param(
-   [Parameter(Mandatory)]
+   [Parameter(Mandatory = $false)]
    [int]#The minimum amount of GB that should be available
-   $Size,
+   $Size = 25,
 
    [Parameter(Mandatory = $false)]
    [switch]#Switches the Size to be a percentage instead of GB
-   $Percent,
-
-   [Parameter(Mandatory = $false)]
-   [switch]#Writes a message out even when the drive has more than the minimum available amount.  In other words, logs *every* time.
-   $outputSuccess
+   $Percent
 )
 
-function Confirm-DiskSpaceAvailable {
-   [CmdletBinding()]
-   Param(
-      [Parameter(Mandatory)]
-      [int]#The minimum amount of GB that should be available
-      $Size,
+Begin {}
 
-      [Parameter(Mandatory = $false)]
-      [switch]#Switches the Size to be a percentage instead of GB
-      $Percent,
+Process {
+   Try {
+      $errors = 0
+      $drives = Get-PSDrive | Where-Object { $_.Provider.Name -eq "FileSystem" -and $_.Used -gt 0 -and $_.Name.ToLower() -ne "temp" }
+      foreach ($drive in $drives) {
+         [string]$label = "GB"
+         [double]$available = 0
+         if ($Percent) {
+            #Percent flag is set
+            #Calculate percent of free space left on drive
+            $available = [math]::Round(($drive.Free / ($drive.Free + $drive.Used)) * 100,2)
+            $label = "%"
+         }
+         else {
+            $available = [math]::Round($drive.Free / 1Gb, 2)
+         }
 
-      [Parameter(Mandatory = $false)]
-      [switch]#Writes a message out even when the drive has more than the minimum available amount.  In other words, logs *every* time.
-      $outputSuccess
-   )
+         "$($drive.Name) $available $label space remaining."
 
-   Begin {}
-
-   Process {
-      Try {
-         $errors = 0
-         $drives = Get-PSDrive | Where-Object { $_.Provider.Name -eq "FileSystem" -and $_.Used -gt 0 -and $_.Name.ToLower() -ne "temp" }
-         foreach ($drive in $drives) {
-            [string]$label = "GB"
-            [double]$available = 0
-            if ($Percent) {
-               #Percent flag is set
-               #Calculate percent of free space left on drive
-               $available = [math]::Round(($drive.Free / ($drive.Free + $drive.Used)) * 100,2)
-               $label = "%"
-            }
-            else {
-               $available = [math]::Round($drive.Free / 1Gb, 2)
-            }
-
-            If($outputSuccess){
-               Write-Output "$available $label space remaining on $($drive.Name)."
-            }
-
-            if ($Size -gt $available) {
-               Write-Output "ERROR: $($drive.Name) is below the threshold of $size $label ($available available)."
-               $errors += 1
-            }
+         if ($Size -gt $available) {
+            $errors += 1
          }
       }
-
-      Catch {
-         Write-Output "Error: ${$_.Exception}"
-         Exit 1
-      }
    }
 
-   End {
-      if ($errors -gt 0) {
-         Exit 1
-      }
-
-      Write-Output "All disks have been checked and have more than or equal to $size $label space available."
-      Exit 0
+   Catch {
+      "ERROR: ${$_.Exception}"
+      Exit 1
    }
 }
 
-if (-not(Get-Command 'Confirm-DiskSpaceAvailable' -errorAction SilentlyContinue)) {
-   . $MyInvocation.MyCommand.Path
+End {
+   if ($errors -gt 0) { Exit 1 }
+   Exit 0
 }
-
-$scriptArgs = @{
-   Size    = $Size
-   Percent = $Percent
-   outputSuccess = $outputSuccess
-}
-
-Confirm-DiskSpaceAvailable @scriptArgs

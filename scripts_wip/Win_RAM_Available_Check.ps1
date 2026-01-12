@@ -12,7 +12,7 @@
 Param(
     [Parameter(Mandatory = $false)]
     [double]#Warn if the amount of available RAM (defaults to GB) is below this limit.  Defaults to 1 GB.
-    $minimumAvailableRAM = 1,
+    $minimumAvailableRAM = 0.75,
 
     [Parameter(Mandatory = $false)]
     [switch]#Use percentage instead of absolute GB values
@@ -30,10 +30,7 @@ if ($Percent) {
     $label = "%"
 }
 
-If($minimumAvailableRAM -gt $available){
-    Write-Output "Avalable RAM is below the threshold of $minimumAvailableRAM $label ($available $label available)."
-    Exit 1
-} else {
-    Write-Output "Avalable RAM is above the threshold of $minimumAvailableRAM $label ($available $label available)."
-    Exit 0
-}
+"$available $label RAM available."
+
+If($minimumAvailableRAM -gt $available){ Exit 1 }
+Exit 0

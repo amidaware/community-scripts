@@ -18,15 +18,11 @@
 Param(
     [Parameter(Mandatory = $false)]
     [int]#Warn if the temperature (in degrees C) is over this limit
-    $TemperatureWarningLimit = 55,
+    $TemperatureWarningLimit = 60,
 
     [Parameter(Mandatory = $false)]
     [int]#Warn if the "wear" of the drive (as a percentage) is above this
-    $maximumWearAllowance = 20,
-    
-    [Parameter(Mandatory = $false)]
-    [switch]#Outputs a full report, instead of warnings only
-    $fullReport
+    $maximumWearAllowance = 20
 )
 
 BEGIN {
@@ -41,7 +37,6 @@ PROCESS {
     Try{
         #Using Windows Storage Reliabilty Counters first (the information behind Settings - Storage - Disks & Volumes - %DiskID% - Drive health)
         $physicalDisks = Get-PhysicalDisk -ErrorAction Stop
-        $storageResults = @()
         foreach ($disk in $physicalDisks) {
             $reliabilityCounter = $null
             try {
@@ -50,12 +45,14 @@ PROCESS {
             catch {
                 Write-Error "No Storage Reliability Counter for '$($disk.FriendlyName)'. This usually means the driver/controller isn't exposing it."
             }
+            $driveLetters = (get-disk -FriendlyName $Disk.FriendlyName | Get-Partition | Where-Object -FilterScript {$_.DriveLetter} | Select-Object -Expand DriveLetter) -join ", "
 
-            $storageResults += [pscustomobject]@{
+            <#
+                DriveLetters            = $driveLetters
+                HealthStatus			= $disk.HealthStatus
                 FriendlyName			= $disk.FriendlyName
                 SerialNumber			= $disk.SerialNumber
                 BusType					= $disk.BusType
-                HealthStatus			= $disk.HealthStatus
                 OperationalStatus		= ($disk.OperationalStatus -join ", ")
                 Temperature 			= $reliabilityCounter.Temperature
                 Wear					= $reliabilityCounter.Wear
@@ -63,30 +60,25 @@ PROCESS {
                 WriteErrorsTotal		= $reliabilityCounter.WriteErrorsTotal
                 ReallocatedSectors		= $reliabilityCounter.ReallocatedSectors
                 PowerOnHours			= $reliabilityCounter.PowerOnHours
-            }
-
+            #>    
             If(
                 $disk.HealthStatus.ToLower() -ne "healthy" -or
                 ($disk.OperationalStatus | Where-Object -FilterScript { $_.ToLower() -ne "ok" }) -or
-                $reliabilityCounter.Wear -ge $maximumWearAllowance -or
-                $reliabilityCounter.Temperature -ge $TemperatureWarningLimit
+                $reliabilityCounter.Wear -gt $maximumWearAllowance -or
+                $reliabilityCounter.Temperature -gt $TemperatureWarningLimit
             ){
-                Write-Error -Message "$($disk.FriendlyName) has conditions that require investigation. $storageResults"
+                "Disk issue: $DriveLetters $($disk.HealthStatus) Status:$(($disk.OperationalStatus -join ", ")) $($reliabilityCounter.Temperature)*C $($reliabilityCounter.Wear)% wear"
+                Write-Error -Message "Disk issues need investigating"
+            } else {
+                "$DriveLetters $($disk.HealthStatus) Status:$(($disk.OperationalStatus -join ", ")) $($reliabilityCounter.Temperature)*C $($reliabilityCounter.Wear)% wear"
             }
         }
-
-        If($fullReport) { $storageResults }
-
     } catch {
         Write-Error -Message "Get-PhysicalDisk failed. This can happen on older OS builds or restricted environments."
     }
 }
 
 END{
-    if ($error) {
-        Write-Output $error
-        exit 1
-    }
-    Write-Output "All drives report as healthy"
+    if ($error) { Exit 1 }
     Exit 0
 }
