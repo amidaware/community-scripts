@@ -1,20 +1,89 @@
-#!/bin/bash
+#!/usr/bin/env bash
+###############################################################################
+# Script Name : linux_check_processes
+# Description : Check if one or more processes are running.
+#
+# Exit Codes :
+#   0 - OK (All processes running)
+#   1 - UNKNOWN (Invalid input / script failure)
+#   2 - WARNING (One or more processes not running)
+#
+# Usage :
+#   --process=proc1,proc2,...,procN
+#
+# Examples :
+#   ./linux_check_processes --process=sshd
+#   ./linux_check_processes --process=sshd,crond,nginx
+#   PROCESSES="sshd crond" ./linux_check_processes
+#
+# Repository  : https://github.com/amidaware/community-scripts
+# Category    : TRMM (nix):System Monitoring
+# Version     : 1.0
+# Last Updated: 2026-02-09
+###############################################################################
 
-# Checks if one or more processes are running.
-# The env variable PROCESSES must be passed in the script using format PROCESSES=process1 process2 process3
+PROCESSES_LIST=()
 
+# ----------------------------- Arg Parsing ---------------------------------
 
-if [ -z "$PROCESSES" ]; then
-    echo "Please specify processes in the environment variable PROCESSES using the format PROCESSES=process1 process2 process3"
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --process=*)
+            process_arg="${1#*=}"
+
+            [[ -z "$process_arg" ]] && {
+                echo "ERROR: --process requires a value"
+                exit 1
+            }
+
+            IFS=',' read -r -a processes <<< "$process_arg"
+
+            for proc in "${processes[@]}"; do
+                [[ -z "$proc" ]] && {
+                    echo "ERROR: Empty process name in --process list"
+                    exit 1
+                }
+                PROCESSES_LIST+=("$proc")
+            done
+            shift
+            ;;
+        *)
+            echo "ERROR: Unknown argument: $1"
+            exit 1
+            ;;
+    esac
+done
+
+# ----------------------- Environment Variable Support -----------------------
+
+if [[ -n "$PROCESSES" ]]; then
+    read -r -a env_procs <<< "$PROCESSES"
+    PROCESSES_LIST+=("${env_procs[@]}")
+fi
+
+# ---------------------------- Validation -----------------------------------
+
+if [[ ${#PROCESSES_LIST[@]} -eq 0 ]]; then
+    echo "ERROR: No processes specified"
     exit 1
 fi
 
-# Loop over the list of processes and check if they are running
-for proc in $PROCESSES; do
-  if pgrep -x "$proc" >/dev/null; then
-    echo "$proc is running"
-  else
-    echo "$proc is not running"
+command -v pgrep >/dev/null 2>&1 || {
+    echo "ERROR: Required command 'pgrep' not found"
     exit 1
-  fi
+}
+
+# ----------------------------- Execution -----------------------------------
+
+exit_code=0
+
+for proc in "${PROCESSES_LIST[@]}"; do
+    if pgrep -x "$proc" >/dev/null 2>&1; then
+        echo "OK: Process '$proc' is running"
+    else
+        echo "WARNING: Process '$proc' is NOT running"
+        exit_code=2
+    fi
 done
+
+exit "$exit_code"
