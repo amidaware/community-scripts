@@ -15,6 +15,7 @@
    v1.4 5/15/2024 Rework and simplify. Write out logfile
    v1.5 6/21/2024 Adding trmm agent to Check-Memorysize
    v1.6 8/26/2024 checking mesh for CF proxy
+   v1.7 1/8/2026 adding defender exclusion list and program files lists to output
 #>
 
 param(
@@ -350,6 +351,74 @@ function Test-ServerConnections {
     }
 }
 
+function Get-DefenderExclusions {
+    try {
+        $preferences = Get-MpPreference -ErrorAction Stop
+        
+        Write-Output "Path Exclusions:"
+        if ($preferences.ExclusionPath.Count -gt 0) {
+            foreach ($path in $preferences.ExclusionPath) {
+                Write-Output "  - $path"
+            }
+        }
+        else {
+            Write-Output "  None"
+        }
+        
+        Write-Output ""
+        Write-Output "Process Exclusions:"
+        if ($preferences.ExclusionProcess.Count -gt 0) {
+            foreach ($process in $preferences.ExclusionProcess) {
+                Write-Output "  - $process"
+            }
+        }
+        else {
+            Write-Output "  None"
+        }
+        
+        Write-Output ""
+        Write-Output "Extension Exclusions:"
+        if ($preferences.ExclusionExtension.Count -gt 0) {
+            foreach ($ext in $preferences.ExclusionExtension) {
+                Write-Output "  - $ext"
+            }
+        }
+        else {
+            Write-Output "  None"
+        }
+    }
+    catch {
+        Write-Output "Unable to retrieve Windows Defender exclusions. Error: $_"
+    }
+}
+
+function Get-ProgramFilesList {
+    $programFolders = @(
+        "C:\Program Files",
+        "C:\Program Files (x86)"
+    )
+    
+    foreach ($folder in $programFolders) {
+        if (Test-Path $folder) {
+            Write-Output "Contents of ${folder}:"
+            try {
+                $items = Get-ChildItem -Path $folder -ErrorAction Stop | Select-Object Name, LastWriteTime
+                foreach ($item in $items) {
+                    Write-Output "  $($item.LastWriteTime.ToString('yyyy-MM-dd')) - $($item.Name)"
+                }
+            }
+            catch {
+                Write-Output "  Unable to list contents. Error: $_"
+            }
+            Write-Output ""
+        }
+        else {
+            Write-Output "${folder} does not exist."
+            Write-Output ""
+        }
+    }
+}
+
 function Check-ServicesAndFiles {
     param (
         [string]$MeshAgentPath = "C:\Program Files\Mesh Agent\MeshAgent.exe",
@@ -454,5 +523,13 @@ Write-Output ""
 
 Write-Output "********************* Mesh Memory Size ************************"
 Check-MemorySize
+Write-Output ""
+
+Write-Output "************** Windows Defender Exclusions ********************"
+Get-DefenderExclusions
+Write-Output ""
+
+Write-Output "******************** Program Files List ***********************"
+Get-ProgramFilesList
 
 Stop-Transcript
