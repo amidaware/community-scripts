@@ -39,11 +39,11 @@
     13.12.24 SAN Split logging from parser.
     06.03.25 SAN added TRMM agent updater.
     11.09.25 SAN disabled choco download progress output to shrink log size
+    22.04.26 SAN added Chocolatey reboot detection from upgrade output
 
 .TODO
     Fix rename?
 #>
-
 
 # Name will be used for both the name of the log file and what line of the Schedules to parse
 $PartName = "SoftwareUpdate"
@@ -54,12 +54,10 @@ $PartName = "SoftwareUpdate"
 # Call the logging snippet env Company_folder_path will be passed
 {{Logging}}
 
-# Function to check if a reboot is pending and return reasons
 function Get-PendingReboot {
     $rebootRequired = $false
-    $reasons = @()  # Array to store reasons for reboot
+    $reasons = @()
 
-    # Check for Windows Update reboot required
     $WUReboot = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired" -ErrorAction SilentlyContinue
     if ($WUReboot) {
         $reasons += "Windows Update requires a reboot."
@@ -67,21 +65,18 @@ function Get-PendingReboot {
     }
 
     # DISABLED DUE TO FALSE POSITIVE
-    # Check for pending file rename operations
     # $PendingFileRenameOperations = Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager" -Name "PendingFileRenameOperations" -ErrorAction SilentlyContinue
     if ($PendingFileRenameOperations) {
         $reasons += "Pending file rename operations require a reboot."
         $rebootRequired = $true
     }
 
-    # Check if Component-Based Servicing (CBS) requires a reboot
     $CBSReboot = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending" -ErrorAction SilentlyContinue
     if ($CBSReboot) {
         $reasons += "Component-Based Servicing requires a reboot."
         $rebootRequired = $true
     }
 
-    # Check for pending computer rename
     $ComputerRename = Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\ComputerName\ActiveComputerName" -ErrorAction SilentlyContinue
     $PendingComputerRename = Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\ComputerName\ComputerName" -ErrorAction SilentlyContinue
     if ($ComputerRename -and $PendingComputerRename -and ($ComputerRename.ComputerName -ne $PendingComputerRename.ComputerName)) {
@@ -89,35 +84,31 @@ function Get-PendingReboot {
         $rebootRequired = $true
     }
 
-    # Check if Windows Installer (MSI) requires a reboot
     $PendingMSIReboot = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Installer\InProgress" -ErrorAction SilentlyContinue
     if ($PendingMSIReboot) {
         $reasons += "Windows Installer (MSI) operation requires a reboot."
         $rebootRequired = $true
     }
 
-    # Check if Group Policy client requires a reboot
     $GPReboot = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Group Policy\State\Machine\RebootRequired" -ErrorAction SilentlyContinue
     if ($GPReboot) {
         $reasons += "Group Policy changes require a reboot."
         $rebootRequired = $true
     }
 
-    # Check for pending package installations
     $PendingPackageInstalls = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Updates" -ErrorAction SilentlyContinue
     if ($PendingPackageInstalls) {
         $reasons += "Pending package installations require a reboot."
         $rebootRequired = $true
     }
 
-    # Return an object with reboot status and reasons
     return [PSCustomObject]@{
         RebootRequired = $rebootRequired
         Reasons        = $reasons
     }
 }
 
-# check if reboot is needed
+# check if reboot is needed BEFORE updates
 $result = Get-PendingReboot
 if ($result.RebootRequired) {
     Write-Host "Reboot is pending BEFORE updates for the following reasons:"
@@ -126,11 +117,9 @@ if ($result.RebootRequired) {
     Write-Host "No Reboot is pending BEFORE updates."
 }
 
-# The following section is in place due to the fact that ps logging does not capture RAW output from choco please do not touch
-# List outdated packages and capture output
+# Chocolatey output capture
 $outdatedPackages = choco outdated | Out-String
-# Upgrade all packages and capture output
-$upgradeResult = choco upgrade all -y --no-progress| Out-String
+$upgradeResult = choco upgrade all -y --no-progress | Out-String
 
 Write-Host ""
 Write-Host "------------------------------------------------------------"
@@ -143,13 +132,20 @@ Write-Host $upgradeResult
 Write-Host ""
 Write-Host "------------------------------------------------------------"
 Write-Host ""
+
 Write-Host "------------------------------------------------------------"
 Write-Host "TRMM Agent update"
 {{Update TRMM agent}}
 
-
-# Check if a reboot is pending and reboot if necessary
+# Check again for reboot AFTER update
 $result = Get-PendingReboot
+
+if ($upgradeResult -match "A pending system reboot request has been detected") {
+    Write-Host "Reboot condition detected in Chocolatey output."
+    $result.RebootRequired = $true
+    $result.Reasons += "Chocolatey reports a pending reboot request."
+}
+
 if ($result.RebootRequired) {
     Write-Host "Reboot is pending AFTER update for the following reasons:"
     $result.Reasons | ForEach-Object { Write-Host "- $_" }
@@ -158,12 +154,10 @@ if ($result.RebootRequired) {
     $timeDifference = New-TimeSpan -Start (Get-Date) -End $scheduledTime
     $SetReboot = [int]$timeDifference.TotalSeconds
 
-    # Schedule the system reboot
     Write-Host "shutdown.exe /r /f /t $SetReboot /c Reboot done by RMM task, required after packages updates /d p:4:1"
     shutdown.exe /r /f /t $SetReboot /c "Reboot done by RMM task, required after packages updates" /d p:4:1
-    
-    # Output a warning message
-    $minutes = [math]::Floor($SetReboot / 60) # Rounding 
+
+    $minutes = [math]::Floor($SetReboot / 60)
     $Message = "The system will reboot in $minutes minutes. Please save your work."
     Write-Host $Message
     msg * $Message
