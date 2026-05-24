@@ -4,7 +4,7 @@
       .DESCRIPTION
       For installing packages using winget.
       .PARAMETER Mode
-      4 options: install, uninstall, search or upgrade.
+      4 options: install, uninstall,, update, show, search or upgrade.
       .PARAMETER PackageName
       Use this to specify which software to install eg: PackageName google.chrome
       .EXAMPLE
