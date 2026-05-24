@@ -4,7 +4,7 @@
       .DESCRIPTION
       For installing packages using winget.
       .PARAMETER Mode
-      6 options: install, uninstall, search, update, show or upgrade.
+      4 options: install, uninstall, search or upgrade.
       .PARAMETER PackageName
       Use this to specify which software to install eg: PackageName google.chrome
       .EXAMPLE
@@ -13,10 +13,6 @@
       -Mode upgrade
       .EXAMPLE
       -Mode uninstall -PackageName google.chrome
-      .EXAMPLE
-      -Mode update -PackageName google.chrome
-      .EXAMPLE (to show updates available)
-      -Mode show
       .NOTES
       9/2021 v1 Initial release by @silversword411 and @bradhawkins 
       11/14/2021 v1.1 Fixing typos and logic flow
@@ -24,46 +20,75 @@
   #>
 
 param (
-    [string] $PackageName,
+    [string] $PackageName = "",
     [string] $Mode = "install"
 )
 
-$wingetloc=(Get-Childitem -Path "C:\Program Files\WindowsApps" -Include winget.exe -Recurse -ErrorAction SilentlyContinue | Select-Object -Last 1 | %{$_.FullName} | Split-Path)
-cd $wingetloc
-
 $ErrorCount = 0
 
-if ($Mode -eq "show") {
-    .\winget.exe upgrade --accept-source-agreements
-    Exit 0
+if ([string]::IsNullOrWhiteSpace($Mode)) {
+    $Mode = "install"
 }
 
-if ($Mode -ne "update" -and !$PackageName) {
-    write-output "No package name provided, please include Example: `"-PackageName google.chrome`" `n"
+$Mode = $Mode.ToLower()
+
+$ValidModes = @("install", "uninstall", "search", "update", "show", "upgrade")
+
+if ($Mode -notin $ValidModes) {
+    Write-Output "Invalid mode: $Mode"
     Exit 1
 }
 
-if ($Mode -eq "upgrade") {
-    .\winget.exe upgrade --all --accept-source-agreements
-    Exit 0
+$wingetloc = Get-ChildItem -Path "C:\Program Files\WindowsApps" -Include winget.exe -Recurse -ErrorAction SilentlyContinue |
+    Select-Object -Last 1 |
+    ForEach-Object { $_.FullName } |
+    Split-Path
+
+if ([string]::IsNullOrWhiteSpace($wingetloc)) {
+    Write-Output "winget.exe not found."
+    Exit 1
 }
 
-if ($Mode -eq "update") {
-    .\winget.exe upgrade $PackageName --accept-source-agreements
-    Exit 0
+$winget = Join-Path $wingetloc "winget.exe"
+
+if (!(Test-Path $winget)) {
+    Write-Output "winget.exe not found at $winget"
+    Exit 1
 }
 
-if ($Mode -eq "search") {
-    .\winget.exe search $PackageName --accept-source-agreements
-    Exit 0
+if ($Mode -notin @("show", "upgrade") -and [string]::IsNullOrWhiteSpace($PackageName)) {
+    Write-Output "No package name provided. Example: -PackageName Google.Chrome"
+    Exit 1
 }
 
-if ($Mode -eq "install") {
-    .\winget.exe install $PackageName --accept-source-agreements --accept-package-agreements
-    Exit 0
-}
+switch ($Mode) {
+    "show" {
+        & $winget upgrade --accept-source-agreements
+        Exit $LASTEXITCODE
+    }
 
-if ($Mode -eq "uninstall") {
-    .\winget.exe uninstall $PackageName --accept-source-agreements
-    Exit 0
+    "upgrade" {
+        & $winget upgrade --all --accept-source-agreements --accept-package-agreements
+        Exit $LASTEXITCODE
+    }
+
+    "update" {
+        & $winget upgrade --id $PackageName --accept-source-agreements --accept-package-agreements
+        Exit $LASTEXITCODE
+    }
+
+    "search" {
+        & $winget search $PackageName --accept-source-agreements
+        Exit $LASTEXITCODE
+    }
+
+    "install" {
+        & $winget install --id $PackageName --accept-source-agreements --accept-package-agreements
+        Exit $LASTEXITCODE
+    }
+
+    "uninstall" {
+        & $winget uninstall --id $PackageName --accept-source-agreements
+        Exit $LASTEXITCODE
+    }
 }
