@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-#public
 '''
 .SYNOPSIS
     Python script designed to automatically update the interface of Uptime-Kuma based online machines for Tactical.
@@ -9,32 +8,30 @@
     After fetching the information, it checks whether the websites still exist in Tactical. If they don't, the script removes them from the dashboard.
     Additionally, it verifies if the sites are already present; if not, it creates them, specifying the name, URL, and Agent ID in the description.
 
-.ADDITIONAL INFORMATIONS
-    API : https://uptime-kuma-api.readthedocs.io/en/latest/index.html
-    Docker-Compose : uptime-kuma on dockge
-    Version : 1.6.0
-
 .NOTE
     Author: MSA/SAN
     Date: 17.08.24
-
+    API : https://uptime-kuma-api.readthedocs.io/en/latest/index.html
+    #PUBLIC
+    
 .EXEMPLE
-endpoint_uptimekuma=UPTIME URL
-user_uptimekuma=UPTIME USER
-password_uptimekuma={{global.uptimepassword}}
-rmm_key_for_uptime={{global.rmm_key_for_uptime_script}}
-rmm_url=https://RMM API URL/agents
-CustomFieldID=11111111
+    endpoint_uptimekuma=UPTIME URL
+    user_uptimekuma=UPTIME USER
+    password_uptimekuma={{global.uptimepassword}}
+    rmm_key_for_uptime={{global.rmm_key_for_uptime_script}}
+    rmm_url=https://RMM API URL/agents
+    CustomFieldID=11111111
 
 .CHANGELOG
     02.06.26 SAN Big code cleanup, multiple timeouts fixes, https cleanup, value mutation bug, removed redundant calls, added startup check, modularisation
+
 .TODO
-   When a hostname is removed/moved, this script doesn't automatically delete it. Need to be fix.
-   The HTTP protocol is automatically replaced by HTTPS. This should be adjusted to retain HTTP when specific keywords are used.
-   Remove the URL from the display name.
+    Alternative to the API used will be needed as it is unmaintained and does not look compatible with uptime V2
+    When a hostname is removed/moved, this script doesn't automatically delete it. Need to be fix.
+    The HTTP protocol is automatically replaced by HTTPS. This should be adjusted to retain HTTP when specific keywords are used.
+    Remove the URL from the display name.
 
 ''' 
-
 
 import sys
 import subprocess
