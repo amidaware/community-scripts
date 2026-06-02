@@ -27,7 +27,7 @@ rmm_url=https://RMM API URL/agents
 CustomFieldID=11111111
 
 .CHANGELOG
-    02.06.26 Big code cleanup, multiple timeouts fixes, https cleanup, value mutation bug, removed redundant calls, added startup check, modularisation
+    02.06.26 SAN Big code cleanup, multiple timeouts fixes, https cleanup, value mutation bug, removed redundant calls, added startup check, modularisation
 .TODO
    When a hostname is removed/moved, this script doesn't automatically delete it. Need to be fix.
    The HTTP protocol is automatically replaced by HTTPS. This should be adjusted to retain HTTP when specific keywords are used.
