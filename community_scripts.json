@@ -1648,6 +1648,25 @@
     "category": "TRMM (Linux):Checks"
   },
   {
+    "guid": "6b7afa44-8a75-4c4d-9600-e467758028de",
+    "filename": "Linux_Flowtriq_DDoS_Status.sh",
+    "submittedBy": "https://github.com/flowtriq",
+    "name": "Flowtriq - DDoS Attack Status",
+    "description": "Checks the local ftagent health endpoint (default port 9100) and alerts if a DDoS attack is active or if the agent is unreachable. ftagent must be installed and running on the monitored node. Returns exit 1 (alert) on active attack or agent down, exit 0 when clear.",
+    "args": [
+      "port=9100",
+      "timeout=5",
+      "warn_no_baseline=0"
+    ],
+    "syntax": "[port=<number>] [timeout=<seconds>] [warn_no_baseline=<0|1>]",
+    "default_timeout": "30",
+    "shell": "shell",
+    "supported_platforms": [
+      "linux"
+    ],
+    "category": "TRMM (Linux):Checks"
+  },
+  {
     "guid": "a8ddc705-c285-429e-a44c-b4ea6b889df5",
     "filename": "Win_IIS_Check_SSL_Certs.ps1",
     "submittedBy": "https://github.com/ebdavison",
