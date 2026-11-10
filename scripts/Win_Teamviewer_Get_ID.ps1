@@ -1,5 +1,7 @@
 # Retrieve Teamviewer ID from TRMM agent. This tests versions 6+ known Registry Paths.
 
+$ErrorActionPreference = 'SilentlyContinue'
+
 $TeamViewerVersionsNums = @('6', '7', '8', '9', '')
 $RegPaths = @('HKLM:\SOFTWARE\TeamViewer', 'HKLM:\SOFTWARE\Wow6432Node\TeamViewer')
 $Paths = @(foreach ($TeamViewerVersionsNum in $TeamViewerVersionsNums) {
@@ -7,6 +9,8 @@ $Paths = @(foreach ($TeamViewerVersionsNum in $TeamViewerVersionsNums) {
             $RegPath + $TeamViewerVersionsNum
         }
     })
+
+$GoodPath = @()
 
 foreach ($Path in $Paths) {
     If (Test-Path $Path) {
@@ -17,7 +21,6 @@ foreach ($Path in $Paths) {
 foreach ($FullPath in $GoodPath) {
     If ($null -ne (Get-Item -Path $FullPath).GetValue('ClientID')) {
         $TeamViewerID = (Get-Item -Path $FullPath).GetValue('ClientID')
-        $ErrorActionPreference = 'silentlycontinue'
 
     }
 
